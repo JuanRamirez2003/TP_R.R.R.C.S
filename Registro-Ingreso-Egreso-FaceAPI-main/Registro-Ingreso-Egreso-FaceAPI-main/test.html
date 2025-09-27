@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Supabase Usuarios</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+  <h1>Test Usuarios Supabase</h1>
+  <button id="test-btn">Mostrar Usuarios en Consola</button>
+
+  <script>
+    // --- Configuración de Supabase ---
+        const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co"
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+    // --- Función para traer usuarios ---
+    async function mostrarUsuarios() {
+      try {
+        const { data: usuarios, error } = await supabaseClient
+          .from('usuarios')  // nombre de la tabla
+          .select('*');
+
+        if (error) {
+          console.error('Error al consultar usuarios:', error);
+          return;
+        }
+
+        if (!usuarios || usuarios.length === 0) {
+          console.log('No hay usuarios registrados.');
+        } else {
+          console.log('Usuarios registrados:', usuarios);
+        }
+      } catch (err) {
+        console.error('Error inesperado:', err);
+      }
+    }
+
+    // --- Evento del botón ---
+    document.getElementById('test-btn').addEventListener('click', mostrarUsuarios);
+  </script>
+</body>
+</html>
