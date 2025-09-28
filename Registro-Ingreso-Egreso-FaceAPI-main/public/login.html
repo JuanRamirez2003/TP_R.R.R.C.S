@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verificación de Operario</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="message-box" class="message-box"></div>
+
+  <div class="container">
+    <!-- Pantalla de login manual -->
+    <div id="manual-login-screen" class="screen active">
+      <div class="screen-content">
+        <h2>Ingreso Manual</h2>
+        <div class="form-group">
+          <input type="text" id="manual-op-code" placeholder="Código de Operario" required>
+          <input type="text" id="manual-dni" placeholder="DNI" required>
+        </div>
+        <div class="button-group">
+          <button id="manual-login-button" class="btn btn-primary">Ingresar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pantalla de verificación con cámara -->
+    <div id="verify-screen" class="screen">
+      <div class="screen-content">
+        <h2>Verificación Facial</h2>
+        <p>Mire a la cámara para confirmar su identidad.</p>
+        <div class="camera-container">
+          <!-- Aquí se mostrará la cámara -->
+          <video id="video-verify" autoplay muted width="320" height="340" style="border:1px solid #ccc; border-radius:8px;"></video>
+        </div>
+        <p id="verify-status">Esperando rostro...</p>
+      </div>
+    </div>
+
+    <!-- Pantalla de acceso permitido -->
+    <div id="access-permitted-screen" class="screen">
+      <div class="screen-content">
+        <h2 class="success">✅ Acceso Permitido</h2>
+        <p>Bienvenido, <span id="user-name"></span></p>
+      </div>
+    </div>
+
+    <!-- Pantalla de acceso denegado -->
+    <div id="access-denied-screen" class="screen">
+      <div class="screen-content">
+        <h2 class="error">❌ Acceso Denegado</h2>
+        <p>Datos incorrectos o rostro no reconocido.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Librerías -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="js/face-api.min.js"></script>
+  <script src="js/loging.js"></script>
+</body>
+</html>

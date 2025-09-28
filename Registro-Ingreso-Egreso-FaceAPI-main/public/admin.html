@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Operario</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bienvenido, <span id="user-name">Usuario</span> 👋</h1>
+        <button id="register-new-button" class="btn btn-primary">Registrar Nuevo Operario</button>
+    </div>
+
+    <script>
+        // Obtener nombre del usuario desde localStorage
+        const userName = localStorage.getItem('currentUserName') || 'Operario';
+        document.getElementById('user-name').textContent = userName;
+
+        // Botón para ir a la página de registro
+        document.getElementById('register-new-button').addEventListener('click', () => {
+            window.location.href = 'register.html'; // cambiar según tu HTML de registro
+        });
+    </script>
+</body>
+</html>

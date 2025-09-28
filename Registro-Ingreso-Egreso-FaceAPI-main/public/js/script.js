@@ -341,10 +341,37 @@ manualLoginButton.addEventListener('click', async () => {
             showMessage('Error al cargar modelos de IA.', 'error', 5000);
         }
     }
-
-    // --- Registro de Accesos ---
-async function registerAccess(usuario_id, tipo = 'manual', accion = 'ingreso') {
+    // --- Obtener último acceso del usuario ---
+async function getLastAccess(usuario_id) {
     try {
+        const { data, error } = await supabaseClient
+            .from('accesos')
+            .select('*')
+            .eq('usuario_id', usuario_id)
+            .order('fecha_hora', { ascending: false })
+            .limit(1);
+
+        if (error) {
+            console.error('Error obteniendo último acceso:', error);
+            return null;
+        }
+
+        return data.length > 0 ? data[0] : null;
+    } catch (err) {
+        console.error('Error inesperado al obtener último acceso:', err);
+        return null;
+    }
+}
+
+ async function registerAccess(usuario_id, tipo = 'manual') {
+    try {
+        // Determinar acción según último acceso
+        const lastAccess = await getLastAccess(usuario_id);
+        let accion = 'ingreso'; // por defecto
+        if (lastAccess && lastAccess.accion === 'ingreso') {
+            accion = 'egreso';
+        }
+
         const { data, error } = await supabaseClient
             .from('accesos')
             .insert([{
@@ -359,13 +386,12 @@ async function registerAccess(usuario_id, tipo = 'manual', accion = 'ingreso') {
         } else {
             console.log(`Acceso registrado: ${accion} para usuario ${usuario_id}`);
         }
+
+        return accion; // devuelve la acción registrada
     } catch (err) {
         console.error('Error inesperado al registrar acceso:', err);
     }
 }
-
-logoutMenuButton.addEventListener('click', () => showScreen('logout-screen'));
-
 async function startFacialLogout() {
     logoutStatus.textContent = 'Iniciando cámara...';
     if (!(await startCamera(videoLogout))) return showScreen('manual-logout-screen');
