@@ -3,106 +3,113 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Admin - Empresa de Alimentos</title>
-  <link rel="stylesheet" href="css/ventas.css">
+  <title>Panel de Administrador</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    /* Minimal CSS para que se vea bien y se destaque el modal */
+    body { font-family: Arial, sans-serif; margin:0; display:flex; height:100vh; background:#121212; color:#e0e0e0; }
+    .sidebar { width:220px; background:#1e1e1e; padding:20px; border-right:1px solid #333; }
+    .sidebar h2 { text-align:center; margin-bottom:20px; color:#55a630; }
+    .sidebar ul { list-style:none; padding:0; }
+    .sidebar li { margin-bottom:15px; }
+    .sidebar button { width:100%; padding:10px; border:none; border-radius:6px; background:#2a2a2a; color:#e0e0e0; cursor:pointer; font-weight:bold; }
+    .sidebar button:hover { background:#55a630; color:#000; }
+    .main-content { flex:1; padding:20px; overflow:auto; }
+    h1, h2 { margin-bottom:20px; color:#fff; }
+    .seccion { display:none; background:#1e1e1e; padding:20px; border-radius:8px; margin-bottom:20px; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; }
+    th, td { border:1px solid #333; padding:8px; text-align:left; }
+    th { background:#2a2a2a; }
+    tr:hover { background:#333; }
+    .btn-edit, .btn-delete { padding:4px 8px; border:none; border-radius:4px; cursor:pointer; }
+    .btn-edit { background:#3498db; color:white; }
+    .btn-delete { background:#e74c3c; color:white; }
+
+    /* Modal */
+    .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; }
+    .modal-content { background:#1e1e1e; padding:20px; border-radius:8px; width:400px; }
+    .modal-content h3 { margin-bottom:15px; }
+    .modal-content label { display:block; margin:10px 0 5px; }
+    .modal-content input, .modal-content select { width:100%; padding:8px; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0; }
+    .modal-content button { margin-top:15px; width:48%; }
+  </style>
 </head>
 <body>
-  <div class="dashboard">
-    <!-- Menú lateral -->
-    <aside class="sidebar">
-      <h2>Administrador</h2>
-      <ul>
-        <li><button onclick="mostrarSeccion('usuarios')">Gestión de Usuarios</button></li>
-        <li><button onclick="mostrarSeccion('accesos')">Accesos a la Base</button></li>
-      </ul>
-    </aside>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>Administrador</h2>
+    <ul>
+      <li><button onclick="mostrarSeccion('usuarios')">Gestión de Usuarios</button></li>
+      <li><button onclick="mostrarSeccion('accesos')">Accesos a la Base</button></li>
+    </ul>
+  </aside>
 
-    <!-- Contenido principal -->
-    <main class="main-content">
-      <h1>Panel de Administrador</h1>
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <h1>Panel de Administrador</h1>
 
-      <!-- ===================== SECCIÓN USUARIOS ===================== -->
-      <div id="usuarios" class="seccion" style="display:none;">
-        <h2>Gestión de Usuarios</h2>
-        <button class="btn-submit" onclick="mostrarFormularioUsuario()">➕ Nuevo Usuario</button>
+    <!-- SECCIÓN USUARIOS -->
+    <div id="usuarios" class="seccion">
+      <h2>Usuarios</h2>
+      <table id="tablaUsuarios">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>DNI</th>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Área</th>
+            <th>Creado en</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-        <!-- Tabla de usuarios -->
-        <table id="tablaUsuarios" style="margin-top:20px;">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Código</th>
-              <th>DNI</th>
-              <th>Nombre</th>
-              <th>Área</th>
-              <th>Creado en</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+    <!-- SECCIÓN ACCESOS -->
+    <div id="accesos" class="seccion">
+      <h2>Accesos</h2>
+      <table id="tablaAccesos">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>ID Usuario</th>
+            <th>Tipo</th>
+            <th>Acción</th>
+            <th>Fecha/Hora</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
 
-        <!-- Formulario modal Usuario -->
-        <div id="formUsuario" style="display:none; margin-top:20px; border:1px solid #ccc; padding:20px; border-radius:8px;">
-          <h3>Nuevo/Editar Usuario</h3>
-          <form id="usuarioForm">
-            <input type="hidden" id="id_usuario">
-
-            <div class="form-group">
-              <label for="codigoUsuario">Código Operario:</label>
-              <input type="text" id="codigoUsuario" required>
-            </div>
-            <div class="form-group">
-              <label for="dniUsuario">DNI:</label>
-              <input type="text" id="dniUsuario" required>
-            </div>
-            <div class="form-group">
-              <label for="nombreUsuario">Nombre:</label>
-              <input type="text" id="nombreUsuario" required>
-            </div>
-            <div class="form-group">
-              <label for="areaUsuario">Área:</label>
-              <input type="text" id="areaUsuario" required>
-            </div>
-
-            <button type="submit" class="btn-submit">Guardar</button>
-            <button type="button" onclick="cancelarUsuario()" class="btn-submit">Cancelar</button>
-          </form>
-        </div>
-
-        <!-- Mensaje éxito Usuario -->
-        <div id="mensajeExitoUsuario" style="display:none; margin-top:20px; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; text-align:center;">
-          <p id="textoExitoUsuario" style="font-weight:bold; color:#155724;"></p>
-          <button onclick="volverPanel()" class="btn-submit">Volver al panel</button>
-        </div>
+  <!-- MODAL EDICIÓN USUARIO -->
+  <div id="modalEditar" class="modal">
+    <div class="modal-content">
+      <h3>Editar Usuario</h3>
+      <input type="hidden" id="editarId">
+      <label for="editarDni">DNI</label>
+      <input type="text" id="editarDni">
+      <label for="editarNombre">Nombre</label>
+      <input type="text" id="editarNombre">
+      <label for="editarTipo">Tipo</label>
+      <select id="editarTipo">
+        <option value="Admin">Admin</option>
+        <option value="Usuario">Usuario</option>
+      </select>
+      <label for="editarArea">Área</label>
+      <input type="text" id="editarArea">
+      <div style="display:flex; justify-content:space-between;">
+        <button onclick="guardarEdicion()" class="btn-edit">Guardar</button>
+        <button onclick="cerrarModal()" class="btn-delete">Cancelar</button>
       </div>
-
-      <!-- ===================== SECCIÓN ACCESOS ===================== -->
-      <div id="accesos" class="seccion" style="display:none;">
-        <h2>Accesos a la Base</h2>
-        <table id="tablaAccesos" style="margin-top:20px;">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Usuario</th>
-              <th>Tabla</th>
-              <th>Permiso</th>
-              <th>Fecha Último Acceso</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </main>
+    </div>
   </div>
 
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script>
-   const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co"
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-  </script>
+  <!-- Supabase y JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/admin-users.js"></script>
 </body>
 </html>

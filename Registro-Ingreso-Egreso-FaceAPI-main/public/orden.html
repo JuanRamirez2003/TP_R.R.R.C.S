@@ -1,68 +1,69 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orden de Producción</title>
-    <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orden de Producción</title>
+  <link rel="stylesheet" href="css/orden.css" />
 </head>
 <body>
-    <div class="container">
-        <!-- Encabezado -->
-        <header>
-            <h1>Orden de Producción</h1>
-        </header>
+  <div class="container">
+    <!-- Encabezado -->
+    <header>
+      <h1>Orden de Producción</h1>
+    </header>
 
-        <!-- Panel Crear Orden -->
-        <div class="panel">
-            <h2>Crear Nueva Orden</h2>
-            <form id="formCrearOrden">
-                <input type="text" id="ordenLote" placeholder="Código de Lote" readonly>
+    <!-- Panel Crear Orden -->
+    <div class="panel">
+      <h2>Crear Nueva Orden</h2>
+      <form id="formCrearOrden">
+        <input type="text" id="ordenLote" placeholder="Código de Lote" readonly />
 
-                <!-- Selección de orden de venta -->
-                <div class="form-group">
-                    <label for="ordenVentaSelect">Orden de Venta</label>
-                    <select id="ordenVentaSelect" required>
-                        <option value="">Seleccione una orden de venta...</option>
-                    </select>
-                </div>
-
-                <!-- Selección de materias primas -->
-                <div class="form-group">
-                    <label for="materiaSelect">Materia Prima</label>
-                    <select id="materiaSelect" required>
-                        <option value="">Seleccione materia prima...</option>
-                    </select>
-                </div>
-
-                <!-- Lista de materias -->
-                <ul id="materiasLista"></ul>
-
-                <button type="submit" class="btn btn-success">✅ Crear Orden</button>
-            </form>
+        <!-- Selección de orden de venta -->
+        <div class="form-group">
+          <label for="ordenVentaSelect">Orden de Venta</label>
+          <select id="ordenVentaSelect" required>
+            <option value="">Seleccione una orden de venta...</option>
+          </select>
         </div>
 
-        <!-- Tabla de órdenes -->
-        <div class="panel">
-            <h2>Órdenes de Producción</h2>
-            <table class="orden-table">
-                <thead>
-                    <tr>
-                        <th>Lote</th>
-                        <th>Orden de Venta</th>
-                        <th>Requerimientos</th>
-                        <th>Etapa</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody id="ordenBody"></tbody>
-            </table>
+        <!-- Selección de materias primas -->
+        <div class="form-group">
+          <label for="materiaSelect">Materia Prima</label>
+          <select id="materiaSelect">
+            <option value="">Seleccione materia prima...</option>
+          </select>
+          <button type="button" id="btnAgregarMateria" class="btn btn-secondary">➕ Agregar</button>
         </div>
+
+        <!-- Lista de materias -->
+        <ul id="materiasLista"></ul>
+
+        <button type="submit" class="btn btn-success">✅ Crear Orden</button>
+      </form>
     </div>
 
-    <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Script -->
-    <script src="js/orden.js"></script>
+    <!-- Tabla de órdenes -->
+    <div class="panel">
+      <h2>Órdenes de Producción</h2>
+      <table class="orden-table">
+        <thead>
+          <tr>
+            <th>Lote</th>
+            <th>Orden de Venta</th>
+            <th>Requerimientos</th>
+            <th>Etapa</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="ordenBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Script -->
+  <script src="js/orden.js"></script>
 </body>
 </html>
