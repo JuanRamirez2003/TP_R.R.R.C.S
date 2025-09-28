@@ -67,41 +67,51 @@ if (inventarioBody) {
 }
 
 // ======================
-// Orden de Producción (orden.html)
+// ORDEN DE PRODUCCIÓN (orden.html)
 // ======================
+
+// Elementos principales del DOM
 const formCrearOrden = document.getElementById("formCrearOrden");
 const ordenBody = document.getElementById("ordenBody");
 const materiasLista = document.getElementById("materiasLista");
 
 if (formCrearOrden) {
-    let ordenes = JSON.parse(localStorage.getItem("ordenes")) || [];
-    let materias = {}; // objeto temporal para almacenar insumos antes de crear la orden
+    // ======================
+    // Datos almacenados
+    // ======================
+    let ordenes = JSON.parse(localStorage.getItem("ordenes")) || {}; // objeto donde la clave es el lote
+    let materias = {}; // materias primas temporales antes de crear la orden
 
-    // Guardar órdenes en localStorage
+    // Guardar en localStorage
     function guardarOrdenes() {
         localStorage.setItem("ordenes", JSON.stringify(ordenes));
     }
 
-    // Renderizar tabla de órdenes
+    // ======================
+    // Panel: ÓRDENES DE PRODUCCIÓN (tabla)
+    // ======================
     function renderOrdenes() {
         ordenBody.innerHTML = "";
-        ordenes.forEach(o => {
+        Object.entries(ordenes).forEach(([lote, data]) => {
             ordenBody.innerHTML += `
                 <tr>
-                    <td>${o.lote}</td>
-                    <td>${JSON.stringify(o.requerimientos)}</td>
-                    <td>${o.etapa}</td>
-                    <td>${o.estado}</td>
-                    <td>${o.movimientos.join(" → ")}</td>
+                    <td>${lote}</td>
+                    <td>${Object.entries(data.requerimientos)
+                        .map(([n, c]) => `${n}: ${c}`).join(", ")}</td>
+                    <td>${data.etapa}</td>
+                    <td>${data.estado}</td>
+                    <td>${data.movimientos.join(" → ")}</td>
                 </tr>`;
         });
         guardarOrdenes();
     }
 
-    // Inicializar tabla
+    // Inicializar tabla al cargar
     renderOrdenes();
 
-    // Botón: Agregar materia prima a la lista temporal
+    // ======================
+    // Panel: AGREGAR MATERIAS PRIMAS
+    // ======================
     document.querySelector(".btnAgregarMateria").addEventListener("click", () => {
         const nombre = document.querySelector(".materiaNombre").value.trim();
         const cantidad = parseFloat(document.querySelector(".materiaCantidad").value);
@@ -111,18 +121,22 @@ if (formCrearOrden) {
             return;
         }
 
+        // Guardar en lista temporal
         materias[nombre] = cantidad;
 
-        // Mostrar lista visual de insumos agregados
+        // Mostrar lista visual en el panel
         materiasLista.innerHTML = Object.entries(materias)
-            .map(([n, c]) => `<li>${n}: ${c}</li>`).join("");
+            .map(([n, c]) => `<li>${n}: ${c}</li>`)
+            .join("");
 
         // Limpiar inputs
         document.querySelector(".materiaNombre").value = "";
         document.querySelector(".materiaCantidad").value = "";
     });
 
-    // Formulario: Crear nueva orden
+    // ======================
+    // Panel: CREAR NUEVA ORDEN
+    // ======================
     formCrearOrden.addEventListener("submit", (e) => {
         e.preventDefault();
         const lote = document.getElementById("ordenLote").value.trim();
@@ -131,25 +145,25 @@ if (formCrearOrden) {
             alert("Ingrese un nombre para el lote.");
             return;
         }
+
         if (Object.keys(materias).length === 0) {
             alert("Agregue al menos un insumo antes de crear la orden.");
             return;
         }
 
-        // Crear nueva orden
-        const nuevaOrden = {
-            lote,
+        // Guardar la orden usando el lote como clave
+        ordenes[lote] = {
             requerimientos: { ...materias },
             etapa: "Preparación",
             estado: "Creada",
             movimientos: ["Orden creada"]
         };
 
-        ordenes.push(nuevaOrden);
+        // Actualizar tabla
         renderOrdenes();
 
-        // Limpiar formulario y lista de insumos temporales
-        formCrearOrden.reset();
+        // Limpiar inputs y lista temporal
+        document.getElementById("ordenLote").value = "";
         materiasLista.innerHTML = "";
         materias = {};
     });
