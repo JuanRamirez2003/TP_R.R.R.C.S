@@ -125,11 +125,35 @@ async function startFaceVerification() {
     const displayName = currentUser.name || currentUser.nombre || "Operario";
     showMessage(`✅ Bienvenido ${displayName}`, "success", 2000);
 
-    // redirigir a otro HTML
+     // redirigir según área
     setTimeout(() => {
         localStorage.setItem('currentUserName', displayName);
-        window.location.href = "admin.html"; // reemplaza con el HTML que quieras
+
+        switch (currentUser.area) {
+            case "Ventas":
+                window.location.href = "ventas.html";
+                break;
+            case "Recursos Humanos":
+                window.location.href = "rrhh.html";
+                break;
+            case "TI":
+                window.location.href = "ti.html";
+                break;
+            case "Operario":
+                window.location.href = "operario.html";
+                break;
+            case "Supervisor":
+                window.location.href = "supervisor.html";
+                break;
+            case "Gerente General":
+                window.location.href = "gerente.html";
+                break;
+            default:
+                // Si no hay área asignada, ir a un HTML genérico
+                window.location.href = "dashboard.html";
+        }
     }, 1500); // pequeño delay para que vea el mensaje
+
 
       } else {
         // rostro detectado pero no coincide -> mostrar error y volver
