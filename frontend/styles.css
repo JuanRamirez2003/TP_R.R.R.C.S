@@ -4,16 +4,49 @@ body {
     padding: 0;
     font-family: 'Inter', sans-serif;
     background-color: #e6f0ff; /* fondo azul claro */
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    display: flex; /* para sidebar + contenido */
     min-height: 100vh;
 }
 
-.container {
-    margin-top: 30px;
-    width: 90%;
-    max-width: 800px;
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    background: #1e3a8a; /* azul oscuro */
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+}
+
+.sidebar h2 {
+    font-size: 18px;
+    margin-bottom: 1rem;
+}
+
+.sidebar .btn-nav {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    text-align: left;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.sidebar .btn-nav:hover {
+    background: #1d4ed8;
+}
+
+/* Contenido principal */
+.app {
+    flex: 1;
+    padding: 20px;
+    background: #f3f4f6;
 }
 
 h1 {
@@ -68,7 +101,8 @@ input, textarea {
     color: #333;
     white-space: pre-wrap;
 }
-/* Tablas */
+
+/* Tablas Inventario */
 .inventory-table {
     width: 100%;
     border-collapse: collapse;
@@ -102,6 +136,8 @@ input, textarea {
 .inventory-table tr:hover {
     background-color: #e6f0ff; /* azul muy suave al pasar el mouse */
 }
+
+/* Tabla de Órdenes */
 .orden-table {
     width: 100%;
     border-collapse: collapse;
