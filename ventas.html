@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Vendedor - Empresa de Alimentos</title>
+  <link rel="stylesheet" href="css/ventas.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Menú lateral -->
+    <aside class="sidebar">
+      <h2>Vendedor</h2>
+      <ul>
+        <li><button onclick="mostrarSeccion('clientes')">Gestión de Clientes</button></li>
+        <li><button onclick="mostrarSeccion('ordenes')">Órdenes de Venta</button></li>
+        <li><button onclick="mostrarSeccion('facturas')">Facturación</button></li>
+      </ul>
+    </aside>
+
+    <!-- Contenido principal -->
+    <main class="main-content">
+      <h1>Panel de Vendedor</h1>
+
+      <!-- ===================== SECCIÓN CLIENTES ===================== -->
+      <div id="clientes" class="seccion" style="display:none;">
+        <h2>Gestión de Clientes</h2>
+        <button class="btn-submit" onclick="mostrarFormularioCliente()">➕ Nuevo Cliente</button>
+        <table id="tablaClientes">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>DNI/CUIT</th>
+              <th>Contacto</th>
+              <th>Dirección</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <!-- Formulario modal Cliente -->
+        <div id="formCliente" style="display:none; margin-top:20px;">
+          <h3>Nuevo/Editar Cliente</h3>
+          <form id="clienteForm">
+            <input type="hidden" id="id_cliente">
+            <div class="form-group">
+              <label for="nombre">Nombre:</label>
+              <input type="text" id="nombre" name="nombre" required>
+            </div>
+            <div class="form-group">
+              <label for="documento">DNI/CUIT:</label>
+              <input type="text" id="documento" name="documento" required>
+            </div>
+            <div class="form-group">
+              <label for="contacto">Teléfono/Email:</label>
+              <input type="text" id="contacto" name="contacto">
+            </div>
+            <div class="form-group">
+              <label for="direccion">Dirección:</label>
+              <input type="text" id="direccion" name="direccion">
+            </div>
+            <div class="form-group">
+              <label for="estado">Estado:</label>
+              <select id="estado" name="estado">
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-submit">Guardar</button>
+            <button type="button" onclick="cancelarCliente()" class="btn-submit">Cancelar</button>
+          </form>
+        </div>
+
+        <!-- Mensaje éxito Cliente -->
+        <div id="mensajeExitoCliente" class="mensaje" style="display:none; margin-top:20px; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; text-align:center;">
+          <p id="textoExitoCliente" style="font-size:18px; font-weight:bold; color:#155724;"></p>
+          <button onclick="volverPanel()" class="btn-submit">Volver al panel</button>
+        </div>
+      </div>
+
+      <!-- ===================== SECCIÓN ÓRDENES ===================== -->
+      <div id="ordenes" class="seccion" style="display:none;">
+        <h2>Órdenes de Venta</h2>
+        <button class="btn-submit" onclick="nuevaOrden()">➕ Nueva Orden</button>
+
+        <!-- Formulario modal Orden -->
+        <div id="formOrden" style="display:none; margin-top:20px;">
+          <h3>Nueva Orden de Venta</h3>
+          <form id="ordenForm">
+            <div class="form-group">
+              <label for="clienteOrden">Cliente:</label>
+              <select id="clienteOrden" required></select>
+            </div>
+
+            <!-- Contenedor dinámico de productos -->
+
+            <div id="productosContainer"></div>
+          
+
+            <button type="button" class="btn-submit" onclick="agregarProducto()">➕ Agregar Producto</button>
+            <button type="submit" class="btn-submit">Guardar Orden</button>
+            <button type="button" onclick="cancelarOrden()" class="btn-submit">Cancelar</button>
+          </form>
+        </div>
+
+        <!-- Mensaje éxito Orden -->
+        <div id="mensajeExitoOrden" class="mensaje" style="display:none; margin-top:20px; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; text-align:center;">
+          <p id="textoExitoOrden" style="font-size:18px; font-weight:bold; color:#155724;"></p>
+          <button onclick="volverPanel()" class="btn-submit">Volver al panel</button>
+        </div>
+
+        <!-- Tabla de órdenes -->
+        <table id="tablaOrdenes" style="margin-top:20px;">
+          <thead>
+            <tr>
+              <th>ID Orden</th>
+              <th>Cliente</th>
+              <th>Productos</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- ===================== SECCIÓN FACTURAS ===================== -->
+      <div id="facturas" class="seccion" style="display:none;">
+        <h2>Facturación</h2>
+        <table id="tablaFacturas">
+          <thead>
+            <tr>
+              <th>ID Factura</th>
+              <th>Orden</th>
+              <th>Cliente</th>
+              <th>Fecha</th>
+              <th>Total</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co"
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+  </script>
+  <script src="js/ventas.js"></script>
+</body>
+</html>

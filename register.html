@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrar Operario</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Registrar Nuevo Operario</h2>
+
+    <!-- Formulario -->
+    <div class="form-group">
+      <input type="text" id="op-code" placeholder="Código de Operario" disabled>
+      <input type="text" id="name" placeholder="Nombre Completo" required>
+      <input type="text" id="dni" placeholder="DNI" required>
+      <select id="area" required>
+        <option value="" disabled selected>Seleccionar Área</option>
+        <option value="Ventas">Ventas</option>
+        <option value="Recursos Humanos">Recursos Humanos</option>
+        <option value="TI">TI</option>
+        <option value="Operario">Operario</option>
+        <option value="Supervisor">Supervisor</option>
+        <option value="Gerente General">Gerente General</option>
+      </select>
+    </div>
+
+    <!-- Botón para verificar datos antes de tomar la foto -->
+    <div class="button-group">
+      <button id="verify-button" class="btn btn-primary">Verificar Datos</button>
+    </div>
+
+    <!-- Cámara -->
+    <div class="camera-container">
+      <video id="video-register" autoplay muted width="320" height="240"></video>
+      <canvas id="canvas-register" style="display:none;"></canvas>
+    </div>
+
+    <!-- Botón para capturar la foto -->
+    <div class="button-group">
+      <button id="capture-button" class="btn btn-capture" disabled>Tomar Foto</button>
+    </div>
+
+    <!-- Botón para registrar -->
+    <div class="button-group">
+      <button id="register-user-button" class="btn btn-primary">Registrar</button>
+    </div>
+  </div>
+
+  <!-- Caja de mensajes -->
+  <div id="message-box" class="message-box"></div>
+
+  <!-- Librerías -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="js/face-api.min.js"></script>
+  <script src="js/register.js"></script>
+</body>
+</html>

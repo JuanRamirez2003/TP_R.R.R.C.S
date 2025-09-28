@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Acceso Facial</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Control de Acceso Facial</h1>
+        
+        <!-- Cámara -->
+        <div class="camera-container">
+            <video id="video-access" autoplay muted></video>
+        </div>
+
+        <!-- Mensajes -->
+        <div id="message-box" class="message-box"></div>
+
+        <!-- Estado -->
+        <div id="status">Cargando...</div>
+        <div id="login-status"></div>
+
+        <!-- Último usuario detectado -->
+        <div id="user-name"></div>
+
+        <!-- Mensaje de acceso -->
+        <div id="access-message"></div>
+
+        <!-- Botón volver a menú -->
+        <button id="back-to-menu" class="btn btn-secondary">Volver al Menú</button>
+    </div>
+
+    <!-- Scripts al final del body -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="js/face-api.min.js"></script>
+    <script src="js/acceso.js"></script>
+    <script>
+        // Navegar a menu.html al hacer click
+        document.getElementById('back-to-menu').addEventListener('click', () => {
+            window.location.href = 'inicio.html';
+        });
+    </script>
+</body>
+</html>

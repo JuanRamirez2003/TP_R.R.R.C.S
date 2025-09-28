@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Operario - Empresa de Alimentos</title>
+    <link rel="stylesheet" href="css/ventas.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Menú lateral -->
+        <aside class="sidebar">
+            <h2>Operario</h2>
+            <ul>
+                <li><button onclick="mostrarSeccion('ingresoMP')">Ingreso Materia Prima</button></li>
+                <li><button onclick="mostrarSeccion('vistaMP')">Listado Materias Primas</button></li>
+                <!-- Más opciones futuras -->
+            </ul>
+        </aside>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+            <h1>Panel de Operario</h1>
+
+            <!-- Sección de ingreso de materia prima -->
+            <div id="ingresoMP" class="seccion" style="display:none;">
+                <h2>Ingreso de Materia Prima</h2>
+                <p>Seleccione la materia prima y registre la entrada del lote:</p>
+                <form id="materiaPrimaForm">
+                    <div class="form-group">
+                        <label for="id_mp">Materia Prima:</label>
+                        <select id="id_mp" name="id_mp" required onchange="mostrarDatosMP()">
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+
+                    <!-- Campos solo de visualización -->
+                    <div class="form-group">
+                        <label>Descripción:</label>
+                        <input type="text" id="descMP" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Unidad de medida:</label>
+                        <input type="text" id="unidadMP" disabled>
+                    </div>
+                    <!-- Campos que completa el operario -->
+                    <div class="form-group">
+                        <label for="provMP">Proveedor:</label>
+                        <select id="provMP" name="id_proveedor" disabled required>
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+
+                    
+                    <div class="form-group">
+                        <label for="lote">Número de Lote:</label>
+                        <input type="text" id="lote" name="lote" disabled required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cantidad">Cantidad ingresada:</label>
+                        <input type="number" id="cantidad" name="cantidad" disabled required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha_ingreso">Fecha de ingreso:</label>
+                        <input type="date" id="fecha_ingreso" name="fecha_ingreso" disabled required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha_cad">Fecha de caducidad:</label>
+                        <input type="date" id="fecha_cad" name="fecha_cad" disabled required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="estado">Estado:</label>
+                        <select id="estado" name="estado" disabled>
+                            <option value="Conforme">Conforme</option>
+                            <option value="No conforme">No conforme</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-submit" disabled>Registrar Lote</button>
+                </form>
+                <div id="mensajeExito" class="mensaje" style="display:none; text-align:center; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; margin-top:20px;">
+                    <p id="textoExito" style="font-size:18px; font-weight:bold; color:#155724;"></p>
+                    <button id="btnOtroLote" class="btn-submit">Cargar otro lote</button>
+                    <button id="btnVolverPrincipal" class="btn-submit">Volver a página principal</button>
+                </div>
+                <div id="mensaje" class="mensaje"></div>
+            </div>
+
+            <!-- Vista de Materias Primas -->
+            <div id="vistaMP" class="seccion" style="display:none;">
+                <h2>Listado de Materias Primas</h2>
+                <table id="tablaMP">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Unidad</th>
+                            <th>Stock Disponible</th>
+                            <th>Proveedor</th>
+                            <th>Proveedor Sec.</th>
+                            <th>Imagen</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Vista de Lotes -->
+            <div id="vistaLotes" class="seccion" style="display:none;">
+                <h2>Lotes de Materia Prima Seleccionada</h2>
+                <table id="tablaLotes">
+                    <thead>
+                        <tr>
+                            <th>ID Lote</th>
+                            <th>Lote</th>
+                            <th>Cantidad</th>
+                            <th>Fecha Ingreso</th>
+                            <th>Fecha Caducidad</th>
+                            <th>Estado</th>
+                            <th>Cant Disponible</th>
+                            <th>Cant Consumida</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <button onclick="volverMP()" class="btn-submit">Volver a Materias Primas</button>
+            </div>
+
+        </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script>
+    const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co"
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+    </script>
+    <script src="js/ingresoMP.js"></script>
+</body>
+</html>

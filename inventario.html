@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <h1>Inventario</h1>
+            <a href="index.html" class="btn">⬅ Volver</a>
+        </header>
+
+        <div class="panel">
+            <h2>Listado</h2>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Unidad</th>
+                        <th>Stock</th>
+                    </tr>
+                </thead>
+                <tbody id="inventarioBody">
+                    <!-- Se carga con JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel">
+            <h2>Agregar Item</h2>
+            <form id="formAgregarItem">
+                <input type="text" id="itemNombre" placeholder="Nombre del item" required>
+                <input type="text" id="itemUnidad" placeholder="Unidad (ej: kg, u)" required>
+                <input type="number" id="itemStock" placeholder="Stock inicial" min="0" required>
+                <button type="submit" class="btn">Agregar</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2>Agregar Stock</h2>
+            <form id="formAgregarStock">
+                <input type="text" id="stockNombre" placeholder="Nombre del item" required>
+                <input type="number" id="stockCantidad" placeholder="Cantidad a agregar" min="1" required>
+                <button type="submit" class="btn">Agregar Stock</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
