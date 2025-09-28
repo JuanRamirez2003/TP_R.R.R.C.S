@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Admin - Empresa de Alimentos</title>
+  <link rel="stylesheet" href="css/ventas.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Menú lateral -->
+    <aside class="sidebar">
+      <h2>Administrador</h2>
+      <ul>
+        <li><button onclick="mostrarSeccion('usuarios')">Gestión de Usuarios</button></li>
+        <li><button onclick="mostrarSeccion('accesos')">Accesos a la Base</button></li>
+      </ul>
+    </aside>
+
+    <!-- Contenido principal -->
+    <main class="main-content">
+      <h1>Panel de Administrador</h1>
+
+      <!-- ===================== SECCIÓN USUARIOS ===================== -->
+      <div id="usuarios" class="seccion" style="display:none;">
+        <h2>Gestión de Usuarios</h2>
+        <button class="btn-submit" onclick="mostrarFormularioUsuario()">➕ Nuevo Usuario</button>
+
+        <!-- Tabla de usuarios -->
+        <table id="tablaUsuarios" style="margin-top:20px;">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Código</th>
+              <th>DNI</th>
+              <th>Nombre</th>
+              <th>Área</th>
+              <th>Creado en</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <!-- Formulario modal Usuario -->
+        <div id="formUsuario" style="display:none; margin-top:20px; border:1px solid #ccc; padding:20px; border-radius:8px;">
+          <h3>Nuevo/Editar Usuario</h3>
+          <form id="usuarioForm">
+            <input type="hidden" id="id_usuario">
+
+            <div class="form-group">
+              <label for="codigoUsuario">Código Operario:</label>
+              <input type="text" id="codigoUsuario" required>
+            </div>
+            <div class="form-group">
+              <label for="dniUsuario">DNI:</label>
+              <input type="text" id="dniUsuario" required>
+            </div>
+            <div class="form-group">
+              <label for="nombreUsuario">Nombre:</label>
+              <input type="text" id="nombreUsuario" required>
+            </div>
+            <div class="form-group">
+              <label for="areaUsuario">Área:</label>
+              <input type="text" id="areaUsuario" required>
+            </div>
+
+            <button type="submit" class="btn-submit">Guardar</button>
+            <button type="button" onclick="cancelarUsuario()" class="btn-submit">Cancelar</button>
+          </form>
+        </div>
+
+        <!-- Mensaje éxito Usuario -->
+        <div id="mensajeExitoUsuario" style="display:none; margin-top:20px; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; text-align:center;">
+          <p id="textoExitoUsuario" style="font-weight:bold; color:#155724;"></p>
+          <button onclick="volverPanel()" class="btn-submit">Volver al panel</button>
+        </div>
+      </div>
+
+      <!-- ===================== SECCIÓN ACCESOS ===================== -->
+      <div id="accesos" class="seccion" style="display:none;">
+        <h2>Accesos a la Base</h2>
+        <table id="tablaAccesos" style="margin-top:20px;">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuario</th>
+              <th>Tabla</th>
+              <th>Permiso</th>
+              <th>Fecha Último Acceso</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+   const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co"
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+  </script>
+  <script src="js/admin-users.js"></script>
+</body>
+</html>
