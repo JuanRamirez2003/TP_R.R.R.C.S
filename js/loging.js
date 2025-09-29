@@ -241,6 +241,19 @@ manualLoginButton.addEventListener("click", async () => {
 });
 
 // ============================
+// Botón Volver
+// ============================
+function volverIndex() {
+  // Detener cámara y limpiar timers si estuvieran activos
+  stopCamera(videoVerify);
+  clearInterval(verifyInterval);
+  clearTimeout(verifyTimeout);
+
+  // Redirigir al index
+  window.location.href = "index.html";
+}
+
+// ============================
 // Limpieza al cambiar pantalla manualmente (si es necesario)
 // ============================
 window.addEventListener("beforeunload", () => {
