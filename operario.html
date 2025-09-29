@@ -5,6 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Área Operario - Empresa de Alimentos</title>
     <link rel="stylesheet" href="css/ventas.css">
+    <style>
+        /* Contenedores de tablas con scroll horizontal */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border:1px solid #ccc;
+            padding:5px 10px;
+            text-align:center;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        /* Responsivo general */
+        @media (max-width: 768px) {
+            input, select, button {
+                width: 100%;
+                margin-top:5px;
+            }
+            .sidebar {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            .main-content {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            th, td {
+                font-size: 12px;
+                padding: 4px 6px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="dashboard">
@@ -53,7 +91,6 @@
                         </select>
                     </div>
 
-                    
                     <div class="form-group">
                         <label for="lote">Número de Lote:</label>
                         <input type="text" id="lote" name="lote" disabled required>
@@ -62,7 +99,6 @@
                     <div class="form-group">
                         <label for="cantidad">Cantidad ingresada:</label>
                         <input type="number" id="cantidad" name="cantidad" min="1" step="1" disabled required>
-
                     </div>
 
                     <div class="form-group">
@@ -96,48 +132,53 @@
             <!-- Vista de Materias Primas -->
             <div id="vistaMP" class="seccion" style="display:none;">
                 <h2>Listado de Materias Primas</h2>
-                <table id="tablaMP">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Descripción</th>
-                            <th>Unidad</th>
-                            <th>Stock Disponible</th>
-                            <th>Proveedor</th>
-                            <th>Proveedor Sec.</th>
-                            <!--<th>Imagen</th> -->
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table id="tablaMP">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Unidad</th>
+                                <th>Stock Disponible</th>
+                                <th>Proveedor</th>
+                                <th>Proveedor Sec.</th>
+                                <!--<th>Imagen</th> -->
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Vista de Lotes -->
             <div id="vistaLotes" class="seccion" style="display:none;">
                 <h2 id="tituloLotes">Lote de Materia Prima</h2>
-                <table id="tablaLotes">
-                    <thead>
-                        <tr>
-                            <th>ID Lote</th>
-                            <th>Lote</th>
-                            <th>Cantidad</th>
-                            <th>Fecha Ingreso</th>
-                            <th>Fecha Caducidad</th>
-                            <th>Estado</th>
-                            <th>Cant Disponible</th>
-                            <th>Cant Consumida</th>
-                            <th>Proveedor</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table id="tablaLotes">
+                        <thead>
+                            <tr>
+                                <th>ID Lote</th>
+                                <th>Lote</th>
+                                <th>Cantidad</th>
+                                <th>Fecha Ingreso</th>
+                                <th>Fecha Caducidad</th>
+                                <th>Estado</th>
+                                <th>Cant Disponible</th>
+                                <th>Cant Consumida</th>
+                                <th>Proveedor</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
                 <button onclick="volverMP()" class="btn-submit">Volver a Materias Primas</button>
             </div>
 
         </main>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <script>
     const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co"
