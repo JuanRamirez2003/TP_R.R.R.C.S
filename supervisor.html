@@ -1,21 +1,196 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Producción</title>
-    <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Supervisor - Empresa de Alimentos</title>
+  <link rel="stylesheet" href="css/ventas.css">
+  <style>
+    .producto-item { 
+      border:1px solid #ccc; 
+      padding:10px; 
+      margin-bottom:10px; 
+      border-radius:5px; 
+    }
+    .producto-item h4 { margin:5px 0; }
+    .mp-container { 
+      max-height: 150px; 
+      overflow-y: auto; 
+      border:1px solid #eee; 
+      padding:5px; 
+      margin-top:5px; 
+      border-radius:5px;
+    }
+    .mp-list { margin-left:20px; margin-bottom:10px; }
+    .mp-list div { margin-bottom:3px; }
+
+    /* Responsivo */
+    @media (max-width: 600px) {
+      .dashboard { display: block; }
+      .sidebar { width: 100%; margin-bottom: 10px; }
+      .main-content { width: 100%; }
+      input, select, button { width: 100%; margin-top:5px; }
+      .mp-container { max-height: 200px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Gestión de Producción</h1>
-        <p>Selecciona una opción</p>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <h2>Supervisor</h2>
+      <ul>
+        <li><button onclick="mostrarSeccion('ordenProduccion')">Creación de Orden de Producción</button></li>
+      </ul>
+      <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
+    </aside>
 
-        <div class="button-group">
-            <a href="inventario.html" class="btn btn-primary">Inventario</a>
-            <a href="orden.html" class="btn btn-success">Orden de Producción</a>
-             <button class="btn btn-primary btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
+    <main class="main-content">
+      <h1>Panel de Supervisor</h1>
+
+      <!-- SECCIÓN ORDEN DE PRODUCCIÓN -->
+      <div id="ordenProduccion" class="seccion" style="display:none;">
+        <h2>Creación de Orden de Producción (OP)</h2>
+
+        <form id="opForm">
+          <!-- Información general -->
+          <div class="form-group">
+            <label for="opNumero">Número de OP:</label>
+            <input type="text" id="opNumero" name="opNumero" placeholder="OP-2025-010" required>
+          </div>
+
+          <div class="form-group">
+            <label for="fechaCreacion">Fecha de creación:</label>
+            <input type="date" id="fechaCreacion" name="fechaCreacion" readonly required>
+          </div>
+
+          <div class="form-group">
+            <label for="motivo">Motivo:</label>
+            <input type="text" id="motivo" name="motivo" placeholder="OV#1234 (30 kg), stock bajo" required>
+          </div>
+
+          <!-- Productos -->
+          <div class="form-group">
+            <label>Productos:</label>
+            <div id="productosContainer"></div>
+            <button type="button" onclick="agregarProducto()">➕ Agregar Producto</button>
+          </div>
+
+          <!-- Reserva -->
+          <div class="form-group">
+            <label for="reserva">Reserva:</label>
+            <input type="text" id="reserva" name="reserva" placeholder="30 bolsas para OV#1234, resto para stock">
+          </div>
+
+          <!-- Botones -->
+          <button type="submit" class="btn-submit">Crear OP</button>
+          <button type="button" onclick="cancelarOP()" class="btn-submit">Cancelar</button>
+        </form>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co";
+    const supabaseKey =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const fechaHoy = new Date().toISOString().split('T')[0];
+      document.getElementById('fechaCreacion').value = fechaHoy;
+
+      // Traer productos desde Supabase
+      const { data: productos, error } = await supabaseClient.from('productos').select('nombre');
+      if(error) {
+        console.error('Error cargando productos:', error);
+        return;
+      }
+      window.listaProductos = productos.map(p => p.nombre);
+
+      agregarProducto();
+    });
+
+    function mostrarSeccion(seccionId) {
+      const secciones = document.querySelectorAll('.seccion');
+      secciones.forEach(sec => sec.style.display = 'none');
+      document.getElementById(seccionId).style.display = 'block';
+    }
+
+    const recetas = {
+      "Patitas congeladas": [
+        { nombre: "Pollo", cantidad: 2, unidad: "kg" },
+        { nombre: "Harina", cantidad: 0.2, unidad: "kg" },
+        { nombre: "Bolsa plástica", cantidad: 1, unidad: "und" }
+      ],
+      "Alitas congeladas": [
+        { nombre: "Pollo", cantidad: 1.5, unidad: "kg" },
+        { nombre: "Sal", cantidad: 0.05, unidad: "kg" },
+        { nombre: "Bolsa plástica", cantidad: 1, unidad: "und" }
+      ]
+    };
+
+    function agregarProducto() {
+      const container = document.getElementById('productosContainer');
+      const div = document.createElement('div');
+      div.className = 'producto-item';
+
+      let options = '<option value="">--Seleccione producto--</option>';
+      if(window.listaProductos) {
+        window.listaProductos.forEach(p => {
+          options += `<option value="${p}">${p}</option>`;
+        });
+      }
+
+      div.innerHTML = `
+        <h4>Producto</h4>
+        <select name="productoNombre[]" required onchange="actualizarMP(this)">
+          ${options}
+        </select>
+        <input type="number" placeholder="Cantidad de lotes" name="productoCantidad[]" min="1" value="1" required oninput="actualizarMP(this)">
+        <select name="productoUnidad[]">
+          <option value="Lote">Lote</option>
+        </select>
+        <button type="button" onclick="eliminarProducto(this)">❌ Eliminar Producto</button>
+
+        <div class="mp-container">
+          <h5>MP Requeridas (calculadas):</h5>
+          <div class="mp-list"></div>
         </div>
-    </div>
+      `;
+      container.appendChild(div);
+    }
+
+    function eliminarProducto(btn) {
+      btn.parentElement.remove();
+      if(document.querySelectorAll('.producto-item').length === 0) agregarProducto();
+    }
+
+    function actualizarMP(select) {
+      const productoDiv = select.parentElement;
+      const nombreProducto = select.value;
+      const cantidadLotes = parseFloat(productoDiv.querySelector('input[name="productoCantidad[]"]').value) || 1;
+      const mpListDiv = productoDiv.querySelector('.mp-list');
+      mpListDiv.innerHTML = '';
+
+      if(recetas[nombreProducto]) {
+        recetas[nombreProducto].forEach(mp => {
+          const total = mp.cantidad * cantidadLotes;
+          const div = document.createElement('div');
+          div.textContent = `${mp.nombre}: ${total} ${mp.unidad}`;
+          mpListDiv.appendChild(div);
+        });
+      }
+    }
+
+    function cancelarOP() {
+      document.getElementById('opForm').reset();
+      document.getElementById('productosContainer').innerHTML = '';
+      agregarProducto();
+      document.getElementById('ordenProduccion').style.display = 'none';
+    }
+  </script>
 </body>
 </html>
