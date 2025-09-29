@@ -7,10 +7,9 @@ const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-
-
-
+// ============================
 // DOM
+// ============================
 const ordenLoteInput = document.getElementById("ordenLote");
 const ordenVentaSelect = document.getElementById("ordenVentaSelect");
 const materiaSelect = document.getElementById("materiaSelect");
@@ -18,147 +17,241 @@ const materiasLista = document.getElementById("materiasLista");
 const btnAgregarMateria = document.getElementById("btnAgregarMateria");
 const ordenForm = document.getElementById("formCrearOrden");
 const ordenBody = document.getElementById("ordenBody");
+const detalleOrdenDiv = document.getElementById("detalleOrdenVenta");
 
+// ============================
 // Variables
+// ============================
 let materias = [];
 let contadorLote = 1;
 let ordenesVentas = [];
 let lotesMP = [];
 
+// ============================
 // Generar lote automático
+// ============================
 function generarCodigoLote() {
   const fecha = new Date();
   const yyyymmdd = fecha.toISOString().slice(0, 10).replace(/-/g, "");
-  const codigo = `LOTE-${yyyymmdd}-${String(contadorLote).padStart(3, "0")}`;
-  ordenLoteInput.value = codigo;
+  ordenLoteInput.value = `LOTE-${yyyymmdd}-${String(contadorLote).padStart(3, "0")}`;
 }
 
+// ============================
 // Cargar órdenes de venta
+// ============================
 async function cargarOrdenesVenta() {
   const { data, error } = await supabaseClient.from("orden_ventas").select("*");
-  if (error) return console.error("Error cargando órdenes de venta:", error.message);
+  if (error) return console.error(error.message);
 
   ordenesVentas = data;
-  ordenVentaSelect.innerHTML = `<option value="">Seleccione una orden de venta...</option>`;
+  ordenVentaSelect.innerHTML = `<option value="">Seleccione una orden...</option>`;
   data.forEach(ov => {
     const opt = document.createElement("option");
     opt.value = ov.id_orden;
-    opt.textContent = `Orden: ${ov.id_orden} - Cantidad: ${ov.cantidad}`;
+    opt.textContent = `#${ov.id_orden}`;
     ordenVentaSelect.appendChild(opt);
   });
 }
 
-// Cargar lotes de materia prima
-async function cargarMateriasPrimas() {
-  const { data, error } = await supabaseClient.from("lote_mp").select("*");
-  if (error) return console.error("Error cargando lotes:", error.message);
+// ============================
+// Mostrar detalle de orden
+// ============================
+async function mostrarDetalleOrden() {
+  const ordenId = ordenVentaSelect.value;
+  detalleOrdenDiv.innerHTML = "";
+  document.getElementById("productosOrden").innerHTML = "";
 
-  lotesMP = data;
-  materiaSelect.innerHTML = `<option value="">Seleccione un lote...</option>`;
-  data.forEach(lote => {
+  if (!ordenId) return;
+
+  const orden = ordenesVentas.find(o => o.id_orden == ordenId);
+  if (!orden) return;
+
+  const { data: detalles, error } = await supabaseClient
+    .from("detalle_ordenes")
+    .select(`id_producto, cantidad, productos: id_producto(nombre)`)
+    .eq("id_orden", ordenId);
+
+  if (error) return console.error(error.message);
+
+  // Mostrar detalle
+  let listaProductos = detalles.map(d => `<li>${d.productos.nombre} - Cantidad: ${d.cantidad}</li>`).join("");
+  detalleOrdenDiv.innerHTML = `
+    <p><b>Orden #${orden.id_orden}</b></p>
+    <p>Cliente: ${orden.id_cliente ?? "N/A"}</p>
+    <p>Fecha: ${orden.fecha ?? "N/A"}</p>
+    <b>Productos:</b>
+    <ul>${listaProductos}</ul>
+  `;
+
+  // Productos con botón asignar
+  const contenedor = document.getElementById("productosOrden");
+  contenedor.innerHTML = "";
+  detalles.forEach(d => {
+    const div = document.createElement("div");
+    div.className = "producto-card";
+    div.innerHTML = `
+      <div>
+        <div><b>${d.productos.nombre}</b></div>
+        <div class="small-muted">Cantidad: ${d.cantidad}</div>
+      </div>
+      <div class="right">
+        <button type="button" class="small btn-primary" data-assign-prod="${d.id_producto}">Asignar lotes</button>
+      </div>
+    `;
+    contenedor.appendChild(div);
+  });
+}
+
+// ============================
+// Cargar lotes disponibles por producto
+// ============================
+async function cargarMateriasPrimas(id_producto) {
+  // Traer las materias primas asociadas al producto
+  const { data: mpRelacionados, error: err1 } = await supabaseClient
+    .from("producto_materia")
+    .select("id_mp")
+    .eq("id_producto", id_producto);
+  if(err1) return console.error(err1);
+
+  const idsMP = mpRelacionados.map(m => m.id_mp);
+
+  // Traer los lotes disponibles
+  const { data: lotes, error: err2 } = await supabaseClient
+    .from("lote_mp")
+    .select("*")
+    .in("id_mp", idsMP)
+    .eq("estado","disponible");
+  if(err2) return console.error(err2);
+
+  lotesMP = lotes;
+  materiaSelect.innerHTML = '<option value="">Seleccione un lote...</option>';
+  lotes.forEach(lote => {
     const opt = document.createElement("option");
     opt.value = lote.id_lote;
-    opt.textContent = `Lote: ${lote.id_lote} - Disponible: ${lote.cantidad_disponible}`;
+    opt.textContent = `Lote ${lote.d_lote} - Cant: ${lote.cantidad_disponible} - Ing: ${lote.fecha_ingreso} - Cad: ${lote.fecha_caducidad}`;
     materiaSelect.appendChild(opt);
   });
 }
 
-// Agregar lote y controlar cantidades
+// ============================
+// Agregar materia a lista temporal
+// ============================
 function agregarMateria() {
   const loteId = materiaSelect.value;
+  if (!loteId) return alert("Seleccione un lote");
+
   const lote = lotesMP.find(l => l.id_lote == loteId);
-  const ordenId = ordenVentaSelect.value;
-  const orden = ordenesVentas.find(o => o.id_orden == ordenId);
+  if (!lote || lote.cantidad_disponible <= 0) return alert("Lote inválido o sin stock");
 
-  if (!lote || !orden) return alert("Selecciona orden y lote");
+  // Tomar toda la cantidad disponible
+  const cantidadTomada = lote.cantidad_disponible;
+  lote.cantidad_disponible = 0;
 
-  let cantidadNecesaria = orden.cantidad; // cantidad solicitada
-  let cantidadDisponible = lote.cantidad_disponible;
+  const existente = materias.find(m => m.id_lote === lote.id_lote);
+  if (existente) {
+    existente.cantidad += cantidadTomada;
+  } else {
+    materias.push({ id_lote: lote.id_lote, cantidad: cantidadTomada });
+  }
 
-  if (cantidadDisponible <= 0) return alert("Lote sin disponibilidad");
-
-  // Determinar cuánto se va a tomar de este lote
-  let cantidadTomada = Math.min(cantidadNecesaria, cantidadDisponible);
-
-  // Agregar a lista temporal
-  materias.push({ id_lote: lote.id_lote, texto: `${lote.id_lote} (tomado: ${cantidadTomada})`, cantidad: cantidadTomada });
-
-  // Restar del lote disponible
-  lote.cantidad_disponible -= cantidadTomada;
-
-  // Mostrar en lista
-  const li = document.createElement("li");
-  li.textContent = `${lote.id_lote} - Tomado: ${cantidadTomada}`;
-  materiasLista.appendChild(li);
-
-  // Actualizar select visualmente
-  cargarMateriasPrimas();
-
-  console.log("Materia agregada:", lote.id_lote, "Cantidad tomada:", cantidadTomada);
+  refrescarListaMaterias();
+  cargarMateriasPrimas(lote.id_mp); // recarga lotes del mismo producto
 }
 
+// ============================
+// Refrescar lista de materias asignadas
+// ============================
+function refrescarListaMaterias() {
+  materiasLista.innerHTML = "";
+  materias.forEach((m, index) => {
+    const li = document.createElement("li");
+    li.textContent = `Lote ${m.id_lote} - Tomado: ${m.cantidad}`;
+
+    const btn = document.createElement("button");
+    btn.textContent = "❌";
+    btn.style.marginLeft = "10px";
+    btn.addEventListener("click", () => eliminarMateria(index));
+
+    li.appendChild(btn);
+    materiasLista.appendChild(li);
+  });
+}
+
+// ============================
+// Eliminar materia de la lista
+// ============================
+function eliminarMateria(index) {
+  const materia = materias[index];
+  const loteOriginal = lotesMP.find(l => l.id_lote === materia.id_lote);
+  if (loteOriginal) loteOriginal.cantidad_disponible += materia.cantidad;
+
+  materias.splice(index, 1);
+  refrescarListaMaterias();
+}
+
+// ============================
 // Guardar orden de producción
+// ============================
 async function guardarOrden(e) {
   e.preventDefault();
-  const lote = ordenLoteInput.value;
-  const ordenVentaId = ordenVentaSelect.value;
-  if (!ordenVentaId || materias.length === 0) return alert("Selecciona orden y al menos un lote");
+  if (!ordenVentaSelect.value || materias.length === 0) return alert("Seleccione orden y al menos un lote");
 
-  // Crear orden
-  const { data: orden, error: errorOrden } = await supabaseClient
-    .from("ordenes_produccion")
-    .insert([{ lote, orden_venta_id: ordenVentaId, etapa: "Inicial", estado: "Pendiente" }])
-    .select()
-    .single();
-  if (errorOrden) return console.error("Error:", errorOrden.message);
+  const loteCodigo = ordenLoteInput.value;
 
-  // Insertar lotes usados
-  const requerimientos = materias.map(m => ({ orden_id: orden.id, lote_mp_id: m.id_lote, cantidad_usada: m.cantidad }));
-  const { error: errorMaterias } = await supabaseClient.from("ordenes_materias").insert(requerimientos);
-  if (errorMaterias) return console.error("Error lotes:", errorMaterias.message);
+  const { error } = await supabaseClient.from("orden_produccion").insert({
+    lote: loteCodigo,
+    id_orden_venta: ordenVentaSelect.value,
+    estado: "Pendiente",
+    inicio: new Date().toISOString()
+  });
 
-  // Actualizar tabla
-  await cargarOrdenesProduccion();
+  if (error) return console.error(error.message);
 
-  // Reset
-  contadorLote++;
-  generarCodigoLote();
-  ordenVentaSelect.value = "";
+  alert("Orden de producción creada ✅");
   materias = [];
-  materiasLista.innerHTML = "";
+  refrescarListaMaterias();
+  generarCodigoLote();
+  cargarOrdenesProduccion();
 }
 
+// ============================
 // Cargar órdenes de producción
+// ============================
 async function cargarOrdenesProduccion() {
-  const { data, error } = await supabaseClient
-    .from("ordenes_produccion")
-    .select(`
-      id, lote, etapa, estado, orden_venta_id,
-      ordenes_materias(lote_mp(id_lote), cantidad_usada)
-    `);
-  if (error) return console.error("Error:", error.message);
+  const { data, error } = await supabaseClient.from("ordenes_produccion").select("*");
+  if (error) return console.error(error.message);
 
   ordenBody.innerHTML = "";
   data.forEach(o => {
-    const lotes = o.ordenes_materias.map(r => `Lote: ${r.lote_mp.id_lote} (Usado: ${r.cantidad_usada})`).join(", ");
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${o.lote}</td>
-      <td>#${o.orden_venta_id}</td>
-      <td>${lotes}</td>
-      <td>${o.etapa}</td>
+      <td>#${o.id_orden_venta}</td>
+      <td>-</td>
+      <td>${o.inicio ?? ""}</td>
+      <td>${o.fin ?? ""}</td>
       <td>${o.estado}</td>
     `;
     ordenBody.appendChild(row);
   });
 }
 
+// ============================
 // Eventos
+// ============================
 btnAgregarMateria.addEventListener("click", agregarMateria);
 ordenForm.addEventListener("submit", guardarOrden);
+ordenVentaSelect.addEventListener("change", mostrarDetalleOrden);
 
-// Inicio
+document.getElementById("productosOrden").addEventListener("click", e => {
+  if (e.target.matches("[data-assign-prod]")) {
+    cargarMateriasPrimas(e.target.dataset.assignProd);
+  }
+});
+
+// ============================
+// Inicialización
+// ============================
 generarCodigoLote();
 cargarOrdenesVenta();
-cargarMateriasPrimas();
 cargarOrdenesProduccion();

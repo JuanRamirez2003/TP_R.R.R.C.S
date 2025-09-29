@@ -1,0 +1,132 @@
+:root{
+  --bg: #121212;            /* fondo principal */
+  --card: #1e1e1e;          /* tarjetas/paneles */
+  --muted: #b0b0b0;         /* textos secundarios */
+  --accent: #55a630;        /* títulos y acentos */
+  --success: #28a745;       /* éxito */
+  --danger: #dc3545;        /* errores */
+  --primary: #007bff;       /* botones principales */
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: #e0e0e0;
+}
+
+.wrap {
+  max-width: 1200px;
+  margin: 22px auto;
+  padding: 18px;
+}
+
+header h1 {
+  margin: 0 0 12px;
+  text-align: center;
+  color: var(--accent);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 18px;
+}
+
+.panel {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  border: 1px solid #333;
+}
+
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--muted);
+}
+
+select, input, button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+
+.inline { display: flex; gap: 8px; align-items: center; }
+.inline > * { flex: 1; }
+
+button.small { padding: 8px 10px; width: auto; }
+
+.btn-primary { background: var(--primary); color: #fff; border: 0; }
+.btn-success { background: var(--success); color: #fff; border: 0; }
+.btn-danger  { background: var(--danger); color: #fff; border: 0; }
+
+ul { padding-left: 0; list-style: none; margin: 0; }
+
+li.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: #1e1e1e;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.muted { color: var(--muted); }
+
+.detalle-orden {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+}
+
+.producto-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  border-radius: 6px;
+  background: #2a2a2a;
+  margin-bottom: 8px;
+  border: 1px solid #333;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+th, td {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background: var(--accent);
+  color: #fff;
+}
+
+.small-muted { font-size: 13px; color: var(--muted); }
+.right { display: flex; gap: 8px; align-items: center; }
+
+@media (max-width: 980px){
+  .grid { grid-template-columns: 1fr; padding-bottom: 30px; }
+}

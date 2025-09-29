@@ -1,58 +1,76 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Orden de Producción</title>
-  <link rel="stylesheet" href="css/orden.css" />
+   <link rel="stylesheet" href="css/orden_produccion.css">
 </head>
 <body>
-  <div class="container">
-    <!-- Encabezado -->
-    <header>
-      <h1>Orden de Producción</h1>
-    </header>
+<div class="wrap">
 
-    <!-- Panel Crear Orden -->
+  <header>
+    <h1>Gestión de Órdenes de Producción</h1>
+  </header>
+
+  <div class="grid">
+    <!-- PANEL IZQUIERDO: Crear orden / asignar lotes -->
     <div class="panel">
-      <h2>Crear Nueva Orden</h2>
-      <form id="formCrearOrden">
-        <input type="text" id="ordenLote" placeholder="Código de Lote" readonly />
+      <h2>Crear / Asignar Lotes</h2>
 
-        <!-- Selección de orden de venta -->
-        <div class="form-group">
+      <form id="formCrearOrden">
+        <div style="margin-bottom:12px;">
+          <label for="ordenLote">Código Lote</label>
+          <input id="ordenLote" type="text" readonly placeholder="LOTE-YYYYMMDD-###" />
+        </div>
+
+        <div style="margin-bottom:12px;">
           <label for="ordenVentaSelect">Orden de Venta</label>
           <select id="ordenVentaSelect" required>
-            <option value="">Seleccione una orden de venta...</option>
+            <option value="">Seleccione una orden...</option>
           </select>
+          <div id="detalleOrdenVenta" class="detalle-orden small-muted"></div>
         </div>
 
-        <!-- Selección de materias primas -->
-        <div class="form-group">
-          <label for="materiaSelect">Materia Prima</label>
-          <select id="materiaSelect">
-            <option value="">Seleccione materia prima...</option>
-          </select>
-          <button type="button" id="btnAgregarMateria" class="btn btn-secondary">➕ Agregar</button>
+        <div style="margin-bottom:12px;">
+          <label>Productos de la orden</label>
+          <div id="productosOrden" class="small-muted"></div>
         </div>
 
-        <!-- Lista de materias -->
-        <ul id="materiasLista"></ul>
+        <div style="margin-bottom:8px;">
+          <label for="materiaSelect">Lotes disponibles</label>
+          <div class="inline">
+            <select id="materiaSelect">
+              <option value="">Seleccione un lote...</option>
+            </select>
+            <button type="button" id="btnAgregarMateria" class="btn-primary">➕ Agregar</button>
+          </div>
+          <div class="small-muted" style="margin-top:6px;">Al agregar, la cantidad tomada se guardará temporalmente y el lote quedará reservado hasta guardar la orden.</div>
+        </div>
 
-        <button type="submit" class="btn btn-success">✅ Crear Orden</button>
+        <div style="margin-bottom:12px;">
+          <label>Materias / Lotes asignados</label>
+          <ul id="materiasLista" aria-live="polite"></ul>
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button type="submit" class="btn-success">✅ Crear Orden de Producción</button>
+          <button type="button" id="btnReset" class="btn-danger">❌ Reset</button>
+        </div>
       </form>
     </div>
 
-    <!-- Tabla de órdenes -->
+    <!-- PANEL DERECHO: Tabla de órdenes de producción -->
     <div class="panel">
       <h2>Órdenes de Producción</h2>
-      <table class="orden-table">
+      <table class="orden-table" aria-describedby="ordenes-table">
         <thead>
           <tr>
             <th>Lote</th>
             <th>Orden de Venta</th>
-            <th>Requerimientos</th>
-            <th>Etapa</th>
+            <th>Productos / Lotes usados</th>
+            <th>Inicio</th>
+            <th>Fin</th>
             <th>Estado</th>
           </tr>
         </thead>
@@ -60,10 +78,10 @@
       </table>
     </div>
   </div>
+</div>
 
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Script -->
-  <script src="js/orden.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/orden.js"></script>
+
 </body>
 </html>
