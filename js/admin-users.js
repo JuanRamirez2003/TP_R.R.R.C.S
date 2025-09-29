@@ -37,7 +37,7 @@ async function cargarUsuarios() {
       <td>${u.id}</td>
       <td>${u.dni}</td>
       <td>${u.name}</td>
-      <td>${u.tipo}</td>
+      <td>${u.estado}</td>
       <td>${u.area}</td>
       <td>${u.created_at}</td>
       <td>
