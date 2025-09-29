@@ -24,12 +24,14 @@
         <option value="Supervisor">Supervisor</option>
         <option value="Gerente General">Gerente General</option>
       </select>
-    </div>
-
     <!-- Botón para verificar datos antes de tomar la foto -->
     <div class="button-group">
       <button id="verify-button" class="btn btn-primary">Verificar Datos</button>
     </div>
+
+    </div>
+
+
 
     <!-- Cámara -->
     <div class="camera-container">
@@ -37,16 +39,15 @@
       <canvas id="canvas-register" style="display:none;"></canvas>
     </div>
 
-    <!-- Botón para capturar la foto -->
-    <div class="button-group">
-      <button id="capture-button" class="btn btn-capture" disabled>Tomar Foto</button>
-    </div>
+ <div class="button-group">
+  
+  <button id="capture-button" class="btn btn-capture" disabled>Tomar Foto</button>
+  <button id="register-user-button" class="btn btn-primary">Registrar</button>
+  <button id="back-button" class="btn btn-secondary" onclick="window.location.href='rrhh.html'">
+    Volver
+  </button>
+</div>
 
-    <!-- Botón para registrar -->
-    <div class="button-group">
-      <button id="register-user-button" class="btn btn-primary">Registrar</button>
-    </div>
-  </div>
 
   <!-- Caja de mensajes -->
   <div id="message-box" class="message-box"></div>
