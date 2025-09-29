@@ -1,0 +1,87 @@
+:root{
+  --sidebar-bg:#163c74;
+  --accent:#2563eb;
+  --bg-start:#eaf6ff;
+  --bg-end:#d7ecff;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --radius:12px;
+  --shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter, sans-serif;
+  display:flex;
+  min-height:100vh;
+  background: linear-gradient(180deg,var(--bg-start),var(--bg-end));
+}
+
+/* Sidebar */
+.sidebar{
+  width:220px;
+  background:var(--sidebar-bg);
+  color:#fff;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.sidebar h2{margin:0;font-size:1.1rem}
+.subtitle{font-size:.85rem;color:#cfdfff}
+.btn-nav{
+  background:transparent;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+  color:#e6f0ff;
+  font-weight:600;
+  text-align:left;
+}
+.btn-nav:hover{background:rgba(255,255,255,0.08)}
+
+/* Main */
+.main{flex:1;padding:24px;display:flex;flex-direction:column;gap:16px}
+.supervisor-banner{
+  background:#dbeefe;
+  padding:16px;
+  border-radius:12px;
+  box-shadow:var(--shadow);
+}
+.supervisor-banner h1{margin:0}
+.card{
+  background:var(--card);
+  padding:20px;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+
+/* Form */
+.row{display:flex;gap:12px;margin-bottom:12px}
+.field{flex:1;display:flex;flex-direction:column}
+label{font-size:.85rem;color:var(--muted);margin-bottom:4px}
+input,select,textarea{
+  padding:10px;
+  border:1px solid #d1e6ff;
+  border-radius:8px;
+}
+textarea{resize:vertical;min-height:70px}
+.actions{display:flex;justify-content:flex-end;gap:10px}
+.btn{
+  background:var(--accent);
+  color:white;
+  border:none;
+  padding:10px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+}
+.btn.secondary{background:#e6f0ff;color:#062a57}
+
+/* Table */
+.requests-table{width:100%;border-collapse:collapse;margin-top:12px}
+.requests-table th,.requests-table td{padding:10px;border-bottom:1px solid #eee}
+.requests-table th{background:var(--accent);color:#fff;text-transform:uppercase;font-size:.8rem}
+.requests-table tr:nth-child(even){background:#f8fafc}
