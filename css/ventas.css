@@ -207,3 +207,43 @@ tr:hover {
         grid-template-columns: 1fr;
     }
 }
+.sidebar .btn-logout {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+}
+
+.sidebar .btn-logout:hover {
+    background-color: #a71d2a !important; 
+}
+/* Botón editar */
+.btn-editar {
+    background-color: #007bff; /* azul */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.btn-editar:hover {
+    background-color: #0056b3; /* azul más oscuro */
+}
+
+/* Botón eliminar */
+.btn-eliminar {
+    background-color: #dc3545; /* rojo */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+    margin-left: 5px;
+}
+
+.btn-eliminar:hover {
+    background-color: #a71d2a; /* rojo más oscuro */
+}
