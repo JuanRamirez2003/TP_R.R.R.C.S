@@ -16,107 +16,125 @@ function mostrarSeccion(seccionId) {
 
 // Cargar usuarios
 async function cargarUsuarios() {
-  const usuariosDemo = [
-    { id: 1, dni: '12345678', full_name: 'Juan Perez', tipo: 'Admin', area: 'Producción', created_at: '2025-01-01' },
-    { id: 2, dni: '87654321', full_name: 'Ana Gómez', tipo: 'Usuario', area: 'Ventas', created_at: '2025-01-05' }
-  ];
+  try {
+    const usuariosDemo = [
+      { id: 1, dni: '12345678', full_name: 'Juan Perez', tipo: 'Admin', area: 'Producción', created_at: '2025-01-01' },
+      { id: 2, dni: '87654321', full_name: 'Ana Gómez', tipo: 'Usuario', area: 'Ventas', created_at: '2025-01-05' }
+    ];
 
-  let { data, error } = await supabaseClient.from('usuarios').select('*');
-  if (error || !data || data.length === 0) {
-    console.warn('Usando datos de prueba para usuarios');
-    data = usuariosDemo;
+    let { data, error } = await supabaseClient.from('usuarios').select('*');
+    if (error || !data || data.length === 0) {
+      console.warn('Usando datos de prueba para usuarios');
+      data = usuariosDemo;
+    }
+
+    const tbody = document.querySelector('#tablaUsuarios tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(u => {
+      const tr = document.createElement('tr');
+      tr.dataset.id = u.id;
+      tr.innerHTML = `
+        <td>${u.id}</td>
+        <td>${u.dni}</td>
+        <td>${u.name}</td>
+        <td>${u.estado}</td>
+        <td>${u.area}</td>
+        <td>${u.created_at}</td>
+        <td>
+          <button class="btn-edit">Editar</button>
+          <button class="btn-delete">Eliminar</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('Error al cargar usuarios:', err);
+    alert('Ocurrió un error al cargar los usuarios.');
   }
-
-  const tbody = document.querySelector('#tablaUsuarios tbody');
-  tbody.innerHTML = '';
-
-  data.forEach(u => {
-    const tr = document.createElement('tr');
-    tr.dataset.id = u.id; // importante para editar/eliminar
-    tr.innerHTML = `
-      <td>${u.id}</td>
-      <td>${u.dni}</td>
-      <td>${u.name}</td>
-      <td>${u.estado}</td>
-      <td>${u.area}</td>
-      <td>${u.created_at}</td>
-      <td>
-        <button class="btn-edit">Editar</button>
-        <button class="btn-delete">Eliminar</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
 }
 
 // Cargar accesos
 async function cargarAccesos() {
-  const accesosDemo = [
-    { id: 1, usuario_id: 1, tipo: 'Login', accion: 'Ingreso al sistema', fecha_hora: '2025-09-28 10:00' },
-    { id: 2, usuario_id: 2, tipo: 'Logout', accion: 'Cierre de sesión', fecha_hora: '2025-09-28 10:30' }
-  ];
+  try {
+    const accesosDemo = [
+      { id: 1, usuario_id: 1, tipo: 'Login', accion: 'Ingreso al sistema', fecha_hora: '2025-09-28 10:00' },
+      { id: 2, usuario_id: 2, tipo: 'Logout', accion: 'Cierre de sesión', fecha_hora: '2025-09-28 10:30' }
+    ];
 
-  let { data, error } = await supabaseClient.from('accesos').select('*');
-  if (error || !data || data.length === 0) {
-    console.warn('Usando datos de prueba para accesos');
-    data = accesosDemo;
+    let { data, error } = await supabaseClient.from('accesos').select('*');
+    if (error || !data || data.length === 0) {
+      console.warn('Usando datos de prueba para accesos');
+      data = accesosDemo;
+    }
+
+    const tbody = document.querySelector('#tablaAccesos tbody');
+    tbody.innerHTML = '';
+    data.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${a.id}</td>
+        <td>${a.usuario_id}</td>
+        <td>${a.estado}</td>
+        <td>${a.accion}</td>
+        <td>${a.fecha_hora}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('Error al cargar accesos:', err);
+    alert('Ocurrió un error al cargar los accesos.');
   }
-
-  const tbody = document.querySelector('#tablaAccesos tbody');
-  tbody.innerHTML = '';
-  data.forEach(a => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${a.id}</td>
-      <td>${a.usuario_id}</td>
-      <td>${a.estado}</td>
-      <td>${a.accion}</td>
-      <td>${a.fecha_hora}</td>
-    `;
-    tbody.appendChild(tr);
-  });
 }
 
 // ================== FUNCIONES DE EDICIÓN ==================
 async function editarUsuario(e) {
-  const tr = e.target.closest('tr');
-  const id = tr.dataset.id;
+  try {
+    const tr = e.target.closest('tr');
+    const id = tr.dataset.id;
 
-  // Obtener usuario
-  let { data: usuario, error } = await supabaseClient.from('usuarios').select('*').eq('id', id).single();
-  if (error || !usuario) return alert('No se encontró el usuario');
+    let { data: usuario, error } = await supabaseClient.from('usuarios').select('*').eq('id', id).single();
+    if (error || !usuario) return alert('No se encontró el usuario');
 
-  // Pedir nuevos valores (puedes reemplazar con modal)
-  const nuevoNombre = prompt('Nombre:', usuario.name);  // usar 'name'
-  const nuevoDNI = prompt('DNI:', usuario.dni);
-  const nuevoEstado = prompt('Estado:', usuario.estado); // cambiar 'tipo' a 'estado'
-  const nuevaArea = prompt('Área:', usuario.area);
+    const nuevoNombre = prompt('Nombre:', usuario.name);
+    const nuevoDNI = prompt('DNI:', usuario.dni);
+    const nuevoEstado = prompt('Estado:', usuario.estado);
+    const nuevaArea = prompt('Área:', usuario.area);
 
-  if (!nuevoNombre || !nuevoDNI || !nuevoEstado || !nuevaArea) return;
+    if (!nuevoNombre || !nuevoDNI || !nuevoEstado || !nuevaArea) return;
 
-  const { error: errUpdate } = await supabaseClient
-    .from('usuarios')
-    .update({ name: nuevoNombre, dni: nuevoDNI, estado: nuevoEstado, area: nuevaArea }) // usar 'name'
-    .eq('id', id);
+    const { error: errUpdate } = await supabaseClient
+      .from('usuarios')
+      .update({ name: nuevoNombre, dni: nuevoDNI, estado: nuevoEstado, area: nuevaArea })
+      .eq('id', id);
 
-  if (errUpdate) return alert('Error al actualizar usuario: ' + errUpdate.message);
+    if (errUpdate) return alert('Error al actualizar usuario: ' + errUpdate.message);
 
-  alert('Usuario actualizado');
-  cargarUsuarios();
+    alert('Usuario actualizado');
+    cargarUsuarios();
+  } catch (err) {
+    console.error('Error al editar usuario:', err);
+    alert('Ocurrió un error al editar el usuario.');
+  }
 }
 
 // ================== FUNCIONES DE ELIMINAR ==================
 async function eliminarUsuario(e) {
-  const tr = e.target.closest('tr');
-  const id = tr.dataset.id;
+  try {
+    const tr = e.target.closest('tr');
+    const id = tr.dataset.id;
 
-  if (!confirm('¿Seguro que deseas eliminar este usuario?')) return;
+    if (!confirm('¿Seguro que deseas eliminar este usuario?')) return;
 
-  const { error } = await supabaseClient.from('usuarios').delete().eq('id', id);
-  if (error) return alert('Error al eliminar usuario: ' + error.message);
+    const { error } = await supabaseClient.from('usuarios').delete().eq('id', id);
+    if (error) return alert('Error al eliminar usuario: ' + error.message);
 
-  alert('Usuario eliminado');
-  cargarUsuarios();
+    alert('Usuario eliminado');
+    cargarUsuarios();
+  } catch (err) {
+    console.error('Error al eliminar usuario:', err);
+    alert('Ocurrió un error al eliminar el usuario.');
+  }
 }
 
 // ================== EVENT DELEGATION ==================
