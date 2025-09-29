@@ -69,7 +69,7 @@ async function cargarAccesos() {
     tr.innerHTML = `
       <td>${a.id}</td>
       <td>${a.usuario_id}</td>
-      <td>${a.tipo}</td>
+      <td>${a.estado}</td>
       <td>${a.accion}</td>
       <td>${a.fecha_hora}</td>
     `;
@@ -89,14 +89,14 @@ async function editarUsuario(e) {
   // Pedir nuevos valores (puedes reemplazar con modal)
   const nuevoNombre = prompt('Nombre:', usuario.name);  // usar 'name'
   const nuevoDNI = prompt('DNI:', usuario.dni);
-  const nuevoTipo = prompt('Tipo:', usuario.tipo);
+  const nuevoEstado = prompt('Estado:', usuario.estado); // cambiar 'tipo' a 'estado'
   const nuevaArea = prompt('Área:', usuario.area);
 
-  if (!nuevoNombre || !nuevoDNI || !nuevoTipo || !nuevaArea) return;
+  if (!nuevoNombre || !nuevoDNI || !nuevoEstado || !nuevaArea) return;
 
   const { error: errUpdate } = await supabaseClient
     .from('usuarios')
-    .update({ name: nuevoNombre, dni: nuevoDNI, tipo: nuevoTipo, area: nuevaArea }) // usar 'name'
+    .update({ name: nuevoNombre, dni: nuevoDNI, estado: nuevoEstado, area: nuevaArea }) // usar 'name'
     .eq('id', id);
 
   if (errUpdate) return alert('Error al actualizar usuario: ' + errUpdate.message);

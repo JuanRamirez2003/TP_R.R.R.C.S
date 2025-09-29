@@ -11,7 +11,7 @@
   <aside class="sidebar">
     <h2>Administrador</h2>
     <ul>
-      <li><button onclick="mostrarSeccion('usuarios')">Gestión de Usuarios</button></li>
+      <li><button onclick="mostrarSeccion('usuarios')">Gestión de Empleados</button></li>
       <li><button onclick="mostrarSeccion('accesos')">Historial de Accesos</button></li>
     </ul>
   </aside>
@@ -22,7 +22,7 @@
 
     <!-- Sección Usuarios -->
     <div id="usuarios" class="seccion">
-      <h2>Usuarios</h2>
+      <h2>Lista de Empleados</h2>
       <button class="btn btn-edit btn-volver" onclick="window.location.href='rrhh.html'">Volver Inicio</button>
       <table id="tablaUsuarios">
         <thead>
@@ -42,7 +42,7 @@
 
     <!-- Sección Accesos -->
     <div id="accesos" class="seccion">
-      <h2>Accesos</h2>
+      <h2>Historial de Accesos de Empleados</h2>
       <button class="btn btn-edit btn-volver" onclick="window.location.href='rrhh.html'">Volver Inicio</button>
       <table id="tablaAccesos">
         <thead>
@@ -68,7 +68,7 @@
       <input type="text" id="editarDni">
       <label for="editarNombre">Nombre</label>
       <input type="text" id="editarNombre">
-      <label for="editarTipo">Tipo</label>
+      <label for="editarTipo">Estado</label><!--Tipo-->
       <select id="editarTipo">
         <option value="Admin">Admin</option>
         <option value="Usuario">Usuario</option>
