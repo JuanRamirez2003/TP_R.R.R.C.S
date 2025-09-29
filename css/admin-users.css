@@ -158,3 +158,11 @@
         font-size: 18px;
       }
     }
+    .sidebar .btn-logout {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+    }
+
+    .sidebar .btn-logout:hover {
+        background-color: #a71d2a !important; 
+    }

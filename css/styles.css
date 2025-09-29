@@ -219,3 +219,11 @@ input[type="text"]:focus {
   box-shadow: 0 0 5px rgba(85, 166, 48, 0.2);
   outline: none;
 }
+.btn-logout {
+    background-color: #dc3545 !important; /* rojo */
+    color: #fff !important;
+}
+
+.btn-logout:hover {
+    background-color: #a71d2a !important; /* rojo más oscuro */
+}
