@@ -10,11 +10,14 @@ function mostrarSeccion(seccionId) {
 async function cargarMateriaPrima() {
     // Traer todas las materias primas
     const { data, error } = await supabaseClient
-    .from('materia_prima').select('*');
+        .from('materia_prima')
+        .select('*');
+
     if (error) {
         console.error(error);
         return;
     }
+
     materiaPrimaData = data;
 
     const select = document.getElementById('id_mp');
@@ -36,9 +39,7 @@ async function mostrarDatosMP() {
         document.getElementById('descMP').value = mp.descr;
         document.getElementById('unidadMP').value = mp.unidad;
 
-        // Traer IDs de proveedores asociados
         const { data: relaciones, error: errRel } = await supabaseClient
-
             .from('materiaprima_proveedor')
             .select('id_proveedor')
             .eq('id_mp', id);
@@ -49,9 +50,7 @@ async function mostrarDatosMP() {
         if (!errRel && relaciones.length > 0) {
             const idsProveedores = relaciones.map(r => r.id_proveedor);
 
-            //Traer los datos de los proveedores
             const { data: proveedores, error: errProv } = await supabaseClient
-
                 .from('proveedor')
                 .select('*')
                 .in('id_proveedor', idsProveedores);
@@ -81,8 +80,7 @@ async function mostrarDatosMP() {
     }
 }
 
-// Insertar lote en supabaseClient
-
+// Insertar lote
 document.getElementById('materiaPrimaForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -97,7 +95,8 @@ document.getElementById('materiaPrimaForm').addEventListener('submit', async (e)
     };
 
     const { error } = await supabaseClient
-    .from('lote_mp').insert([nuevoLote]);
+        .from('lote_mp')
+        .insert([nuevoLote]);
 
     if (!error) {
         const form = document.getElementById('materiaPrimaForm');
@@ -111,7 +110,6 @@ document.getElementById('materiaPrimaForm').addEventListener('submit', async (e)
     }
 });
 
-// Botón "Cargar otro lote"
 document.getElementById('btnOtroLote').addEventListener('click', () => {
     const form = document.getElementById('materiaPrimaForm');
     form.reset();
@@ -124,30 +122,37 @@ document.getElementById('btnOtroLote').addEventListener('click', () => {
     document.getElementById('provMP').innerHTML = '<option value="">Seleccione...</option>';
 });
 
-// Botón "Volver a página principal"
 document.getElementById('btnVolverPrincipal').addEventListener('click', () => {
     document.getElementById('mensajeExito').style.display = 'none';
     mostrarSeccion('vistaMP');
 });
 
 async function cargarMP() {
-    // Traer materias primas con lotes
+    // Traer materias primas con lotes para calcular stock
     const { data: materias, error } = await supabaseClient
-    .from('materia_prima').select(`
-        *,
-        lote_mp(cantidad)
-    `);
+        .from('materia_prima')
+        .select(`
+            *,
+            lote_mp(cantidad)
+        `);
 
     if (error) {
         console.error(error);
         return;
     }
 
+    // Traer todos los proveedores
+    const { data: proveedores } = await supabaseClient
+        .from('proveedor')
+        .select('id_proveedor,nombre');
+
     const tbody = document.querySelector('#tablaMP tbody');
     tbody.innerHTML = '';
 
     materias.forEach(mp => {
-        const stock = mp.lote_mp.reduce((acc, l) => acc + l.cantidad, 0);
+        const stock = mp.lote_mp?.reduce((acc, l) => acc + l.cantidad, 0) || 0;
+        const nombreProv = proveedores.find(p => p.id_proveedor === mp.id_proveedor)?.nombre || '';
+        const nombreProvSec = proveedores.find(p => p.id_proveedor === mp.id_proveedorsec)?.nombre || '';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -156,44 +161,71 @@ async function cargarMP() {
             <td>${mp.descr}</td>
             <td>${mp.unidad}</td>
             <td>${stock}</td>
-            <td>${mp.id_proveedor || ''}</td>
-            <td>${mp.id_proveedorsec || ''}</td>
-            <td><img src="${mp.img || 'imagenes/default.jpg'}" width="40"></td>
+            <td>${nombreProv}</td>
+            <td>${nombreProvSec}</td>
+            
             <td><button onclick="verLotes(${mp.id_mp})">Ver Lotes</button></td>
-        `;
+        `;//<td><img src="${mp.img || 'imagenes/default.jpg'}" width="40"></td>
         tbody.appendChild(tr);
     });
 }
-
 async function verLotes(idMP) {
+    // Ocultar la lista de MP y mostrar la vista de lotes
     document.getElementById('vistaMP').style.display = 'none';
     document.getElementById('vistaLotes').style.display = 'block';
 
-    const { data: lotes, error } = await supabaseClient
-    .from('lote_mp').select('*').eq('id_mp', idMP);
+    // Actualizar título dinámico de los lotes
+    const mp = materiaPrimaData.find(m => m.id_mp == idMP);
+    const nombreMP = mp ? mp.nombre : 'Materia Prima';
+    document.getElementById('tituloLotes').textContent = `Lotes de ${nombreMP}`;
 
-    if (error) {
-        console.error(error);
+    // Traer los lotes de la materia prima
+    const { data: lotes, error: errorLotes } = await supabaseClient
+        .from('lote_mp')
+        .select('*')
+        .eq('id_mp', idMP);
+
+    if (errorLotes) {
+        console.error(errorLotes);
+        return;
+    }
+
+    // Traer todos los proveedores que aparezcan en estos lotes
+    const idsProveedores = lotes.map(l => l.id_proveedor).filter((v, i, a) => a.indexOf(v) === i); // únicos
+    const { data: proveedores, error: errorProv } = await supabaseClient
+        .from('proveedor')
+        .select('id_proveedor,nombre')
+        .in('id_proveedor', idsProveedores);
+
+    if (errorProv) {
+        console.error(errorProv);
         return;
     }
 
     const tbody = document.querySelector('#tablaLotes tbody');
     tbody.innerHTML = '';
+
     lotes.forEach(lote => {
+        const prov = proveedores.find(p => p.id_proveedor === lote.id_proveedor);
+        const nomProveedor = prov ? prov.nombre : '';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${lote.id_lote}</td>
-            <td>${lote.lote}</td>
-            <td>${lote.cantidad}</td>
-            <td>${lote.fecha_ingreso}</td>
-            <td>${lote.fecha_caducidad}</td>
-            <td>${lote.estado}</td>
-            <td>${lote.cantidad_disponible}</td>
-            <td>${lote.cantidad_consumida}</td>
+        <td data-label="ID Lote">${lote.id_lote}</td>
+        <td data-label="Lote">${lote.lote}</td>
+        <td data-label="Cantidad">${lote.cantidad}</td>
+        <td data-label="Fecha Ingreso">${lote.fecha_ingreso}</td>
+        <td data-label="Fecha Caducidad">${lote.fecha_caducidad}</td>
+        <td data-label="Estado">${lote.estado}</td>
+        <td data-label="Cant Disponible">${lote.cantidad_disponible}</td>
+        <td data-label="Cant Consumida">${lote.cantidad_consumida}</td>
+        <td data-label="Proveedor">${nomProveedor}</td>
         `;
         tbody.appendChild(tr);
     });
 }
+
+
 
 function volverMP() {
     document.getElementById('vistaLotes').style.display = 'none';
