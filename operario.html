@@ -61,14 +61,14 @@
 
                     <div class="form-group">
                         <label for="cantidad">Cantidad ingresada:</label>
-                        <input type="number" id="cantidad" name="cantidad" disabled required>
+                        <input type="number" id="cantidad" name="cantidad" min="1" step="1" disabled required>
+
                     </div>
 
                     <div class="form-group">
                         <label for="fecha_ingreso">Fecha de ingreso:</label>
                         <input type="date" id="fecha_ingreso" name="fecha_ingreso" disabled required>
                     </div>
-
                     <div class="form-group">
                         <label for="fecha_cad">Fecha de caducidad:</label>
                         <input type="date" id="fecha_cad" name="fecha_cad" disabled required>
@@ -83,6 +83,7 @@
                     </div>
 
                     <button type="submit" class="btn-submit" disabled>Registrar Lote</button>
+                    <button type="submit" id="btnCancelar" class="btn-submit">Cancelar</button>
                 </form>
                 <div id="mensajeExito" class="mensaje" style="display:none; text-align:center; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; margin-top:20px;">
                     <p id="textoExito" style="font-size:18px; font-weight:bold; color:#155724;"></p>

@@ -2,10 +2,26 @@ let materiaPrimaData = [];
 
 function mostrarSeccion(seccionId) {
     const secciones = document.querySelectorAll('.seccion');
-    secciones.forEach(sec => sec.style.display = 'none');
+    secciones.forEach(sec => {
+        sec.style.display = 'none';
+        
+        // Resetea el formulario si es la sección de ingresoMP
+        if(sec.id === 'ingresoMP') {
+            const form = sec.querySelector('form');
+            if(form) form.reset();
+
+            // Deshabilitar campos y botón submit
+            const campos = ['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMP'];
+            campos.forEach(c => document.getElementById(c).disabled = true);
+            document.querySelector('.btn-submit').disabled = true;
+            document.getElementById('provMP').innerHTML = '<option value="">Seleccione...</option>';
+        }
+    });
+
     document.getElementById(seccionId).style.display = 'block';
     if (seccionId === 'vistaMP') cargarMP();
 }
+
 
 async function cargarMateriaPrima() {
     // Traer todas las materias primas
@@ -70,6 +86,24 @@ async function mostrarDatosMP() {
         campos.forEach(c => document.getElementById(c).disabled = false);
         selectProv.disabled = false;
         document.querySelector('.btn-submit').disabled = false;
+
+        const fechaIngreso = document.getElementById('fecha_ingreso');
+        const hoy = new Date();
+        const yyyy = hoy.getFullYear();
+        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dd = String(hoy.getDate()).padStart(2, '0');
+        const hoyStr = `${yyyy}-${mm}-${dd}`;
+
+        fechaIngreso.setAttribute('min', hoyStr); 
+        fechaIngreso.setAttribute('max', hoyStr); 
+
+        const fechaCad = document.getElementById('fecha_cad');
+        fechaCad.setAttribute('min', hoyStr); // no puede ser anterior a hoy
+
+        fechaIngreso.addEventListener('change', () => {
+            fechaCad.setAttribute('min', fechaIngreso.value);
+        });
+
     } else {
         document.getElementById('descMP').value = '';
         document.getElementById('unidadMP').value = '';
@@ -79,6 +113,23 @@ async function mostrarDatosMP() {
         document.querySelector('.btn-submit').disabled = true;
     }
 }
+    document.getElementById('btnCancelar').addEventListener('click', () => {
+        const form = document.getElementById('materiaPrimaForm');
+        form.reset(); 
+        form.style.display = 'grid';
+        document.getElementById('mensajeExito').style.display = 'none';
+
+        // Deshabilitar campos
+        const campos = ['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMP'];
+        campos.forEach(c => document.getElementById(c).disabled = true);
+        document.querySelector('.btn-submit').disabled = true;
+        document.getElementById('provMP').innerHTML = '<option value="">Seleccione...</option>';
+
+        // Volver a la vista de Materias Primas
+        mostrarSeccion('vistaMP');
+    });
+
+
 
 // Insertar lote
 document.getElementById('materiaPrimaForm').addEventListener('submit', async (e) => {
