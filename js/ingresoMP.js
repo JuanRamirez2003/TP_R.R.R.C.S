@@ -1,284 +1,273 @@
 let materiaPrimaData = [];
 
+// ============================
+// Utilidades
+// ============================
+function habilitarCampos(campos, habilitar = true) {
+    campos.forEach(c => {
+        const el = document.getElementById(c);
+        if (el) el.disabled = !habilitar;
+    });
+    const btnSubmit = document.querySelector('.btn-submit');
+    if (btnSubmit) btnSubmit.disabled = !habilitar;
+}
+
+function resetSelect(selectId, placeholder = "Seleccione...") {
+    const sel = document.getElementById(selectId);
+    if (sel) sel.innerHTML = `<option value="">${placeholder}</option>`;
+}
+
+// ============================
+// Navegación entre secciones
+// ============================
 function mostrarSeccion(seccionId) {
-    const secciones = document.querySelectorAll('.seccion');
-    secciones.forEach(sec => {
-        sec.style.display = 'none';
-        
-        // Resetea el formulario si es la sección de ingresoMP
-        if(sec.id === 'ingresoMP') {
-            const form = sec.querySelector('form');
-            if(form) form.reset();
+    try {
+        document.querySelectorAll('.seccion').forEach(sec => {
+            sec.style.display = 'none';
+            if(sec.id === 'ingresoMP') {
+                const form = sec.querySelector('form');
+                if(form) form.reset();
+                habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMP'], false);
+                resetSelect('provMP');
+            }
+        });
 
-            // Deshabilitar campos y botón submit
-            const campos = ['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMP'];
-            campos.forEach(c => document.getElementById(c).disabled = true);
-            document.querySelector('.btn-submit').disabled = true;
-            document.getElementById('provMP').innerHTML = '<option value="">Seleccione...</option>';
-        }
-    });
-
-    document.getElementById(seccionId).style.display = 'block';
-    if (seccionId === 'vistaMP') cargarMP();
-}
-
-
-async function cargarMateriaPrima() {
-    // Traer todas las materias primas
-    const { data, error } = await supabaseClient
-        .from('materia_prima')
-        .select('*');
-
-    if (error) {
-        console.error(error);
-        return;
+        const target = document.getElementById(seccionId);
+        if(target) target.style.display = 'block';
+        if(seccionId === 'vistaMP') cargarMP();
+    } catch(err) {
+        console.error("Error mostrando sección:", err);
     }
-
-    materiaPrimaData = data;
-
-    const select = document.getElementById('id_mp');
-    select.innerHTML = '<option value="">Seleccione...</option>';
-    materiaPrimaData.forEach(mp => {
-        const option = document.createElement('option');
-        option.value = mp.id_mp;
-        option.textContent = mp.nombre;
-        select.appendChild(option);
-    });
 }
 
+// ============================
+// Cargar Materia Prima
+// ============================
+async function cargarMateriaPrima() {
+    try {
+        const { data, error } = await supabaseClient.from('materia_prima').select('*');
+        if (error) throw error;
+
+        materiaPrimaData = data || [];
+
+        const select = document.getElementById('id_mp');
+        if (select) {
+            resetSelect('id_mp');
+            materiaPrimaData.forEach(mp => {
+                const option = document.createElement('option');
+                option.value = mp.id_mp;
+                option.textContent = mp.nombre;
+                select.appendChild(option);
+            });
+        }
+    } catch(err) {
+        console.error("Error cargando materia prima:", err);
+    }
+}
+
+// ============================
+// Mostrar datos al seleccionar MP
+// ============================
 async function mostrarDatosMP() {
-    const id = document.getElementById('id_mp').value;
-    const campos = ['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado'];
-    const mp = materiaPrimaData.find(item => item.id_mp == id);
+    try {
+        const id = document.getElementById('id_mp').value;
+        const campos = ['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado'];
+        const mp = materiaPrimaData.find(item => item.id_mp == id);
 
-    if (mp) {
-        document.getElementById('descMP').value = mp.descr;
-        document.getElementById('unidadMP').value = mp.unidad;
+        if (!mp) {
+            campos.forEach(c => document.getElementById(c).disabled = true);
+            habilitarCampos(['provMP'], false);
+            resetSelect('provMP');
+            document.getElementById('descMP').value = '';
+            document.getElementById('unidadMP').value = '';
+            return;
+        }
 
+        document.getElementById('descMP').value = mp.descr || '';
+        document.getElementById('unidadMP').value = mp.unidad || '';
+
+        // Obtener proveedores asociados
         const { data: relaciones, error: errRel } = await supabaseClient
             .from('materiaprima_proveedor')
             .select('id_proveedor')
             .eq('id_mp', id);
+        if (errRel) throw errRel;
 
-        const selectProv = document.getElementById('provMP');
-        selectProv.innerHTML = '<option value="">Seleccione...</option>';
-
-        if (!errRel && relaciones.length > 0) {
+        resetSelect('provMP');
+        if (relaciones && relaciones.length) {
             const idsProveedores = relaciones.map(r => r.id_proveedor);
-
             const { data: proveedores, error: errProv } = await supabaseClient
                 .from('proveedor')
                 .select('*')
                 .in('id_proveedor', idsProveedores);
+            if (errProv) throw errProv;
 
-            if (!errProv && proveedores) {
-                proveedores.forEach(p => {
-                    const option = document.createElement('option');
-                    option.value = p.id_proveedor;
-                    option.textContent = p.nombre;
-                    selectProv.appendChild(option);
-                });
-            } else if (errProv) {
-                console.error('Error proveedores:', errProv);
-            }
+            proveedores.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id_proveedor;
+                option.textContent = p.nombre;
+                document.getElementById('provMP').appendChild(option);
+            });
         }
 
-        campos.forEach(c => document.getElementById(c).disabled = false);
-        selectProv.disabled = false;
-        document.querySelector('.btn-submit').disabled = false;
+        habilitarCampos(campos, true);
+        habilitarCampos(['provMP'], true);
 
+        // Configurar fechas
         const fechaIngreso = document.getElementById('fecha_ingreso');
-        const hoy = new Date();
-        const yyyy = hoy.getFullYear();
-        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-        const dd = String(hoy.getDate()).padStart(2, '0');
-        const hoyStr = `${yyyy}-${mm}-${dd}`;
-
-        fechaIngreso.setAttribute('min', hoyStr); 
-        fechaIngreso.setAttribute('max', hoyStr); 
-
         const fechaCad = document.getElementById('fecha_cad');
-        fechaCad.setAttribute('min', hoyStr); // no puede ser anterior a hoy
+        const hoy = new Date();
+        const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+        fechaIngreso.setAttribute('min', hoyStr);
+        fechaIngreso.setAttribute('max', hoyStr);
+        fechaCad.setAttribute('min', hoyStr);
 
         fechaIngreso.addEventListener('change', () => {
             fechaCad.setAttribute('min', fechaIngreso.value);
         });
 
-    } else {
-        document.getElementById('descMP').value = '';
-        document.getElementById('unidadMP').value = '';
-        document.getElementById('provMP').innerHTML = '<option value="">Seleccione...</option>';
-        campos.forEach(c => document.getElementById(c).disabled = true);
-        document.getElementById('provMP').disabled = true;
-        document.querySelector('.btn-submit').disabled = true;
+    } catch(err) {
+        console.error("Error mostrando datos MP:", err);
     }
 }
-    document.getElementById('btnCancelar').addEventListener('click', () => {
-        const form = document.getElementById('materiaPrimaForm');
-        form.reset(); 
-        form.style.display = 'grid';
-        document.getElementById('mensajeExito').style.display = 'none';
 
-        // Deshabilitar campos
-        const campos = ['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMP'];
-        campos.forEach(c => document.getElementById(c).disabled = true);
-        document.querySelector('.btn-submit').disabled = true;
-        document.getElementById('provMP').innerHTML = '<option value="">Seleccione...</option>';
+// ============================
+// Eventos Botones
+// ============================
+document.getElementById('btnCancelar')?.addEventListener('click', () => {
+    const form = document.getElementById('materiaPrimaForm');
+    form.reset();
+    form.style.display = 'grid';
+    document.getElementById('mensajeExito').style.display = 'none';
+    habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMP'], false);
+    resetSelect('provMP');
+    mostrarSeccion('vistaMP');
+});
 
-        // Volver a la vista de Materias Primas
-        mostrarSeccion('vistaMP');
-    });
+document.getElementById('btnOtroLote')?.addEventListener('click', () => {
+    const form = document.getElementById('materiaPrimaForm');
+    form.reset();
+    form.style.display = 'grid';
+    document.getElementById('mensajeExito').style.display = 'none';
+    habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMP'], false);
+    resetSelect('provMP');
+});
 
+document.getElementById('btnVolverPrincipal')?.addEventListener('click', () => {
+    document.getElementById('mensajeExito').style.display = 'none';
+    mostrarSeccion('vistaMP');
+});
 
-
+// ============================
 // Insertar lote
-document.getElementById('materiaPrimaForm').addEventListener('submit', async (e) => {
+// ============================
+document.getElementById('materiaPrimaForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    try {
+        const nuevoLote = {
+            id_mp: parseInt(document.getElementById('id_mp').value),
+            id_proveedor: parseInt(document.getElementById('provMP').value),
+            lote: document.getElementById('lote').value,
+            cantidad: parseFloat(document.getElementById('cantidad').value),
+            fecha_ingreso: document.getElementById('fecha_ingreso').value,
+            fecha_caducidad: document.getElementById('fecha_cad').value,
+            estado: document.getElementById('estado').value
+        };
+        const { error } = await supabaseClient.from('lote_mp').insert([nuevoLote]);
+        if (error) throw error;
 
-    const nuevoLote = {
-        id_mp: parseInt(document.getElementById('id_mp').value),
-        id_proveedor: parseInt(document.getElementById('provMP').value),
-        lote: document.getElementById('lote').value,
-        cantidad: parseFloat(document.getElementById('cantidad').value),
-        fecha_ingreso: document.getElementById('fecha_ingreso').value,
-        fecha_caducidad: document.getElementById('fecha_cad').value,
-        estado: document.getElementById('estado').value
-    };
-
-    const { error } = await supabaseClient
-        .from('lote_mp')
-        .insert([nuevoLote]);
-
-    if (!error) {
         const form = document.getElementById('materiaPrimaForm');
         form.style.display = 'none';
         const mensajeExito = document.getElementById('mensajeExito');
         document.getElementById('textoExito').textContent = "Lote registrado correctamente";
         mensajeExito.style.display = 'block';
-    } else {
-        console.error(error);
+
+    } catch(err) {
+        console.error("Error insertando lote:", err);
         document.getElementById('mensaje').textContent = "Error al registrar el lote";
     }
 });
 
-document.getElementById('btnOtroLote').addEventListener('click', () => {
-    const form = document.getElementById('materiaPrimaForm');
-    form.reset();
-    form.style.display = 'grid';
-    document.getElementById('mensajeExito').style.display = 'none';
-
-    const campos = ['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMP'];
-    campos.forEach(c => document.getElementById(c).disabled = true);
-    document.querySelector('.btn-submit').disabled = true;
-    document.getElementById('provMP').innerHTML = '<option value="">Seleccione...</option>';
-});
-
-document.getElementById('btnVolverPrincipal').addEventListener('click', () => {
-    document.getElementById('mensajeExito').style.display = 'none';
-    mostrarSeccion('vistaMP');
-});
-
+// ============================
+// Cargar tabla Materias Primas
+// ============================
 async function cargarMP() {
-    // Traer materias primas con lotes para calcular stock
-    const { data: materias, error } = await supabaseClient
-        .from('materia_prima')
-        .select(`
-            *,
-            lote_mp(cantidad)
-        `);
+    try {
+        const { data: materias, error } = await supabaseClient.from('materia_prima').select(`*, lote_mp(cantidad)`);
+        if (error) throw error;
 
-    if (error) {
-        console.error(error);
-        return;
+        const { data: proveedores } = await supabaseClient.from('proveedor').select('id_proveedor,nombre');
+        const tbody = document.querySelector('#tablaMP tbody');
+        tbody.innerHTML = '';
+
+        materias.forEach(mp => {
+            const stock = mp.lote_mp?.reduce((acc,l)=> acc+l.cantidad,0) || 0;
+            const nombreProv = proveedores.find(p=>p.id_proveedor===mp.id_proveedor)?.nombre || '';
+            const nombreProvSec = proveedores.find(p=>p.id_proveedor===mp.id_proveedorsec)?.nombre || '';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${mp.id_mp}</td>
+                <td>${mp.nombre}</td>
+                <td>${mp.descr}</td>
+                <td>${mp.unidad}</td>
+                <td>${stock}</td>
+                <td>${nombreProv}</td>
+                <td>${nombreProvSec}</td>
+                <td><button class="btn-editar" onclick="verLotes(${mp.id_mp})">Ver Lotes</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch(err) {
+        console.error("Error cargando tabla MP:", err);
     }
-
-    // Traer todos los proveedores
-    const { data: proveedores } = await supabaseClient
-        .from('proveedor')
-        .select('id_proveedor,nombre');
-
-    const tbody = document.querySelector('#tablaMP tbody');
-    tbody.innerHTML = '';
-
-    materias.forEach(mp => {
-        const stock = mp.lote_mp?.reduce((acc, l) => acc + l.cantidad, 0) || 0;
-        const nombreProv = proveedores.find(p => p.id_proveedor === mp.id_proveedor)?.nombre || '';
-        const nombreProvSec = proveedores.find(p => p.id_proveedor === mp.id_proveedorsec)?.nombre || '';
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${mp.id_mp}</td>
-            <td>${mp.nombre}</td>
-            <td>${mp.descr}</td>
-            <td>${mp.unidad}</td>
-            <td>${stock}</td>
-            <td>${nombreProv}</td>
-            <td>${nombreProvSec}</td>
-            
-        <button class="btn-editar" onclick="verLotes(${mp.id_mp})">Ver Lotes</button>
-
-        `;//<td><img src="${mp.img || 'imagenes/default.jpg'}" width="40"></td>
-        tbody.appendChild(tr);
-    });
 }
+
+// ============================
+// Ver lotes de una MP
+// ============================
 async function verLotes(idMP) {
-    // Ocultar la lista de MP y mostrar la vista de lotes
-    document.getElementById('vistaMP').style.display = 'none';
-    document.getElementById('vistaLotes').style.display = 'block';
+    try {
+        mostrarSeccion('vistaLotes');
+        const mp = materiaPrimaData.find(m=>m.id_mp==idMP);
+        document.getElementById('tituloLotes').textContent = `Lotes de ${mp?.nombre || 'Materia Prima'}`;
 
-    // Actualizar título dinámico de los lotes
-    const mp = materiaPrimaData.find(m => m.id_mp == idMP);
-    const nombreMP = mp ? mp.nombre : 'Materia Prima';
-    document.getElementById('tituloLotes').textContent = `Lotes de ${nombreMP}`;
+        const { data: lotes, error: errorLotes } = await supabaseClient.from('lote_mp').select('*').eq('id_mp', idMP);
+        if(errorLotes) throw errorLotes;
 
-    // Traer los lotes de la materia prima
-    const { data: lotes, error: errorLotes } = await supabaseClient
-        .from('lote_mp')
-        .select('*')
-        .eq('id_mp', idMP);
+        const idsProveedores = [...new Set(lotes.map(l=>l.id_proveedor))];
+        const { data: proveedores, error: errorProv } = await supabaseClient.from('proveedor').select('id_proveedor,nombre').in('id_proveedor', idsProveedores);
+        if(errorProv) throw errorProv;
 
-    if (errorLotes) {
-        console.error(errorLotes);
-        return;
+        const tbody = document.querySelector('#tablaLotes tbody');
+        tbody.innerHTML = '';
+
+        lotes.forEach(lote => {
+            const nomProveedor = proveedores.find(p=>p.id_proveedor===lote.id_proveedor)?.nombre || '';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td data-label="ID Lote">${lote.id_lote}</td>
+                <td data-label="Lote">${lote.lote}</td>
+                <td data-label="Cantidad">${lote.cantidad}</td>
+                <td data-label="Fecha Ingreso">${lote.fecha_ingreso}</td>
+                <td data-label="Fecha Caducidad">${lote.fecha_caducidad}</td>
+                <td data-label="Estado">${lote.estado}</td>
+                <td data-label="Cant Disponible">${lote.cantidad_disponible}</td>
+                <td data-label="Cant Consumida">${lote.cantidad_consumida}</td>
+                <td data-label="Proveedor">${nomProveedor}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch(err) {
+        console.error("Error mostrando lotes:", err);
     }
-
-    // Traer todos los proveedores que aparezcan en estos lotes
-    const idsProveedores = lotes.map(l => l.id_proveedor).filter((v, i, a) => a.indexOf(v) === i); // únicos
-    const { data: proveedores, error: errorProv } = await supabaseClient
-        .from('proveedor')
-        .select('id_proveedor,nombre')
-        .in('id_proveedor', idsProveedores);
-
-    if (errorProv) {
-        console.error(errorProv);
-        return;
-    }
-
-    const tbody = document.querySelector('#tablaLotes tbody');
-    tbody.innerHTML = '';
-
-    lotes.forEach(lote => {
-        const prov = proveedores.find(p => p.id_proveedor === lote.id_proveedor);
-        const nomProveedor = prov ? prov.nombre : '';
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-        <td data-label="ID Lote">${lote.id_lote}</td>
-        <td data-label="Lote">${lote.lote}</td>
-        <td data-label="Cantidad">${lote.cantidad}</td>
-        <td data-label="Fecha Ingreso">${lote.fecha_ingreso}</td>
-        <td data-label="Fecha Caducidad">${lote.fecha_caducidad}</td>
-        <td data-label="Estado">${lote.estado}</td>
-        <td data-label="Cant Disponible">${lote.cantidad_disponible}</td>
-        <td data-label="Cant Consumida">${lote.cantidad_consumida}</td>
-        <td data-label="Proveedor">${nomProveedor}</td>
-        `;
-        tbody.appendChild(tr);
-    });
 }
 
-
-
+// ============================
+// Volver a vista MP
+// ============================
 function volverMP() {
     document.getElementById('vistaLotes').style.display = 'none';
     document.getElementById('vistaMP').style.display = 'block';
