@@ -164,7 +164,8 @@ async function cargarMP() {
             <td>${nombreProv}</td>
             <td>${nombreProvSec}</td>
             
-            <td><button onclick="verLotes(${mp.id_mp})">Ver Lotes</button></td>
+        <button class="btn-editar" onclick="verLotes(${mp.id_mp})">Ver Lotes</button>
+
         `;//<td><img src="${mp.img || 'imagenes/default.jpg'}" width="40"></td>
         tbody.appendChild(tr);
     });
