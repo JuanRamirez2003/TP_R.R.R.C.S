@@ -3,42 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerente General</title>
-    <link rel="stylesheet" href="css/gg.css">
+    <title>Pedidos de Materia Prima - Gerente</title>
+    <link rel="stylesheet" href="css/ventas.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="dashboard">
-        <!-- Menú lateral -->
+        <!-- Sidebar -->
         <aside class="sidebar">
-            <h2>Gerente General</h2>
-
+            <h2>Gerente</h2>
             <ul>
-                <li><button>Opción 1</button></li>
-                <li><button>Opción 2</button></li>
-                <li><button>Opción 3</button></li>
-                <!--<li><button>Reportes</button></li>
-                <li><button>Indicadores</button></li>
-                <li><button>Analíticas</button></li>-->
+                <li><button onclick="mostrarSeccion('pedidoMP')">Crear Pedido</button></li>
+                <li><button onclick="mostrarSeccion('vistaPedidos')">Ver Pedidos</button></li>
                 <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
             </ul>
-
-            <!-- Botón Cerrar Sesión -->
-            
         </aside>
 
         <!-- Contenido principal -->
         <main class="main-content">
-            <h1>Área de Gerente General</h1>
-            <p>Aquí se mostrará la información y funciones que se definan más adelante.</p>
+            <h1>Pedidos de Materia Prima</h1>
+
+            <!-- Sección Crear Pedido -->
+            <div id="pedidoMP" class="seccion" style="display:none;">
+                <form id="pedidoForm">
+                    <div class="form-group">
+                        <label for="materiaSelect">Materia Prima:</label>
+                        <select id="materiaSelect" required>
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="proveedorSelect">Proveedor:</label>
+                        <select id="proveedorSelect" required>
+                            <option value="">Seleccione una materia primero</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cantidad">Cantidad:</label>
+                        <input type="number" id="cantidad" required min="1" step="1">
+                    </div>
+
+                    <button type="submit" class="btn-submit">Enviar Pedido</button>
+                </form>
+
+                <div id="mensajeExito" class="mensaje exito">Pedido enviado correctamente.</div>
+                <div id="mensajeError" class="mensaje error"></div>
+            </div>
+
+            <!-- Sección Ver Pedidos -->
+            <div id="vistaPedidos" class="seccion" style="display:none;">
+                <h2>Pedidos Registrados</h2>
+                <div class="table-wrapper">
+                    <table id="tablaPedidos">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Materia Prima</th>
+                                <th>Proveedor</th>
+                                <th>Cantidad</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
         </main>
     </div>
 
+    <script src="js/gg.js"></script>
     <script>
         function cerrarSesion() {
             localStorage.clear();
             sessionStorage.clear();
             window.location.href = "index.html";
         }
+
+        function mostrarSeccion(id) {
+            document.querySelectorAll('.seccion').forEach(sec => sec.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            mostrarSeccion('pedidoMP'); // Mostrar sección inicial
+        });
     </script>
 </body>
 </html>

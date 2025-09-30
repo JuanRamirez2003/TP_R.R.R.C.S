@@ -2,121 +2,70 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Compra - Panel Supervisor</title>
-  <link rel="stylesheet" href="css/compra.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos de Materia Prima - Operario</title>
+  <link rel="stylesheet" href="css/ventas.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <h2>Panel de Supervisor</h2>
-    <div class="subtitle">Gestión de compras</div>
+  <div class="dashboard">
+    <!-- Menú lateral -->
+    <aside class="sidebar">
+      <h2>Operario</h2>
+      <ul>
+        <li><button onclick="mostrarSeccion('pedidoMP')">Crear Pedido</button></li>
+        <li><button onclick="mostrarSeccion('vistaPedidos')">Ver Pedidos</button></li>
+      </ul>
+      <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
+    </aside>
 
-    <button class="btn-nav" data-panel="panelAgregar">➕ Agregar Materia</button>
-    <button class="btn-nav" data-panel="panelCrear">📝 Crear Pedido</button>
-    <button class="btn-nav" data-panel="panelVer">📋 Ver Pedidos</button>
-    <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
-  </aside>
+    <!-- Contenido principal -->
+    <main class="main-content">
+      <h1>Pedidos de Materia Prima</h1>
 
-  <!-- Main -->
-  <main class="main">
-    <!-- Banner -->
-    <div class="supervisor-banner">
-      <div>
-        <h1>Panel de Supervisor</h1>
-        <p class="small">Solicitudes de compra de materia prima a proveedores</p>
-      </div>
-      <div class="small">Estado: <strong style="color:#0b5fff">En línea</strong></div>
-    </div>
-
-    <!-- Agregar materia -->
-    <section class="card" id="panelAgregar">
-      <h2>Agregar Materia Prima</h2>
-      <div class="row">
-        <div class="field">
-          <label>Nombre materia prima</label>
-          <input type="text" id="mpNombre" placeholder="Ej: Harina 000">
-        </div>
-        <div class="field">
-          <label>Cantidad</label>
-          <input type="number" id="mpCantidad" min="0" placeholder="Ej: 10">
-        </div>
-        <div class="field">
-          <label>Unidad</label>
-          <select id="mpUnidad">
-            <option value="kg">kg</option>
-            <option value="u">u</option>
-            <option value="l">l</option>
+      <!-- Sección Crear Pedido -->
+      <div id="pedidoMP" class="seccion" style="display:none;">
+        <form id="pedidoForm">
+          <label for="materiaSelect">Materia Prima:</label>
+          <select id="materiaSelect" required>
+            <option value="">Seleccione...</option>
           </select>
-        </div>
-      </div>
-      <div class="actions">
-        <button class="btn secondary" id="limpiarLista">Limpiar lista</button>
-        <button class="btn" id="btnAgregarMP">Agregar a lista</button>
-      </div>
-      <div style="margin-top:14px">
-        <strong>Lista temporal de materias:</strong>
-        <ul id="listaTemporal"></ul>
-      </div>
-    </section>
 
-    <!-- Crear pedido -->
-    <section class="card" id="panelCrear">
-      <h2>Crear Pedido a Proveedor</h2>
-      <form id="formPedido">
-        <div class="row">
-          <div class="field">
-            <label>Proveedor</label>
-            <input type="text" id="proveedor" required>
-          </div>
-          <div class="field">
-            <label>Referencia interna</label>
-            <input type="text" id="refPedido" placeholder="Ej: Pedido-2025-001" required>
-          </div>
-        </div>
-        <div class="row">
-          <div class="field">
-            <label>Fecha de entrega</label>
-            <input type="date" id="fechaEntrega">
-          </div>
-          <div class="field">
-            <label>Prioridad</label>
-            <select id="prioridad">
-              <option value="normal">Normal</option>
-              <option value="alta">Alta</option>
-              <option value="urgente">Urgente</option>
-            </select>
-          </div>
-        </div>
-        <label>Notas</label>
-        <textarea id="notas"></textarea>
-        <div class="actions">
-          <button type="submit" class="btn">Enviar pedido</button>
-        </div>
-      </form>
-    </section>
+          <label for="proveedorSelect">Proveedor:</label>
+          <select id="proveedorSelect" required>
+            <option value="">Seleccione una materia primero</option>
+          </select>
 
-    <!-- Ver pedidos -->
-    <section class="card" id="panelVer">
-      <h2>Pedidos realizados</h2>
-      <table class="requests-table">
-        <thead>
-          <tr>
-            <th>Referencia</th>
-            <th>Proveedor</th>
-            <th>Requerimientos</th>
-            <th>Fecha entrega</th>
-            <th>Prioridad</th>
-            <th>Movimientos</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="pedidosBody"></tbody>
-      </table>
-    </section>
-  </main>
+          <label for="cantidad">Cantidad:</label>
+          <input type="number" id="cantidad" required min="1" step="1">
+
+          <button type="submit">Enviar Pedido</button>
+        </form>
+        <div id="mensajeExito" class="mensaje exito">Pedido enviado correctamente.</div>
+        <div id="mensajeError" class="mensaje error"></div>
+      </div>
+
+      <!-- Sección Ver Pedidos -->
+      <div id="vistaPedidos" class="seccion" style="display:none;">
+        <h2>Pedidos Registrados</h2>
+        <div class="table-wrapper">
+          <table id="tablaPedidos">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Materia Prima</th>
+                <th>Proveedor</th>
+                <th>Cantidad</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
 
   <script src="js/compra.js"></script>
 </body>
 </html>
-
