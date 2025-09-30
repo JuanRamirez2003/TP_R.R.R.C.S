@@ -9,6 +9,13 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 let materiaPrimaData = [];
 let proveedorData = [];
 
+// ================== Inicialización EmailJS ==================
+if (typeof emailjs !== 'undefined') {
+    emailjs.init("SJ34lI1ytF8WPEMSi"); // Tu Public Key
+} else {
+    console.warn("EmailJS no cargado. Revisa tu <script> en HTML.");
+}
+
 // ================== Funciones ==================
 async function cargarMaterias() {
     try {
@@ -63,11 +70,11 @@ async function cargarProveedores(id_mp) {
     }
 }
 
+// ================== Eventos ==================
 document.getElementById('materiaSelect').addEventListener('change', e => {
     cargarProveedores(e.target.value);
 });
 
-// ================== Envío de Pedido ==================
 document.getElementById('pedidoForm').addEventListener('submit', async e => {
     e.preventDefault();
 
@@ -94,31 +101,37 @@ document.getElementById('pedidoForm').addEventListener('submit', async e => {
         const materia = materiaSelect.selectedOptions[0].textContent;
         const proveedor = proveedorSelect.selectedOptions[0].textContent;
 
+        // --- Guardar en Supabase ---
         const { data, error } = await supabaseClient
             .from('orden_compra_mp')
             .insert([{ materia_prima: materia, proveedor: proveedor, cantidad, estado: 'Pendiente' }]);
         if (error) throw error;
 
+        // --- Mensajes ---
         mensajeExito.style.display = "block";
         mensajeError.style.display = "none";
         e.target.reset();
         proveedorSelect.innerHTML = "<option value=''>Seleccione una materia primero</option>";
 
+        // --- Actualizar tabla ---
         cargarTablaPedidos();
         mostrarSeccion('vistaPedidos');
 
-        // Enviar email
-        emailjs.send('service_n3qcy6p', 'template_80elrdn', {
-            to_email: 'jpramirez180803@gmail.com',
-            materia_prima: materia,
-            proveedor: proveedor,
-            cantidad: cantidad,
-            estado: 'Pendiente'
-        }).then(() => {
-            console.log("Email enviado correctamente");
-        }).catch(err => {
-            console.error("Error enviando email:", err);
-        });
+        // --- Enviar email ---
+        if (typeof emailjs !== 'undefined') {
+            emailjs.send('service_n3qcy6p', 'template_80elrdn', {
+                materia_prima: materia,
+                proveedor: proveedor,
+                cantidad: cantidad,
+                estado: 'Pendiente'
+            }).then(() => {
+                console.log("Email enviado correctamente");
+            }).catch(err => {
+                console.error("Error enviando email:", err);
+            });
+        } else {
+            console.warn("EmailJS no cargado. No se pudo enviar el email.");
+        }
 
     } catch (err) {
         console.error("Error guardando pedido:", err);
@@ -156,6 +169,12 @@ async function cargarTablaPedidos() {
     } catch (err) {
         console.error("Error cargando tabla de pedidos:", err);
     }
+}
+
+// ================== Navegación ==================
+function mostrarSeccion(id) {
+    document.querySelectorAll('.seccion').forEach(sec => sec.style.display = 'none');
+    document.getElementById(id).style.display = 'block';
 }
 
 // ================== Inicialización ==================
