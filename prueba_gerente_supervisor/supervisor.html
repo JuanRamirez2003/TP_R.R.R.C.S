@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Supervisor</title>
+  <link rel="stylesheet" href="supervisor.css">
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Supervisor</h2>
+    <button onclick="mostrarSeccion('stock')">📦 Stock</button>
+    <button onclick="mostrarSeccion('requerimiento')">📝 Requerimiento</button>
+    <button onclick="mostrarSeccion('seguimiento')">📋 Seguimiento</button>
+    <button onclick="mostrarSeccion('recepcion')">📥 Recepción</button>
+    <button onclick="mostrarSeccion('incidencias')">⚠️ Incidencias</button>
+  </div>
+
+  <div class="main">
+    <!-- STOCK -->
+    <section id="stock" class="seccion activa">
+      <h2>Stock de Materias Primas</h2>
+      <table id="tablaStock">
+        <thead>
+          <tr>
+            <th>Materia Prima</th>
+            <th>Stock Actual</th>
+            <th>Mínimo</th>
+            <th>Máximo</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button onclick="cargarEjemplo()">Cargar Ejemplo</button>
+      <button onclick="borrarDatos()">Borrar Todo</button>
+    </section>
+
+    <!-- REQUERIMIENTO -->
+    <section id="requerimiento" class="seccion">
+      <h2>Generar Requerimiento</h2>
+      <form id="formRequerimiento">
+        <label>Materia Prima:</label>
+        <input type="text" id="reqMateria" required>
+        <label>Cantidad:</label>
+        <input type="number" id="reqCantidad" required>
+        <label>Justificación:</label>
+        <input type="text" id="reqJustificacion" required>
+        <button type="submit">Enviar</button>
+      </form>
+    </section>
+
+    <!-- SEGUIMIENTO -->
+    <section id="seguimiento" class="seccion">
+      <h2>Seguimiento de Requerimientos</h2>
+      <table id="tablaRequerimientos">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Materia Prima</th>
+            <th>Cantidad</th>
+            <th>Justificación</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- RECEPCIÓN -->
+    <section id="recepcion" class="seccion">
+      <h2>Recepción de Materiales</h2>
+      <form id="formRecepcion">
+        <label>Orden de Compra:</label>
+        <input type="text" id="recOrden" required>
+        <label>Materia Prima:</label>
+        <input type="text" id="recMateria" required>
+        <label>Cantidad:</label>
+        <input type="number" id="recCantidad" required>
+        <label>Fecha Vencimiento:</label>
+        <input type="date" id="recVencimiento">
+        <label>Estado de Calidad:</label>
+        <select id="recCalidad">
+          <option value="Conforme">Conforme</option>
+          <option value="No Conforme">No Conforme</option>
+        </select>
+        <label>Observaciones:</label>
+        <input type="text" id="recObs">
+        <button type="submit">Registrar</button>
+      </form>
+      <table id="tablaRecepcion">
+        <thead>
+          <tr>
+            <th>Orden</th>
+            <th>Materia</th>
+            <th>Cantidad</th>
+            <th>Vencimiento</th>
+            <th>Calidad</th>
+            <th>Obs</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- INCIDENCIAS -->
+    <section id="incidencias" class="seccion">
+      <h2>Reporte de Incidencias</h2>
+      <form id="formIncidencia">
+        <label>Materia Prima:</label>
+        <input type="text" id="incMateria" required>
+        <label>Tipo de Incidencia:</label>
+        <select id="incTipo">
+          <option value="Faltante">Faltante</option>
+          <option value="Calidad">Calidad</option>
+          <option value="Vencimiento">Vencimiento</option>
+          <option value="Daño">Daño</option>
+        </select>
+        <label>Observación:</label>
+        <input type="text" id="incObs">
+        <button type="submit">Reportar</button>
+      </form>
+      <table id="tablaIncidencias">
+        <thead>
+          <tr>
+            <th>Materia</th>
+            <th>Tipo</th>
+            <th>Observación</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script src="supervisor.js"></script>
+</body>
+</html>
