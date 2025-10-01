@@ -77,7 +77,7 @@ formRequerimiento?.addEventListener("submit", e => {
     materia: document.getElementById("reqMateria").value,
     cantidad: parseInt(document.getElementById("reqCantidad").value),
     justificacion: document.getElementById("reqJustificacion").value,
-    estado: "Pendiente"
+    estado: "Pendiente" // siempre pendiente hasta revisión del gerente
   };
   requerimientos.push(req);
   guardarDatos("requerimientos", requerimientos);
@@ -97,15 +97,33 @@ function renderRequerimientos() {
         <td>${r.justificacion}</td>
         <td>${r.estado}</td>
         <td>
-          <button onclick="aprobarRequerimiento(${r.id})">Aprobar</button>
+          <button onclick="editarRequerimiento(${r.id})">Editar</button>
+          <button onclick="eliminarRequerimiento(${r.id})">Eliminar</button>
         </td>
       </tr>`;
   });
 }
 
-function aprobarRequerimiento(id) {
-  requerimientos = requerimientos.map(r => r.id === id ? { ...r, estado: "Aprobado" } : r);
-  guardarDatos("requerimientos", requerimientos);
+function editarRequerimiento(id) {
+  const req = requerimientos.find(r => r.id === id);
+  if (!req || req.estado !== 'Pendiente') { alert('No se puede editar requerimiento ya revisado'); return; }
+  const nuevaMateria = prompt('Materia Prima:', req.materia);
+  const nuevaCantidad = prompt('Cantidad:', req.cantidad);
+  const nuevaJustificacion = prompt('Justificación:', req.justificacion);
+  if (nuevaMateria && nuevaCantidad && nuevaJustificacion) {
+    req.materia = nuevaMateria;
+    req.cantidad = parseInt(nuevaCantidad);
+    req.justificacion = nuevaJustificacion;
+    guardarDatos('requerimientos', requerimientos);
+    renderRequerimientos();
+  }
+}
+
+function eliminarRequerimiento(id) {
+  const req = requerimientos.find(r => r.id === id);
+  if (!req || req.estado !== 'Pendiente') { alert('No se puede eliminar requerimiento ya revisado'); return; }
+  requerimientos = requerimientos.filter(r => r.id !== id);
+  guardarDatos('requerimientos', requerimientos);
   renderRequerimientos();
 }
 

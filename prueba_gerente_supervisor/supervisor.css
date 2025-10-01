@@ -118,3 +118,33 @@ table th {
   color: red;
   font-weight: bold;
 }
+
+/* ============================= */
+/* Botones de acciones en seguimiento de requerimientos */
+#tablaRequerimientos button {
+  padding: 5px 10px;
+  margin: 2px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background 0.3s;
+}
+
+#tablaRequerimientos button:nth-child(1) { /* Editar */
+  background: #f59e0b; /* amarillo/naranja */
+  color: white;
+}
+
+#tablaRequerimientos button:nth-child(1):hover {
+  background: #d97706;
+}
+
+#tablaRequerimientos button:nth-child(2) { /* Eliminar */
+  background: #ef4444; /* rojo */
+  color: white;
+}
+
+#tablaRequerimientos button:nth-child(2):hover {
+  background: #b91c1c;
+}
