@@ -17,37 +17,46 @@ function volverPanel() {
 
 // Mostrar formulario nuevo cliente
 function mostrarFormularioCliente() {
+  //document.getElementById('tablaClientes').style.display = 'none';
   document.getElementById('formCliente').style.display = 'block';
   document.getElementById('clienteForm').reset();
-  document.getElementById('id_cliente').value = '';
   document.getElementById('mensajeExitoCliente').style.display = 'none';
+
 }
 
 // Cancelar formulario cliente
 function cancelarCliente() {
+ // listarClientes();
+
   document.getElementById('formCliente').style.display = 'none';
+  //volverPanel();
+  
 }
 
 // Listar clientes en tabla
 async function listarClientes() {
   try {
-    const { data, error } = await supabaseClient.from('clientes').select('*').order('id_cliente');
+    const { data, error } = await supabaseClient.from('clientes').select('*').order('dni_cuil');
     if (error) throw error;
 
     const tbody = document.querySelector('#tablaClientes tbody');
     tbody.innerHTML = '';
+
     data.forEach(cliente => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${cliente.id_cliente}</td>
+        <td>${cliente.dni_cuil}</td>
         <td>${cliente.nombre}</td>
-        <td>${cliente.documento}</td>
-        <td>${cliente.contacto}</td>
+        <td>${cliente.tipo_cliente}</td>
+        <td>${cliente.email}</td>
+        <td>${cliente.telefono}</td>
+        <td>${cliente.pref_cont}</td>
         <td>${cliente.direccion}</td>
         <td>${cliente.estado}</td>
+        <td>${cliente.alta_id_emp}</td>
         <td>
-          <button class="btn-editar" onclick="editarCliente(${cliente.id_cliente})">Editar</button>
-          <button class="btn-eliminar" onclick="bajaCliente(${cliente.id_cliente})">Eliminar</button>
+          <button class="btn-editar" onclick="editarCliente('${cliente.dni_cuil}')">Editar</button>
+          <button class="btn-eliminar" onclick="bajaCliente('${cliente.dni_cuil}')">Eliminar</button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -57,64 +66,217 @@ async function listarClientes() {
   }
 }
 
-// Crear o editar cliente
-document.getElementById('clienteForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  try {
-    const id_cliente = document.getElementById('id_cliente').value;
-    const nombre = document.getElementById('nombre').value;
-    const documento = document.getElementById('documento').value;
-    const contacto = document.getElementById('contacto').value;
-    const direccion = document.getElementById('direccion').value;
-    const estado = document.getElementById('estado').value;
+// ================== VALIDACIONES ==================
 
-    if (id_cliente) {
-      const { error } = await supabaseClient.from('clientes').update({ nombre, documento, contacto, direccion, estado }).eq('id_cliente', id_cliente);
-      if (error) throw error;
-    } else {
-      const { error } = await supabaseClient.from('clientes').insert([{ nombre, documento, contacto, direccion, estado }]);
-      if (error) throw error;
-    }
+// Validar email
+function validarEmail(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+}
 
-    document.getElementById('formCliente').style.display = 'none';
-    document.getElementById('textoExitoCliente').innerText = `Cliente "${nombre}" registrado correctamente.`;
-    document.getElementById('mensajeExitoCliente').style.display = 'block';
-    listarClientes();
-  } catch (err) {
-    console.error('Error guardando cliente:', err);
-    alert('Ocurrió un error al guardar el cliente.');
+// Validar teléfono (solo números, entre 8 y 15 dígitos)
+function validarTelefono(telefono) {
+  const regex = /^[0-9]{8,15}$/;//15 por numero internacional
+  return regex.test(telefono);
+}
+
+// Validar DNI ( 8 dígitos)
+function validarDNI(dni) {
+  const regex = /^[0-9]{8}$/;
+  return regex.test(dni);
+}
+
+// Validar CUIL (formato XX-XXXXXXXX-X)
+function validarCUIL(cuil) {
+  const regex = /^[0-9]{2}-[0-9]{8}-[0-9]$/;
+  return regex.test(cuil);
+}
+
+// Mostrar mensaje de error en pantalla
+function mostrarError(mensaje) {
+  const div = document.getElementById('mensajeError');
+  if (!div) return alert(mensaje); // fallback si no hay div
+  div.innerText = mensaje;
+  div.style.display = 'block';
+  setTimeout(() => div.style.display = 'none', 4000);
+}
+
+
+// ================== CAMBIO DINÁMICO LABEL DOCUMENTO ==================
+const tipoClienteSelect = document.getElementById("tipoCliente");
+const documentoLabel = document.getElementById("labelDocumento");
+const documentoInput = document.getElementById("documento");
+
+
+tipoClienteSelect.addEventListener("change", () => {
+  if (tipoClienteSelect.value === "consumidor final") {
+    documentoLabel.innerText = "DNI:";
+    documentoInput.placeholder = "Ej: 12345678";
+    documentoInput.value = "";
+  } else if (tipoClienteSelect.value === "comercial") {
+    documentoLabel.innerText = "CUIL:";
+    documentoInput.placeholder = "Ej CUIL: 20-12345678-3";
+  } else {
+    documentoLabel.innerText = "Documento:";
+    documentoInput.placeholder = "Seleccione tipo primero";
+    documentoInput.value = "";
   }
 });
 
-// Editar cliente
-async function editarCliente(id) {
+// ================== EVENTO SUBMIT ==================
+document.getElementById("clienteForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  // Tomar valores
+  const id_cliente = document.getElementById("id_cliente").value;
+  const nombre = document.getElementById("nombre").value.trim();
+  const tipo_cliente = document.getElementById("tipoCliente").value;
+  const dni_cuil = document.getElementById("documento").value.trim();
+  const pref_cont = document.getElementById("preferenciaContacto").value;
+  const email = document.getElementById("email").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const direccion = document.getElementById("direccion").value.trim();
+  const estado = document.getElementById("estado").value;
+
+  // ============ VALIDACIONES ============
+  if (!nombre) return mostrarError("El nombre es obligatorio");
+  if (!tipo_cliente) return mostrarError("Debe seleccionar el tipo de cliente");
+
+  if (tipo_cliente === "consumidor final" && !validarDNI(dni_cuil)) {
+    return mostrarError("Formato incorrecto de DNI. Ej: 12345678");
+  }
+
+  if (tipo_cliente === "comercial" && !validarCUIL(dni_cuil)) {
+    return mostrarError("Formato incorrecto de CUIL. Ej: 20-12345678-3");
+  }
+
+  if (!pref_cont) return mostrarError("Debe seleccionar la preferencia de contacto");
+  if (!validarEmail(email)) return mostrarError("El email no tiene un formato válido");
+  if (!validarTelefono(telefono)) return mostrarError("Formato incorrecto de teléfono. Solo números, Ej: 1123456789");
+  if (!direccionEsValida(direccion)) return mostrarError("Debe seleccionar una dirección de la lista de direcciones validadas");
+
   try {
-    const { data, error } = await supabaseClient.from('clientes').select('*').eq('id_cliente', id).single();
+    // ============ VERIFICAR DUPLICADOS ============
+    const { data: existente } = await supabaseClient
+      .from('clientes')
+      .select('id_cliente')
+      .eq('dni_cuil', dni_cuil)
+      .maybeSingle();
+
+    // Permite que el mismo cliente mantenga su DNI/CUIL
+    if (existente && Number(id_cliente) !== existente.id_cliente) {
+      throw new Error("Ya existe un cliente con ese DNI/CUIL");
+    }
+
+    // ============ DATOS DEL CLIENTE ============
+    const nuevoCliente = {
+      nombre,
+      tipo_cliente,
+      dni_cuil,
+      pref_cont,
+      email,
+      telefono,
+      direccion,
+      estado
+    };
+
+    // ============ CREAR O EDITAR ============
+    if (id_cliente) {
+      // === EDICIÓN ===
+      const { error } = await supabaseClient
+        .from("clientes")
+        .update(nuevoCliente)
+        .eq('id_cliente', id_cliente);
+      if (error) throw error;
+      document.getElementById("textoExitoCliente").innerText = "Cliente actualizado con éxito";
+    } else {
+      // === CREACIÓN ===
+      const { error } = await supabaseClient
+        .from("clientes")
+        .insert([nuevoCliente]);
+      if (error) throw error;
+      document.getElementById("textoExitoCliente").innerText = "Cliente creado con éxito";
+    }
+
+    // Mostrar mensaje de éxito y ocultar formulario
+    document.getElementById("formCliente").style.display = "none";
+    document.getElementById("mensajeExitoCliente").style.display = "block";
+
+    // Refrescar lista de clientes
+    listarClientes();
+
+  } catch (err) {
+    console.error("Error:", err);
+    mostrarError(err.message || "Error al procesar el cliente");
+  }
+});
+
+
+// ================== EDITAR CLIENTE ==================
+async function editarCliente(dni) {
+  try {
+  
+    const { data, error } = await supabaseClient
+      .from('clientes')
+      .select('*')
+      .eq('dni_cuil', dni)
+      .single();
     if (error) throw error;
 
-    document.getElementById('id_cliente').value = data.id_cliente;
+    // Mapear tipo_cliente de DB al value del select
+    let tipoValue = '';
+    if (data.tipo_cliente === "consumidor final") tipoValue = "consumidor final";
+    else if (data.tipo_cliente === "comercial") tipoValue = "comercial";
+
+    // 1️⃣ Poner el select del tipo
+    tipoClienteSelect.value = tipoValue;
+
+    // 2️⃣ Actualizar label y placeholder sin borrar el valor
+    if (tipoValue === "consumidor final") {
+
+      documentoLabel.innerText = "DNI:";
+      documentoInput.placeholder = "Ingrese DNI (7 u 8 dígitos)";
+    } else if (tipoValue === "comercial") {
+      documentoLabel.innerText = "CUIL:";
+      documentoInput.placeholder = "Ingrese CUIL (XX-XXXXXXXX-X)";
+    }
+
+    // 3️⃣ Poner el valor del documento real
+    documentoInput.value = data.dni_cuil;
+
+    // Resto de campos
     document.getElementById('nombre').value = data.nombre;
-    document.getElementById('documento').value = data.documento;
-    document.getElementById('contacto').value = data.contacto;
     document.getElementById('direccion').value = data.direccion;
+    document.getElementById('email').value = data.email;
+    document.getElementById('telefono').value = data.telefono;
+    document.getElementById('preferenciaContacto').value = data.pref_cont;
     document.getElementById('estado').value = data.estado;
+
+    document.getElementById('id_cliente').value = data.id_cliente;
+
+    // Mostrar formulario
     document.getElementById('formCliente').style.display = 'block';
   } catch (err) {
-    console.error('Error editando cliente:', err);
-    alert('Ocurrió un error al cargar los datos del cliente.');
+    console.error(err);
+    mostrarError('Error al cargar datos del cliente');
   }
 }
 
-// Dar de baja cliente
-async function bajaCliente(id) {
+
+
+
+// ================== DAR DE BAJA CLIENTE ==================
+async function bajaCliente(dni) {
   if (!confirm('¿Desea dar de baja este cliente?')) return;
   try {
-    const { error } = await supabaseClient.from('clientes').update({ estado: 'inactivo' }).eq('id_cliente', id);
+    const { error } = await supabaseClient.from('clientes')
+      .update({ estado: 'inactivo' })
+      .eq('dni_cuil', dni);
     if (error) throw error;
     listarClientes();
   } catch (err) {
-    console.error('Error dando de baja cliente:', err);
-    alert('Ocurrió un error al dar de baja el cliente.');
+    console.error(err);
+    mostrarError('Error al dar de baja el cliente');
   }
 }
 
@@ -140,7 +302,7 @@ function cancelarOrden() {
 // Cargar clientes en dropdown
 async function cargarClientesDropdown() {
   try {
-    const { data, error } = await supabaseClient.from('clientes').select('id_cliente, nombre').eq('estado','activo');
+    const { data, error } = await supabaseClient.from('clientes').select('id_cliente, nombre').eq('estado', 'activo');
     if (error) throw error;
 
     const select = document.getElementById('clienteOrden');
@@ -177,7 +339,7 @@ async function agregarProducto() {
     container.appendChild(div);
 
     // Cargar productos en el select
-    const { data, error } = await supabaseClient.from('productos').select('*').eq('estado','activo');
+    const { data, error } = await supabaseClient.from('productos').select('*').eq('estado', 'activo');
     if (error) throw error;
 
     const select = div.querySelector('.productoSelect');

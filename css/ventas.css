@@ -247,3 +247,25 @@ tr:hover {
 .btn-eliminar:hover {
     background-color: #a71d2a; /* rojo más oscuro */
 }
+
+    .table-wrapper {
+        overflow-x: auto;
+        margin-top:10px;
+    }
+
+    @media (max-width:768px) {
+        input, select, button {
+            width: 100%;
+            margin-top:5px;
+        }
+        .form-row {
+            flex-direction: column;
+        }
+    }
+
+    @media (max-width:480px) {
+        th, td {
+            font-size:12px;
+            padding:4px 6px;
+        }
+    }

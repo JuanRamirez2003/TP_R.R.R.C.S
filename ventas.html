@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Vendedor - Empresa de Alimentos</title>
   <link rel="stylesheet" href="css/ventas.css">
 </head>
+
 <body>
   <div class="dashboard">
     <!-- Menú lateral -->
@@ -15,7 +17,7 @@
         <li><button onclick="mostrarSeccion('clientes')">Gestión de Clientes</button></li>
         <li><button onclick="mostrarSeccion('ordenes')">Órdenes de Venta</button></li>
         <li><button onclick="mostrarSeccion('facturas')">Facturación</button></li>
-        
+
       </ul>
       <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
     </aside>
@@ -28,42 +30,97 @@
       <div id="clientes" class="seccion" style="display:none;">
         <h2>Gestión de Clientes</h2>
         <button class="btn-submit" onclick="mostrarFormularioCliente()">➕ Nuevo Cliente</button>
-        <table id="tablaClientes">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>DNI/CUIT</th>
-              <th>Contacto</th>
-              <th>Dirección</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+        <div class="table-wrapper">
+          <table id="tablaClientes">
+            <thead>
+              <tr>
+                <th>DNI/CUIT</th> <!-- Antes ID -->
+                <th>Nombre</th>
+                <th>Tipo Cliente</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th>Preferencia Contacto</th>
+                <th>Dirección</th>
+                <th>Estado</th>
+                <th>Alta por Empleado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
 
         <!-- Formulario modal Cliente -->
         <div id="formCliente" style="display:none; margin-top:20px;">
-          <h3>Nuevo/Editar Cliente</h3>
+          <h3>Nuevo Cliente</h3>
           <form id="clienteForm">
             <input type="hidden" id="id_cliente">
+
             <div class="form-group">
               <label for="nombre">Nombre:</label>
               <input type="text" id="nombre" name="nombre" required>
+
             </div>
-            <div class="form-group">
-              <label for="documento">DNI/CUIT:</label>
-              <input type="text" id="documento" name="documento" required>
+
+            <!-- Tipo de cliente y documento en la misma fila -->
+            <div class="form-row" style="display:flex; flex-direction:column; gap:20px;">
+              <div class="form-group" style="width:100%;">
+                <label for="tipoCliente">Tipo:</label>
+                <select id="tipoCliente" name="tipoCliente" required>
+                  <option value="">Seleccione una opcion</option>
+                  <option value="consumidor final">consumidor final</option>
+                  <option value="comercial">comercial</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="width:100%;">
+                <label for="documento" id="labelDocumento">Documento:</label>
+                <input type="text" id="documento" name="documento" required placeholder="Seleccione tipo primero">
+              </div>
             </div>
-            <div class="form-group">
-              <label for="contacto">Teléfono/Email:</label>
-              <input type="text" id="contacto" name="contacto">
+
+            <!-- Preferencia de contacto -->
+            <div class="form-row" style="display:flex; flex-wrap:wrap; gap:20px; align-items:flex-start;">
+              <div class="form-group" style="flex:1;">
+                <label for="preferenciaContacto">Cont de Pref:</label>
+                <select id="preferenciaContacto" name="preferenciaContacto" required>
+                  <option value="">Seleccione un opcion</option>
+                  <option value="email">Email</option>
+                  <option value="telefono">Teléfono</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label for="telefono">Teléfono:</label>
+                <input type="tel" id="telefono" name="telefono" placeholder="1123456789" required>
+
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="ej: ejemplo@correo.com" required>
+
+              </div>
+
+
             </div>
-            <div class="form-group">
-              <label for="direccion">Dirección:</label>
-              <input type="text" id="direccion" name="direccion">
+            <!-- Dirección -->
+            <div class="form-group" style="margin-top:10px;">
+              <label for="direccion" style="font-weight:bold; color:white;">Dirección:</label>
+              <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                <input type="text" id="direccion" name="direccion" placeholder="Ej: Calle Falsa 123, Springfield"
+                  required
+                  style="flex:1; padding:8px 10px; border:1px solid #ccc; border-radius:6px; font-size:14px; outline:none;"
+                  onfocus="this.style.borderColor='#007bff';" onblur="this.style.borderColor='#ccc';">
+                <button type="button" onclick="normalizarDireccion()"
+                  style="padding:8px 15px; background-color:#007bff; color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px; transition: background 0.3s;">
+                  Validar Dirección
+                </button>
+              </div>
+              <div id="resultadosDireccion" style="margin-top:8px;"></div>
             </div>
+
+
+
+
             <div class="form-group">
               <label for="estado">Estado:</label>
               <select id="estado" name="estado">
@@ -77,7 +134,8 @@
         </div>
 
         <!-- Mensaje éxito Cliente -->
-        <div id="mensajeExitoCliente" class="mensaje" style="display:none; margin-top:20px; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; text-align:center;">
+        <div id="mensajeExitoCliente" class="mensaje"
+          style="display:none; margin-top:20px; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; text-align:center;">
           <p id="textoExitoCliente" style="font-size:18px; font-weight:bold; color:#155724;"></p>
           <button onclick="volverPanel()" class="btn-submit">Volver al panel</button>
         </div>
@@ -100,7 +158,7 @@
             <!-- Contenedor dinámico de productos -->
 
             <div id="productosContainer"></div>
-          
+
 
             <button type="button" class="btn-submit" onclick="agregarProducto()">➕ Agregar Producto</button>
             <button type="submit" class="btn-submit">Guardar Orden</button>
@@ -109,7 +167,8 @@
         </div>
 
         <!-- Mensaje éxito Orden -->
-        <div id="mensajeExitoOrden" class="mensaje" style="display:none; margin-top:20px; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; text-align:center;">
+        <div id="mensajeExitoOrden" class="mensaje"
+          style="display:none; margin-top:20px; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; text-align:center;">
           <p id="textoExitoOrden" style="font-size:18px; font-weight:bold; color:#155724;"></p>
           <button onclick="volverPanel()" class="btn-submit">Volver al panel</button>
         </div>
@@ -157,6 +216,8 @@
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
   </script>
+  <script src="js/normalizarDireccion.js"></script>
   <script src="js/ventas.js"></script>
 </body>
+
 </html>
