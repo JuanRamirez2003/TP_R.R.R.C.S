@@ -4,12 +4,26 @@ function mostrarSeccion(seccionId) {
   document.querySelectorAll('.seccion').forEach(sec => sec.style.display = 'none');
   document.getElementById(seccionId).style.display = 'block';
 
-  if (seccionId === 'clientes') listarClientes();
-  if (seccionId === 'ordenes') listarOrdenes();
+  if (seccionId === 'clientes') {
+    document.getElementById('formCliente').style.display = 'none';
+    document.getElementById('mensajeExitoCliente').style.display = 'none';
+    document.getElementById('tablaClientesContainer').style.display = 'block';
+
+    listarClientes();
+  }
+
+  if (seccionId === 'ordenes') {
+    document.getElementById('formOrden').style.display = 'none';
+    document.getElementById('mensajeExitoOrden').style.display = 'none';
+    document.getElementById('tablaOrdenesContainer').style.display = 'block';
+
+    listarOrdenes();
+  }
 }
 
 // Volver al panel principal
 function volverPanel() {
+  document.getElementById("mensajeExitoCliente").style.display = "none";
   document.querySelectorAll('.seccion').forEach(sec => sec.style.display = 'none');
 }
 
@@ -17,20 +31,19 @@ function volverPanel() {
 
 // Mostrar formulario nuevo cliente
 function mostrarFormularioCliente() {
-  //document.getElementById('tablaClientes').style.display = 'none';
   document.getElementById('formCliente').style.display = 'block';
   document.getElementById('clienteForm').reset();
   document.getElementById('mensajeExitoCliente').style.display = 'none';
-
+  document.getElementById('tablaClientesContainer').style.display = 'none';
 }
 
-// Cancelar formulario cliente
-function cancelarCliente() {
- // listarClientes();
 
-  document.getElementById('formCliente').style.display = 'none';
-  //volverPanel();
+function cancelarCliente() {
   
+  document.getElementById('tablaClientesContainer').style.display = 'block';
+  document.getElementById('formCliente').style.display = 'none';
+  
+
 }
 
 // Listar clientes en tabla
@@ -74,25 +87,21 @@ function validarEmail(email) {
   return regex.test(email);
 }
 
-// Validar teléfono (solo números, entre 8 y 15 dígitos)
 function validarTelefono(telefono) {
   const regex = /^[0-9]{8,15}$/;//15 por numero internacional
   return regex.test(telefono);
 }
 
-// Validar DNI ( 8 dígitos)
 function validarDNI(dni) {
   const regex = /^[0-9]{8}$/;
   return regex.test(dni);
 }
 
-// Validar CUIL (formato XX-XXXXXXXX-X)
 function validarCUIL(cuil) {
   const regex = /^[0-9]{2}-[0-9]{8}-[0-9]$/;
   return regex.test(cuil);
 }
 
-// Mostrar mensaje de error en pantalla
 function mostrarError(mensaje) {
   const div = document.getElementById('mensajeError');
   if (!div) return alert(mensaje); // fallback si no hay div
@@ -190,7 +199,6 @@ document.getElementById("clienteForm").addEventListener("submit", async function
       if (error) throw error;
       document.getElementById("textoExitoCliente").innerText = "Cliente actualizado con éxito";
     } else {
-      // === CREACIÓN ===
       const { error } = await supabaseClient
         .from("clientes")
         .insert([nuevoCliente]);
@@ -198,11 +206,9 @@ document.getElementById("clienteForm").addEventListener("submit", async function
       document.getElementById("textoExitoCliente").innerText = "Cliente creado con éxito";
     }
 
-    // Mostrar mensaje de éxito y ocultar formulario
     document.getElementById("formCliente").style.display = "none";
     document.getElementById("mensajeExitoCliente").style.display = "block";
 
-    // Refrescar lista de clientes
     listarClientes();
 
   } catch (err) {
@@ -215,7 +221,7 @@ document.getElementById("clienteForm").addEventListener("submit", async function
 // ================== EDITAR CLIENTE ==================
 async function editarCliente(dni) {
   try {
-  
+
     const { data, error } = await supabaseClient
       .from('clientes')
       .select('*')
@@ -228,10 +234,8 @@ async function editarCliente(dni) {
     if (data.tipo_cliente === "consumidor final") tipoValue = "consumidor final";
     else if (data.tipo_cliente === "comercial") tipoValue = "comercial";
 
-    // 1️⃣ Poner el select del tipo
     tipoClienteSelect.value = tipoValue;
 
-    // 2️⃣ Actualizar label y placeholder sin borrar el valor
     if (tipoValue === "consumidor final") {
 
       documentoLabel.innerText = "DNI:";
@@ -241,7 +245,6 @@ async function editarCliente(dni) {
       documentoInput.placeholder = "Ingrese CUIL (XX-XXXXXXXX-X)";
     }
 
-    // 3️⃣ Poner el valor del documento real
     documentoInput.value = data.dni_cuil;
 
     // Resto de campos
@@ -256,6 +259,8 @@ async function editarCliente(dni) {
 
     // Mostrar formulario
     document.getElementById('formCliente').style.display = 'block';
+
+    document.getElementById('tablaClientesContainer').style.display = 'none';
   } catch (err) {
     console.error(err);
     mostrarError('Error al cargar datos del cliente');
@@ -283,8 +288,17 @@ async function bajaCliente(dni) {
 // ===================== ÓRDENES DE VENTA =====================
 let productosOrdenList = [];
 
+async function mostrarOrdenes() {
+  document.getElementById('formOrden').style.display = 'none';
+  document.getElementById('mensajeExitoOrden').style.display = 'none';
+  document.getElementById('tablaOrdenesContainer').style.display = 'block';
+  await listarOrdenes();
+}
 // Mostrar formulario nueva orden
+
+
 function nuevaOrden() {
+
   document.getElementById('formOrden').style.display = 'block';
   document.getElementById('ordenForm').reset();
   document.getElementById('mensajeExitoOrden').style.display = 'none';
@@ -292,11 +306,14 @@ function nuevaOrden() {
   productosOrdenList = [];
   cargarClientesDropdown();
   agregarProducto(); // siempre inicia con un producto
-}
 
+  // Ocultar tabla de órdenes
+  document.getElementById('tablaOrdenes').parentElement.style.display = 'none';
+}
 // Cancelar formulario orden
 function cancelarOrden() {
   document.getElementById('formOrden').style.display = 'none';
+  document.getElementById('tablaOrdenes').parentElement.style.display = 'block';
 }
 
 // Cargar clientes en dropdown

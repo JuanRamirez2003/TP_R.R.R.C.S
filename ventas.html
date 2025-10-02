@@ -30,7 +30,7 @@
       <div id="clientes" class="seccion" style="display:none;">
         <h2>Gestión de Clientes</h2>
         <button class="btn-submit" onclick="mostrarFormularioCliente()">➕ Nuevo Cliente</button>
-        <div class="table-wrapper">
+        <div id="tablaClientesContainer" class="table-wrapper" style="margin-top:20px;">
           <table id="tablaClientes">
             <thead>
               <tr>
@@ -174,21 +174,22 @@
         </div>
 
         <!-- Tabla de órdenes -->
-        <table id="tablaOrdenes" style="margin-top:20px;">
-          <thead>
-            <tr>
-              <th>ID Orden</th>
-              <th>Cliente</th>
-              <th>Productos</th>
-              <th>Fecha</th>
-              <th>Estado</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+        <div id="tablaOrdenesContainer" style="margin-top:20px;">
+          <table id="tablaOrdenes">
+            <thead>
+              <tr>
+                <th>ID Orden</th>
+                <th>Cliente</th>
+                <th>Productos</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
-
       <!-- ===================== SECCIÓN FACTURAS ===================== -->
       <div id="facturas" class="seccion" style="display:none;">
         <h2>Facturación</h2>
