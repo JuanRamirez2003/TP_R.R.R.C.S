@@ -6,58 +6,50 @@
 <title>Panel de Supervisor - Local</title>
 <link rel="stylesheet" href="css/ventas.css">
 <style>
-body { font-family: Arial, sans-serif; margin:0; background-color:#121212; color:#e0e0e0; }
-.dashboard { display: flex; min-height:100vh; }
-.sidebar { background:#1e1e1e; color:#e0e0e0; width:220px; padding:20px; border-right:1px solid #333; }
-.sidebar h2 { color:#55a630; text-align:center; margin-bottom:20px; }
-.sidebar button { width:100%; padding:10px; margin:10px 0; border:none; border-radius:5px; cursor:pointer; background:#2a2a2a; color:#e0e0e0; font-weight:bold; transition:0.3s; }
-.sidebar button:hover { background:#55a630; color:#000; }
+  .producto-item { 
+    border:1px solid #ccc; 
+    padding:10px; 
+    margin-bottom:10px; 
+    border-radius:5px; 
+    display: flex; 
+    align-items: center; 
+    gap: 10px;
+  }
+  .producto-item select, .producto-item input {
+    padding:5px;
+    font-size: 14px;
+  }
+  .mp-container { 
+    max-height: 150px; 
+    overflow-y: auto; 
+    border:1px solid #eee; 
+    padding:5px; 
+    margin-top:5px; 
+    border-radius:5px;
+  }
+  .mp-list { margin-left:20px; margin-bottom:10px; }
+  .mp-list div { margin-bottom:3px; }
 
-.main-content { flex:1; padding:20px; background:#121212; }
+  button.agregarProducto {
+    padding: 5px 8px;
+    font-size: 14px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 4px;
+    border: none;
+    cursor:pointer;
+  }
+  button.agregarProducto:hover {
+    background-color: #0056b3;
+  }
 
-.producto-item { 
-  border:1px solid #333; 
-  padding:10px; 
-  margin-bottom:10px; 
-  border-radius:5px; 
-  display:flex; 
-  gap:10px; 
-  align-items:center; 
-  background:#1e1e1e;
-}
-.producto-item h4 { margin:0; color:#55a630; }
-.producto-item select, .producto-item input { padding:5px; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0; }
-
-.producto-item button { padding:5px 10px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer; transition:0.3s; }
-.producto-item button:hover { background:#a71d2a; }
-
-button[type="submit"] { padding:10px 15px; background:#55a630; color:#000; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:0.3s; margin-top:10px; }
-button[type="submit"]:hover { background:#4a8c2a; color:#fff; }
-
-button[type="button"]:not(.producto-item button) { padding:8px 12px; border-radius:4px; margin-top:5px; }
-
-table { width:100%; border-collapse:collapse; margin-top:15px; background:#2a2a2a; border-radius:6px; overflow:hidden; }
-table th, table td { padding:10px; text-align:center; border-bottom:1px solid #333; color:#e0e0e0; }
-table th { background:#1e1e1e; }
-table tr:hover { background:#3e3e3e; }
-
-/* BOTONES SEGUIMIENTO OP */
-.btn-editar { background-color:#007bff; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:13px; margin:2px; transition:0.3s; }
-.btn-editar:hover { background-color:#0056b3; }
-
-.btn-eliminar { background-color:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:13px; margin:2px; transition:0.3s; }
-.btn-eliminar:hover { background-color:#a71d2a; }
-
-.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000; }
-.modal-content { background:#1e1e1e; color:#e0e0e0; padding:20px; border-radius:8px; width:500px; max-height:80%; overflow-y:auto; position:relative; }
-.close-modal { position:absolute; top:10px; right:15px; cursor:pointer; font-size:18px; font-weight:bold; color:#fff; }
-
-@media(max-width:600px){
-  .dashboard{display:block;}
-  .sidebar{width:100%; margin-bottom:10px;}
-  .main-content{width:100%;}
-  .producto-item { flex-direction:column; align-items:flex-start; }
-}
+  @media(max-width:600px){
+    .dashboard{display:block;}
+    .sidebar{width:100%; margin-bottom:10px;}
+    .main-content{width:100%;}
+    input, select, button { width: 100%; margin-top:5px; }
+    .mp-container { max-height: 200px; }
+  }
 </style>
 </head>
 <body>
@@ -82,10 +74,10 @@ table tr:hover { background:#3e3e3e; }
         <div class="form-group">
           <label>Productos:</label>
           <div id="productosContainer"></div>
-          <button type="button" onclick="agregarProducto()" style="padding:5px 10px; font-size:13px;">➕ Agregar Producto</button>
+          <button type="button" onclick="agregarProducto()" class="agregarProducto">➕ Agregar Producto</button>
         </div>
-        <button type="submit">Crear OP</button>
-        <button type="button" onclick="cancelarOP()">Cancelar</button>
+        <button type="submit" class="btn-submit">Crear OP</button>
+        <button type="button" onclick="cancelarOP()" class="btn-eliminar">Cancelar</button>
       </form>
     </div>
 
@@ -119,64 +111,103 @@ table tr:hover { background:#3e3e3e; }
 
 <script>
 let ordenesProduccion = JSON.parse(localStorage.getItem("ordenesProduccion")) || [];
-const productosDisponibles = [
-  "Medallón de Pollo",
-  "Arvejas",
-  "Choclo",
-  "Patitas de Pollo",
-  "Milanesa de Carne"
-];
+const productosDisponibles = ["Medallón de Pollo", "Arvejas", "Choclo", "Patitas de Pollo", "Milanesa de Carne"];
 
-function guardarOPs(){ localStorage.setItem("ordenesProduccion", JSON.stringify(ordenesProduccion)); }
-function mostrarSeccion(id){ 
+// Guardar OPs
+function guardarOPs() { localStorage.setItem("ordenesProduccion", JSON.stringify(ordenesProduccion)); }
+
+function mostrarSeccion(id){
   document.querySelectorAll('.seccion').forEach(s=>s.style.display='none'); 
   document.getElementById(id).style.display='block'; 
-  if(id==='ordenProduccion') document.getElementById("opNumero").value = generarNumeroOP();
+  if(id==="ordenProduccion") prepararNuevaOP();
+  if(id==="seguimientoOP") cargarOP();
 }
-function generarNumeroOP(){ return `OP-2025-${(ordenesProduccion.length+1).toString().padStart(3,'0')}`; }
 
+// Generar número incremental de OP
+function generarNumeroOP(){
+  const año = 2025;
+  const numero = (ordenesProduccion.length + 1).toString().padStart(3,"0");
+  return `OP-${año}-${numero}`;
+}
+
+// Preparar nueva OP
+function prepararNuevaOP(){
+  document.getElementById("opNumero").value = generarNumeroOP();
+  document.getElementById('productosContainer').innerHTML='';
+  agregarProducto();
+}
+
+// Productos dinámicos
 function agregarProducto(){
-  const container=document.getElementById('productosContainer');
-  const div=document.createElement('div'); div.className='producto-item';
-  let opciones=productosDisponibles.map(p=>`<option value="${p}">${p}</option>`).join('');
+  const container = document.getElementById('productosContainer');
+  const div = document.createElement('div'); 
+  div.className='producto-item';
+  let opciones = productosDisponibles.map(p => `<option value="${p}">${p}</option>`).join('');
   div.innerHTML=`
-    <h4>Producto</h4>
     <select name="productoNombre[]" required>
       <option value="" disabled selected>Seleccione un producto</option>
       ${opciones}
     </select>
-    <input type="number" placeholder="Cantidad" name="productoCantidad[]" min="1" value="1" required>
-    <button type="button" onclick="eliminarProducto(this)">❌ Eliminar</button>
+    <input type="number" name="productoCantidad[]" min="1" value="1" required>
+    <button type="button" onclick="eliminarProducto(this)" class="btn-eliminar">❌</button>
   `;
   container.appendChild(div);
 }
-function eliminarProducto(btn){ btn.parentElement.remove(); if(document.querySelectorAll('.producto-item').length===0) agregarProducto(); }
-function cancelarOP(){ document.getElementById('opForm').reset(); document.getElementById('productosContainer').innerHTML=''; agregarProducto(); document.getElementById('ordenProduccion').style.display='none'; }
 
-document.getElementById('opForm').addEventListener('submit',(e)=>{
+function eliminarProducto(btn){ 
+  btn.parentElement.remove(); 
+  if(document.querySelectorAll('.producto-item').length===0) agregarProducto(); 
+}
+
+function cancelarOP(){ 
+  document.getElementById('opForm').reset(); 
+  document.getElementById('productosContainer').innerHTML=''; 
+  agregarProducto(); 
+  document.getElementById('ordenProduccion').style.display='none'; 
+}
+
+// Crear OP
+document.getElementById('opForm').addEventListener('submit', (e)=>{
   e.preventDefault();
-  const opNumero=document.getElementById('opNumero').value;
-  const productos=Array.from(document.querySelectorAll('.producto-item')).map(p=>({
-    nombre:p.querySelector('select[name="productoNombre[]"]').value,
-    cantidad:p.querySelector('input[name="productoCantidad[]"]').value
+  // Validar productos
+  const productos = Array.from(document.querySelectorAll('.producto-item')).map(p=>({
+    nombre:p.querySelector('select').value,
+    cantidad:p.querySelector('input').value
   }));
-  const nuevaOP={opNumero,productos,estado:'Pendiente',fecha_emision:new Date().toISOString()};
-  ordenesProduccion.push(nuevaOP); guardarOPs(); cancelarOP(); mostrarSeccion('seguimientoOP'); cargarOP();
+  if(productos.some(p=>!p.nombre || p.cantidad<=0)){
+    alert("Complete todos los productos con cantidad válida");
+    return;
+  }
+
+  const nuevaOP = {
+    opNumero: document.getElementById('opNumero').value,
+    productos,
+    estado:'Pendiente',
+    fecha_emision:new Date().toISOString()
+  };
+
+  ordenesProduccion.push(nuevaOP);
+  guardarOPs();
+  cancelarOP();
+  mostrarSeccion('seguimientoOP');
+  cargarOP();
 });
 
+// Cargar OPs en tabla
 function cargarOP(){
-  const tabla=document.getElementById('tablaOP'); tabla.innerHTML='';
+  const tabla = document.getElementById('tablaOP'); 
+  tabla.innerHTML='';
   ordenesProduccion.forEach(op=>{
-    const tr=document.createElement('tr');
+    const tr = document.createElement('tr');
     tr.innerHTML=`
       <td>${op.opNumero}</td>
-      <td><button class="btn-editar" onclick="verOrden('${op.opNumero}')">📄 Ver Orden</button></td>
+      <td><button onclick="verOrden('${op.opNumero}')" class="btn-editar">📄 Ver Orden</button></td>
       <td>${op.estado}</td>
       <td>${new Date(op.fecha_emision).toLocaleString()}</td>
       <td>
         ${op.estado==='Pendiente'
-          ? `<button class="btn-editar" onclick="editarOP('${op.opNumero}')">✏️ Editar</button>
-             <button class="btn-eliminar" onclick="eliminarOP('${op.opNumero}')">❌ Eliminar</button>`
+          ? `<button onclick="editarOP('${op.opNumero}')" class="btn-editar">✏️ Editar</button>
+             <button onclick="eliminarOP('${op.opNumero}')" class="btn-eliminar">❌ Eliminar</button>`
           : 'No disponible'}
       </td>
     `;
@@ -184,26 +215,48 @@ function cargarOP(){
   });
 }
 
+// Modal
 function verOrden(opNumero){
-  const op=ordenesProduccion.find(o=>o.opNumero===opNumero); if(!op) return;
-  let productosHtml=op.productos.map(p=>`<p>${p.nombre} - Cantidad: ${p.cantidad}</p>`).join('');
+  const op = ordenesProduccion.find(o=>o.opNumero===opNumero); 
+  if(!op) return;
+  let productosHtml = op.productos.map(p => `<p>${p.nombre} - Cantidad: ${p.cantidad}</p>`).join('');
   document.getElementById('detalleOrden').innerHTML=`
     <p><strong>Número OP:</strong> ${op.opNumero}</p>
     <p><strong>Fecha Emisión:</strong> ${new Date(op.fecha_emision).toLocaleString()}</p>
     <p><strong>Estado:</strong> ${op.estado}</p>
-    <h4>Productos:</h4>${productosHtml}
+    <h4>Productos:</h4>
+    ${productosHtml}
   `;
-  const modal=document.getElementById('modalOrden'); modal.style.display='flex';
-  modal.onclick=function(e){if(e.target===modal) cerrarModal();}
+  document.getElementById('modalOrden').style.display='flex';
 }
 
-function cerrarModal(){ const modal=document.getElementById('modalOrden'); modal.style.display='none'; modal.onclick=null; }
+function cerrarModal(){
+  document.getElementById('modalOrden').style.display='none';
+}
 
-function eliminarOP(opNumero){ if(!confirm('¿Eliminar esta OP completa?')) return; ordenesProduccion=ordenesProduccion.filter(o=>o.opNumero!==opNumero); guardarOPs(); cargarOP(); }
-function editarOP(opNumero){ const op=ordenesProduccion.find(o=>o.opNumero===opNumero); if(!op) return; op.productos.forEach(p=>{ const cantidad=prompt(`Editar cantidad de ${p.nombre}:`,p.cantidad); if(cantidad) p.cantidad=cantidad; }); guardarOPs(); cargarOP(); }
+// Editar OP
+function editarOP(opNumero){
+  const op = ordenesProduccion.find(o=>o.opNumero===opNumero); 
+  if(!op) return;
+  op.productos.forEach(p=>{
+    const cant = prompt(`Editar cantidad de ${p.nombre}:`, p.cantidad);
+    if(cant && !isNaN(cant) && cant>0) p.cantidad = cant;
+  });
+  guardarOPs();
+  cargarOP();
+}
+
+// Eliminar OP
+function eliminarOP(opNumero){
+  if(confirm(`¿Eliminar OP ${opNumero}?`)){
+    ordenesProduccion = ordenesProduccion.filter(o=>o.opNumero!==opNumero);
+    guardarOPs();
+    cargarOP();
+  }
+}
 
 // Inicial
-agregarProducto();
+prepararNuevaOP();
 </script>
 </body>
 </html>
