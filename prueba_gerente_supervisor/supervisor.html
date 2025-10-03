@@ -37,7 +37,7 @@ table th, table td { border:1px solid #ccc; padding:5px; text-align:left; }
       <form id="opForm">
         <div class="form-group">
           <label for="opNumero">Número de OP:</label>
-          <input type="text" id="opNumero" placeholder="OP-2025-010" required>
+          <input type="text" id="opNumero" readonly required>
         </div>
         <div class="form-group">
           <label>Productos:</label>
@@ -91,8 +91,21 @@ const productosDisponibles = [
 
 // Guardar OPs
 function guardarOPs() { localStorage.setItem("ordenesProduccion", JSON.stringify(ordenesProduccion)); }
-function generarId() { return Date.now(); }
-function mostrarSeccion(id){ document.querySelectorAll('.seccion').forEach(s=>s.style.display='none'); document.getElementById(id).style.display='block'; }
+function mostrarSeccion(id){ 
+  document.querySelectorAll('.seccion').forEach(s=>s.style.display='none'); 
+  document.getElementById(id).style.display='block'; 
+
+  if(id === "ordenProduccion"){
+    document.getElementById("opNumero").value = generarNumeroOP();
+  }
+}
+
+// Generar número incremental de OP
+function generarNumeroOP(){
+  const año = 2025; // fijo como pediste
+  const numero = (ordenesProduccion.length + 1).toString().padStart(3,"0");
+  return `OP-${año}-${numero}`;
+}
 
 // PRODUCTOS
 function agregarProducto(){
@@ -133,8 +146,7 @@ document.getElementById('opForm').addEventListener('submit', (e)=>{
   }));
 
   const nuevaOP = {
-    id: generarId(),
-    opNumero,
+    opNumero,                // se usa como ID también
     productos,
     estado:'Pendiente',
     fecha_emision:new Date().toISOString()
@@ -154,12 +166,15 @@ function cargarOP(){
   ordenesProduccion.forEach(op=>{
     const tr = document.createElement('tr');
     tr.innerHTML=`
-      <td>${op.id}</td>
-      <td><button onclick="verOrden(${op.id})">📄 Ver Orden</button></td>
+      <td>${op.opNumero}</td> <!-- ID ahora es el número de OP -->
+      <td><button onclick="verOrden('${op.opNumero}')">📄 Ver Orden</button></td>
       <td>${op.estado}</td>
       <td>${new Date(op.fecha_emision).toLocaleString()}</td>
       <td>
-        ${op.estado==='Pendiente'?`<button onclick="editarOP(${op.id})">✏️ Editar</button> <button onclick="eliminarOP(${op.id})">❌ Eliminar</button>`:'No disponible'}
+        ${op.estado==='Pendiente'
+          ? `<button onclick="editarOP('${op.opNumero}')">✏️ Editar</button>
+             <button onclick="eliminarOP('${op.opNumero}')">❌ Eliminar</button>`
+          : 'No disponible'}
       </td>
     `;
     tabla.appendChild(tr);
@@ -167,14 +182,13 @@ function cargarOP(){
 }
 
 // VER ORDEN MODAL
-function verOrden(id){
-  const op = ordenesProduccion.find(o=>o.id===id); 
+function verOrden(opNumero){
+  const op = ordenesProduccion.find(o=>o.opNumero===opNumero); 
   if(!op) return;
 
   let productosHtml = op.productos.map(p => `<p>${p.nombre} - Cantidad: ${p.cantidad}</p>`).join('');
 
   let html=`
-    <p><strong>ID:</strong> ${op.id}</p>
     <p><strong>Número OP:</strong> ${op.opNumero}</p>
     <p><strong>Fecha Emisión:</strong> ${new Date(op.fecha_emision).toLocaleString()}</p>
     <p><strong>Estado:</strong> ${op.estado}</p>
@@ -199,18 +213,16 @@ function cerrarModal(){
 }
 
 // ELIMINAR ORDEN
-function eliminarOP(id){
+function eliminarOP(opNumero){
   if(!confirm('¿Eliminar esta OP completa?')) return;
-  ordenesProduccion = ordenesProduccion.filter(o=>o.id!==id);
+  ordenesProduccion = ordenesProduccion.filter(o=>o.opNumero!==opNumero);
   guardarOPs();
   cargarOP();
 }
 
 // EDITAR OP
-function editarOP(id){
-  const op = ordenesProduccion.find(o=>o.id===id); if(!op) return;
-  const nuevoNumero = prompt('Editar número de OP:', op.opNumero);
-  if(nuevoNumero) op.opNumero = nuevoNumero;
+function editarOP(opNumero){
+  const op = ordenesProduccion.find(o=>o.opNumero===opNumero); if(!op) return;
   op.productos.forEach((p,i)=>{
     const cantidad = prompt(`Editar cantidad de ${p.nombre}:`, p.cantidad);
     if(cantidad) p.cantidad = cantidad;
