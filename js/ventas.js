@@ -319,12 +319,23 @@ function cancelarOrden() {
 // Cargar clientes en dropdown
 async function cargarClientesDropdown() {
   try {
-    const { data, error } = await supabaseClient.from('clientes').select('id_cliente, nombre').eq('estado', 'activo');
+    const { data, error } = await supabaseClient
+      .from('clientes')
+      .select('id_cliente, nombre')
+      .eq('estado', 'activo');
     if (error) throw error;
 
     const select = document.getElementById('clienteOrden');
     select.innerHTML = '<option value="">Seleccione...</option>';
     data.forEach(c => select.innerHTML += `<option value="${c.id_cliente}">${c.nombre}</option>`);
+
+    // Inicializar Select2
+    $('#clienteOrden').select2({
+      placeholder: "Buscar cliente...",
+      allowClear: true,
+      dropdownParent: $('#formOrden') // necesario si está dentro de un modal
+    });
+
   } catch (err) {
     console.error('Error cargando clientes para orden:', err);
   }
@@ -361,7 +372,14 @@ async function agregarProducto() {
 
     const select = div.querySelector('.productoSelect');
     select.innerHTML = '<option value="">Seleccione...</option>';
-    data.forEach(p => select.innerHTML += `<option value="${p.id_producto}">${p.nombre} - Stock: ${p.stock}</option>`);
+    data.forEach(p => select.innerHTML += `<option value="${p.id_producto}">${p.nombre} </option>`);//- Stock: ${p.stock}
+  
+     $(select).select2({
+      placeholder: "Buscar producto...",
+      allowClear: true,
+      dropdownParent: $(div) // el dropdown aparece sobre el div del producto
+    });
+  
   } catch (err) {
     console.error('Error agregando producto:', err);
     alert('Ocurrió un error al agregar el producto.');
