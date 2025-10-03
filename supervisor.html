@@ -1,196 +1,209 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Supervisor - Empresa de Alimentos</title>
-  <link rel="stylesheet" href="css/ventas.css">
-  <style>
-    .producto-item { 
-      border:1px solid #ccc; 
-      padding:10px; 
-      margin-bottom:10px; 
-      border-radius:5px; 
-    }
-    .producto-item h4 { margin:5px 0; }
-    .mp-container { 
-      max-height: 150px; 
-      overflow-y: auto; 
-      border:1px solid #eee; 
-      padding:5px; 
-      margin-top:5px; 
-      border-radius:5px;
-    }
-    .mp-list { margin-left:20px; margin-bottom:10px; }
-    .mp-list div { margin-bottom:3px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Supervisor - Local</title>
+<link rel="stylesheet" href="css/ventas.css">
+<style>
+body { font-family: Arial, sans-serif; margin:0; background-color:#121212; color:#e0e0e0; }
+.dashboard { display: flex; min-height:100vh; }
+.sidebar { background:#1e1e1e; color:#e0e0e0; width:220px; padding:20px; border-right:1px solid #333; }
+.sidebar h2 { color:#55a630; text-align:center; margin-bottom:20px; }
+.sidebar button { width:100%; padding:10px; margin:10px 0; border:none; border-radius:5px; cursor:pointer; background:#2a2a2a; color:#e0e0e0; font-weight:bold; transition:0.3s; }
+.sidebar button:hover { background:#55a630; color:#000; }
 
-    /* Responsivo */
-    @media (max-width: 600px) {
-      .dashboard { display: block; }
-      .sidebar { width: 100%; margin-bottom: 10px; }
-      .main-content { width: 100%; }
-      input, select, button { width: 100%; margin-top:5px; }
-      .mp-container { max-height: 200px; }
-    }
-  </style>
+.main-content { flex:1; padding:20px; background:#121212; }
+
+.producto-item { 
+  border:1px solid #333; 
+  padding:10px; 
+  margin-bottom:10px; 
+  border-radius:5px; 
+  display:flex; 
+  gap:10px; 
+  align-items:center; 
+  background:#1e1e1e;
+}
+.producto-item h4 { margin:0; color:#55a630; }
+.producto-item select, .producto-item input { padding:5px; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0; }
+
+.producto-item button { padding:5px 10px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer; transition:0.3s; }
+.producto-item button:hover { background:#a71d2a; }
+
+button[type="submit"] { padding:10px 15px; background:#55a630; color:#000; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:0.3s; margin-top:10px; }
+button[type="submit"]:hover { background:#4a8c2a; color:#fff; }
+
+button[type="button"]:not(.producto-item button) { padding:8px 12px; border-radius:4px; margin-top:5px; }
+
+table { width:100%; border-collapse:collapse; margin-top:15px; background:#2a2a2a; border-radius:6px; overflow:hidden; }
+table th, table td { padding:10px; text-align:center; border-bottom:1px solid #333; color:#e0e0e0; }
+table th { background:#1e1e1e; }
+table tr:hover { background:#3e3e3e; }
+
+/* BOTONES SEGUIMIENTO OP */
+.btn-editar { background-color:#007bff; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:13px; margin:2px; transition:0.3s; }
+.btn-editar:hover { background-color:#0056b3; }
+
+.btn-eliminar { background-color:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:13px; margin:2px; transition:0.3s; }
+.btn-eliminar:hover { background-color:#a71d2a; }
+
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000; }
+.modal-content { background:#1e1e1e; color:#e0e0e0; padding:20px; border-radius:8px; width:500px; max-height:80%; overflow-y:auto; position:relative; }
+.close-modal { position:absolute; top:10px; right:15px; cursor:pointer; font-size:18px; font-weight:bold; color:#fff; }
+
+@media(max-width:600px){
+  .dashboard{display:block;}
+  .sidebar{width:100%; margin-bottom:10px;}
+  .main-content{width:100%;}
+  .producto-item { flex-direction:column; align-items:flex-start; }
+}
+</style>
 </head>
 <body>
-  <div class="dashboard">
-    <aside class="sidebar">
-      <h2>Supervisor</h2>
-      <ul>
-        <li><button onclick="mostrarSeccion('ordenProduccion')">Creación de Orden de Producción</button></li>
-      </ul>
-      <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
-    </aside>
+<div class="dashboard">
+  <aside class="sidebar">
+    <h2>Supervisor</h2>
+    <button onclick="mostrarSeccion('ordenProduccion')">Creación OP</button>
+    <button onclick="mostrarSeccion('seguimientoOP'); cargarOP()">Seguimiento OP</button>
+  </aside>
 
-    <main class="main-content">
-      <h1>Panel de Supervisor</h1>
+  <main class="main-content">
+    <h1>Panel de Supervisor</h1>
 
-      <!-- SECCIÓN ORDEN DE PRODUCCIÓN -->
-      <div id="ordenProduccion" class="seccion" style="display:none;">
-        <h2>Creación de Orden de Producción (OP)</h2>
-
-        <form id="opForm">
-          <!-- Información general -->
-          <div class="form-group">
-            <label for="opNumero">Número de OP:</label>
-            <input type="text" id="opNumero" name="opNumero" placeholder="OP-2025-010" required>
-          </div>
-
-          <div class="form-group">
-            <label for="fechaCreacion">Fecha de creación:</label>
-            <input type="date" id="fechaCreacion" name="fechaCreacion" readonly required>
-          </div>
-
-          <div class="form-group">
-            <label for="motivo">Motivo:</label>
-            <input type="text" id="motivo" name="motivo" placeholder="OV#1234 (30 kg), stock bajo" required>
-          </div>
-
-          <!-- Productos -->
-          <div class="form-group">
-            <label>Productos:</label>
-            <div id="productosContainer"></div>
-            <button type="button" onclick="agregarProducto()">➕ Agregar Producto</button>
-          </div>
-
-          <!-- Reserva -->
-          <div class="form-group">
-            <label for="reserva">Reserva:</label>
-            <input type="text" id="reserva" name="reserva" placeholder="30 bolsas para OV#1234, resto para stock">
-          </div>
-
-          <!-- Botones -->
-          <button type="submit" class="btn-submit">Crear OP</button>
-          <button type="button" onclick="cancelarOP()" class="btn-submit">Cancelar</button>
-        </form>
-      </div>
-
-    </main>
-  </div>
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script>
-    const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co";
-    const supabaseKey =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      const fechaHoy = new Date().toISOString().split('T')[0];
-      document.getElementById('fechaCreacion').value = fechaHoy;
-
-      // Traer productos desde Supabase
-      const { data: productos, error } = await supabaseClient.from('productos').select('nombre');
-      if(error) {
-        console.error('Error cargando productos:', error);
-        return;
-      }
-      window.listaProductos = productos.map(p => p.nombre);
-
-      agregarProducto();
-    });
-
-    function mostrarSeccion(seccionId) {
-      const secciones = document.querySelectorAll('.seccion');
-      secciones.forEach(sec => sec.style.display = 'none');
-      document.getElementById(seccionId).style.display = 'block';
-    }
-
-    const recetas = {
-      "Patitas congeladas": [
-        { nombre: "Pollo", cantidad: 2, unidad: "kg" },
-        { nombre: "Harina", cantidad: 0.2, unidad: "kg" },
-        { nombre: "Bolsa plástica", cantidad: 1, unidad: "und" }
-      ],
-      "Alitas congeladas": [
-        { nombre: "Pollo", cantidad: 1.5, unidad: "kg" },
-        { nombre: "Sal", cantidad: 0.05, unidad: "kg" },
-        { nombre: "Bolsa plástica", cantidad: 1, unidad: "und" }
-      ]
-    };
-
-    function agregarProducto() {
-      const container = document.getElementById('productosContainer');
-      const div = document.createElement('div');
-      div.className = 'producto-item';
-
-      let options = '<option value="">--Seleccione producto--</option>';
-      if(window.listaProductos) {
-        window.listaProductos.forEach(p => {
-          options += `<option value="${p}">${p}</option>`;
-        });
-      }
-
-      div.innerHTML = `
-        <h4>Producto</h4>
-        <select name="productoNombre[]" required onchange="actualizarMP(this)">
-          ${options}
-        </select>
-        <input type="number" placeholder="Cantidad de lotes" name="productoCantidad[]" min="1" value="1" required oninput="actualizarMP(this)">
-        <select name="productoUnidad[]">
-          <option value="Lote">Lote</option>
-        </select>
-        <button type="button" onclick="eliminarProducto(this)">❌ Eliminar Producto</button>
-
-        <div class="mp-container">
-          <h5>MP Requeridas (calculadas):</h5>
-          <div class="mp-list"></div>
+    <!-- CREACIÓN OP -->
+    <div id="ordenProduccion" class="seccion" style="display:none;">
+      <h2>Creación de Orden de Producción</h2>
+      <form id="opForm">
+        <div class="form-group">
+          <label for="opNumero">Número de OP:</label>
+          <input type="text" id="opNumero" readonly required>
         </div>
-      `;
-      container.appendChild(div);
-    }
+        <div class="form-group">
+          <label>Productos:</label>
+          <div id="productosContainer"></div>
+          <button type="button" onclick="agregarProducto()" style="padding:5px 10px; font-size:13px;">➕ Agregar Producto</button>
+        </div>
+        <button type="submit">Crear OP</button>
+        <button type="button" onclick="cancelarOP()">Cancelar</button>
+      </form>
+    </div>
 
-    function eliminarProducto(btn) {
-      btn.parentElement.remove();
-      if(document.querySelectorAll('.producto-item').length === 0) agregarProducto();
-    }
+    <!-- SEGUIMIENTO OP -->
+    <div id="seguimientoOP" class="seccion" style="display:none;">
+      <h2>Seguimiento de Órdenes de Producción</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Orden</th>
+            <th>Estado</th>
+            <th>Fecha Emisión</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaOP"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
 
-    function actualizarMP(select) {
-      const productoDiv = select.parentElement;
-      const nombreProducto = select.value;
-      const cantidadLotes = parseFloat(productoDiv.querySelector('input[name="productoCantidad[]"]').value) || 1;
-      const mpListDiv = productoDiv.querySelector('.mp-list');
-      mpListDiv.innerHTML = '';
+<!-- Modal Ver Orden -->
+<div class="modal" id="modalOrden">
+  <div class="modal-content">
+    <span class="close-modal" onclick="cerrarModal()">&times;</span>
+    <h2>Detalle de Orden</h2>
+    <div id="detalleOrden"></div>
+  </div>
+</div>
 
-      if(recetas[nombreProducto]) {
-        recetas[nombreProducto].forEach(mp => {
-          const total = mp.cantidad * cantidadLotes;
-          const div = document.createElement('div');
-          div.textContent = `${mp.nombre}: ${total} ${mp.unidad}`;
-          mpListDiv.appendChild(div);
-        });
-      }
-    }
+<script>
+let ordenesProduccion = JSON.parse(localStorage.getItem("ordenesProduccion")) || [];
+const productosDisponibles = [
+  "Medallón de Pollo",
+  "Arvejas",
+  "Choclo",
+  "Patitas de Pollo",
+  "Milanesa de Carne"
+];
 
-    function cancelarOP() {
-      document.getElementById('opForm').reset();
-      document.getElementById('productosContainer').innerHTML = '';
-      agregarProducto();
-      document.getElementById('ordenProduccion').style.display = 'none';
-    }
-  </script>
+function guardarOPs(){ localStorage.setItem("ordenesProduccion", JSON.stringify(ordenesProduccion)); }
+function mostrarSeccion(id){ 
+  document.querySelectorAll('.seccion').forEach(s=>s.style.display='none'); 
+  document.getElementById(id).style.display='block'; 
+  if(id==='ordenProduccion') document.getElementById("opNumero").value = generarNumeroOP();
+}
+function generarNumeroOP(){ return `OP-2025-${(ordenesProduccion.length+1).toString().padStart(3,'0')}`; }
+
+function agregarProducto(){
+  const container=document.getElementById('productosContainer');
+  const div=document.createElement('div'); div.className='producto-item';
+  let opciones=productosDisponibles.map(p=>`<option value="${p}">${p}</option>`).join('');
+  div.innerHTML=`
+    <h4>Producto</h4>
+    <select name="productoNombre[]" required>
+      <option value="" disabled selected>Seleccione un producto</option>
+      ${opciones}
+    </select>
+    <input type="number" placeholder="Cantidad" name="productoCantidad[]" min="1" value="1" required>
+    <button type="button" onclick="eliminarProducto(this)">❌ Eliminar</button>
+  `;
+  container.appendChild(div);
+}
+function eliminarProducto(btn){ btn.parentElement.remove(); if(document.querySelectorAll('.producto-item').length===0) agregarProducto(); }
+function cancelarOP(){ document.getElementById('opForm').reset(); document.getElementById('productosContainer').innerHTML=''; agregarProducto(); document.getElementById('ordenProduccion').style.display='none'; }
+
+document.getElementById('opForm').addEventListener('submit',(e)=>{
+  e.preventDefault();
+  const opNumero=document.getElementById('opNumero').value;
+  const productos=Array.from(document.querySelectorAll('.producto-item')).map(p=>({
+    nombre:p.querySelector('select[name="productoNombre[]"]').value,
+    cantidad:p.querySelector('input[name="productoCantidad[]"]').value
+  }));
+  const nuevaOP={opNumero,productos,estado:'Pendiente',fecha_emision:new Date().toISOString()};
+  ordenesProduccion.push(nuevaOP); guardarOPs(); cancelarOP(); mostrarSeccion('seguimientoOP'); cargarOP();
+});
+
+function cargarOP(){
+  const tabla=document.getElementById('tablaOP'); tabla.innerHTML='';
+  ordenesProduccion.forEach(op=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${op.opNumero}</td>
+      <td><button class="btn-editar" onclick="verOrden('${op.opNumero}')">📄 Ver Orden</button></td>
+      <td>${op.estado}</td>
+      <td>${new Date(op.fecha_emision).toLocaleString()}</td>
+      <td>
+        ${op.estado==='Pendiente'
+          ? `<button class="btn-editar" onclick="editarOP('${op.opNumero}')">✏️ Editar</button>
+             <button class="btn-eliminar" onclick="eliminarOP('${op.opNumero}')">❌ Eliminar</button>`
+          : 'No disponible'}
+      </td>
+    `;
+    tabla.appendChild(tr);
+  });
+}
+
+function verOrden(opNumero){
+  const op=ordenesProduccion.find(o=>o.opNumero===opNumero); if(!op) return;
+  let productosHtml=op.productos.map(p=>`<p>${p.nombre} - Cantidad: ${p.cantidad}</p>`).join('');
+  document.getElementById('detalleOrden').innerHTML=`
+    <p><strong>Número OP:</strong> ${op.opNumero}</p>
+    <p><strong>Fecha Emisión:</strong> ${new Date(op.fecha_emision).toLocaleString()}</p>
+    <p><strong>Estado:</strong> ${op.estado}</p>
+    <h4>Productos:</h4>${productosHtml}
+  `;
+  const modal=document.getElementById('modalOrden'); modal.style.display='flex';
+  modal.onclick=function(e){if(e.target===modal) cerrarModal();}
+}
+
+function cerrarModal(){ const modal=document.getElementById('modalOrden'); modal.style.display='none'; modal.onclick=null; }
+
+function eliminarOP(opNumero){ if(!confirm('¿Eliminar esta OP completa?')) return; ordenesProduccion=ordenesProduccion.filter(o=>o.opNumero!==opNumero); guardarOPs(); cargarOP(); }
+function editarOP(opNumero){ const op=ordenesProduccion.find(o=>o.opNumero===opNumero); if(!op) return; op.productos.forEach(p=>{ const cantidad=prompt(`Editar cantidad de ${p.nombre}:`,p.cantidad); if(cantidad) p.cantidad=cantidad; }); guardarOPs(); cargarOP(); }
+
+// Inicial
+agregarProducto();
+</script>
 </body>
 </html>
