@@ -1,139 +1,226 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel Supervisor</title>
-  <link rel="stylesheet" href="supervisor.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Supervisor - Local</title>
+<style>
+body { font-family: Arial, sans-serif; margin:0; }
+.dashboard { display: flex; min-height:100vh; }
+.sidebar { background:#1e3a8a; color:white; width:220px; padding:20px; }
+.sidebar button { display:block; width:100%; margin:10px 0; padding:10px; background:#2563eb; border:none; color:white; border-radius:5px; cursor:pointer; }
+.main-content { flex:1; padding:20px; background:#f9fafb; }
+.producto-item { border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:5px; }
+.producto-item h4 { margin:5px 0; }
+table { border-collapse: collapse; margin-top:10px; width:100%; }
+table th, table td { border:1px solid #ccc; padding:5px; text-align:left; }
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000; }
+.modal-content { background:#fff; padding:20px; border-radius:8px; width:500px; max-height:80%; overflow-y:auto; position:relative; }
+.close-modal { position:absolute; top:10px; right:15px; cursor:pointer; font-size:18px; font-weight:bold; }
+@media(max-width:600px){.dashboard{display:block;}.sidebar{width:100%; margin-bottom:10px;}.main-content{width:100%;}.modal-content{width:95%;}}
+</style>
 </head>
 <body>
-  <div class="sidebar">
+<div class="dashboard">
+  <aside class="sidebar">
     <h2>Supervisor</h2>
-    <button onclick="mostrarSeccion('stock')">📦 Stock</button>
-    <button onclick="mostrarSeccion('generar-requerimiento')">📝 Generar Requerimiento</button>
-    <button onclick="mostrarSeccion('seguimiento')">📋 Seguimiento</button>
-    <button onclick="mostrarSeccion('recepcion')">📥 Recepción</button>
-    <button onclick="mostrarSeccion('incidencias')">⚠️ Incidencias</button>
-  </div>
+    <button onclick="mostrarSeccion('ordenProduccion')">Creación OP</button>
+    <button onclick="mostrarSeccion('seguimientoOP'); cargarOP()">Seguimiento OP</button>
+  </aside>
 
-  <div class="main">
-    <!-- STOCK -->
-    <section id="stock" class="seccion activa">
-      <h2>Stock de Materias Primas</h2>
-      <table id="tablaStock">
-        <thead>
-          <tr>
-            <th>Materia Prima</th>
-            <th>Stock Actual</th>
-            <th>Mínimo</th>
-            <th>Máximo</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <button onclick="cargarEjemplo()">Cargar Ejemplo</button>
-      <button onclick="borrarDatos()">Borrar Todo</button>
-    </section>
+  <main class="main-content">
+    <h1>Panel de Supervisor</h1>
 
-    <!-- GENERAR REQUERIMIENTO -->
-    <section id="generar-requerimiento" class="seccion">
-      <h2>Generar Requerimiento</h2>
-      <form id="formRequerimiento">
-        <label>Materia Prima:</label>
-        <input type="text" id="reqMateria" required>
-        <label>Cantidad:</label>
-        <input type="number" id="reqCantidad" required>
-        <label>Justificación:</label>
-        <input type="text" id="reqJustificacion" required>
-        <button type="submit">Enviar</button>
+    <!-- CREACIÓN OP -->
+    <div id="ordenProduccion" class="seccion" style="display:none;">
+      <h2>Creación de Orden de Producción</h2>
+      <form id="opForm">
+        <div class="form-group">
+          <label for="opNumero">Número de OP:</label>
+          <input type="text" id="opNumero" placeholder="OP-2025-010" required>
+        </div>
+        <div class="form-group">
+          <label>Productos:</label>
+          <div id="productosContainer"></div>
+          <button type="button" onclick="agregarProducto()">➕ Agregar Producto</button>
+        </div>
+        <button type="submit">Crear OP</button>
+        <button type="button" onclick="cancelarOP()">Cancelar</button>
       </form>
-    </section>
+    </div>
 
-    <!-- SEGUIMIENTO -->
-    <section id="seguimiento" class="seccion">
-      <h2>Seguimiento de Requerimientos</h2>
-      <table id="tablaRequerimientos">
+    <!-- SEGUIMIENTO OP -->
+    <div id="seguimientoOP" class="seccion" style="display:none;">
+      <h2>Seguimiento de Órdenes de Producción</h2>
+      <table>
         <thead>
           <tr>
             <th>ID</th>
-            <th>Materia Prima</th>
-            <th>Cantidad</th>
-            <th>Justificación</th>
+            <th>Orden</th>
             <th>Estado</th>
+            <th>Fecha Emisión</th>
             <th>Acciones</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="tablaOP"></tbody>
       </table>
-    </section>
+    </div>
+  </main>
+</div>
 
-    <!-- RECEPCIÓN -->
-    <section id="recepcion" class="seccion">
-      <h2>Recepción de Materiales</h2>
-      <form id="formRecepcion">
-        <label>Orden de Compra:</label>
-        <input type="text" id="recOrden" required>
-        <label>Materia Prima:</label>
-        <input type="text" id="recMateria" required>
-        <label>Cantidad:</label>
-        <input type="number" id="recCantidad" required>
-        <label>Fecha Vencimiento:</label>
-        <input type="date" id="recVencimiento">
-        <label>Estado de Calidad:</label>
-        <select id="recCalidad">
-          <option value="Conforme">Conforme</option>
-          <option value="No Conforme">No Conforme</option>
-        </select>
-        <label>Observaciones:</label>
-        <input type="text" id="recObs">
-        <button type="submit">Registrar</button>
-      </form>
-      <table id="tablaRecepcion">
-        <thead>
-          <tr>
-            <th>Orden</th>
-            <th>Materia</th>
-            <th>Cantidad</th>
-            <th>Vencimiento</th>
-            <th>Calidad</th>
-            <th>Obs</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <!-- INCIDENCIAS -->
-    <section id="incidencias" class="seccion">
-      <h2>Reporte de Incidencias</h2>
-      <form id="formIncidencia">
-        <label>Materia Prima:</label>
-        <input type="text" id="incMateria" required>
-        <label>Tipo de Incidencia:</label>
-        <select id="incTipo">
-          <option value="Faltante">Faltante</option>
-          <option value="Calidad">Calidad</option>
-          <option value="Vencimiento">Vencimiento</option>
-          <option value="Daño">Daño</option>
-        </select>
-        <label>Observación:</label>
-        <input type="text" id="incObs">
-        <button type="submit">Reportar</button>
-      </form>
-      <table id="tablaIncidencias">
-        <thead>
-          <tr>
-            <th>Materia</th>
-            <th>Tipo</th>
-            <th>Observación</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
+<!-- Modal Ver Orden -->
+<div class="modal" id="modalOrden">
+  <div class="modal-content">
+    <span class="close-modal" onclick="cerrarModal()">&times;</span>
+    <h2>Detalle de Orden</h2>
+    <div id="detalleOrden"></div>
   </div>
+</div>
 
-  <script src="supervisor.js"></script>
+<script>
+let ordenesProduccion = JSON.parse(localStorage.getItem("ordenesProduccion")) || [];
+
+// Lista de productos predefinidos
+const productosDisponibles = [
+  "Medallón de Pollo",
+  "Arvejas",
+  "Choclo",
+  "Patitas de Pollo",
+  "Milanesa de Carne"
+];
+
+// Guardar OPs
+function guardarOPs() { localStorage.setItem("ordenesProduccion", JSON.stringify(ordenesProduccion)); }
+function generarId() { return Date.now(); }
+function mostrarSeccion(id){ document.querySelectorAll('.seccion').forEach(s=>s.style.display='none'); document.getElementById(id).style.display='block'; }
+
+// PRODUCTOS
+function agregarProducto(){
+  const container = document.getElementById('productosContainer');
+  const div = document.createElement('div'); div.className='producto-item';
+
+  let opciones = productosDisponibles.map(p => `<option value="${p}">${p}</option>`).join('');
+
+  div.innerHTML=`
+    <h4>Producto</h4>
+    <select name="productoNombre[]" required>
+      <option value="" disabled selected>Seleccione un producto</option>
+      ${opciones}
+    </select>
+    <input type="number" placeholder="Cantidad" name="productoCantidad[]" min="1" value="1" required>
+    <button type="button" onclick="eliminarProducto(this)">❌ Eliminar</button>
+  `;
+  container.appendChild(div);
+}
+function eliminarProducto(btn){ 
+  btn.parentElement.remove(); 
+  if(document.querySelectorAll('.producto-item').length===0) agregarProducto(); 
+}
+function cancelarOP(){ 
+  document.getElementById('opForm').reset(); 
+  document.getElementById('productosContainer').innerHTML=''; 
+  agregarProducto(); 
+  document.getElementById('ordenProduccion').style.display='none'; 
+}
+
+// CREAR OP
+document.getElementById('opForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const opNumero = document.getElementById('opNumero').value;
+  const productos = Array.from(document.querySelectorAll('.producto-item')).map(p=>({
+    nombre: p.querySelector('select[name="productoNombre[]"]').value,
+    cantidad: p.querySelector('input[name="productoCantidad[]"]').value
+  }));
+
+  const nuevaOP = {
+    id: generarId(),
+    opNumero,
+    productos,
+    estado:'Pendiente',
+    fecha_emision:new Date().toISOString()
+  };
+
+  ordenesProduccion.push(nuevaOP);
+  guardarOPs();
+  cancelarOP();
+  mostrarSeccion('seguimientoOP');
+  cargarOP();
+});
+
+// SEGUIMIENTO OP
+function cargarOP(){
+  const tabla = document.getElementById('tablaOP'); 
+  tabla.innerHTML='';
+  ordenesProduccion.forEach(op=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML=`
+      <td>${op.id}</td>
+      <td><button onclick="verOrden(${op.id})">📄 Ver Orden</button></td>
+      <td>${op.estado}</td>
+      <td>${new Date(op.fecha_emision).toLocaleString()}</td>
+      <td>
+        ${op.estado==='Pendiente'?`<button onclick="editarOP(${op.id})">✏️ Editar</button> <button onclick="eliminarOP(${op.id})">❌ Eliminar</button>`:'No disponible'}
+      </td>
+    `;
+    tabla.appendChild(tr);
+  });
+}
+
+// VER ORDEN MODAL
+function verOrden(id){
+  const op = ordenesProduccion.find(o=>o.id===id); 
+  if(!op) return;
+
+  let productosHtml = op.productos.map(p => `<p>${p.nombre} - Cantidad: ${p.cantidad}</p>`).join('');
+
+  let html=`
+    <p><strong>ID:</strong> ${op.id}</p>
+    <p><strong>Número OP:</strong> ${op.opNumero}</p>
+    <p><strong>Fecha Emisión:</strong> ${new Date(op.fecha_emision).toLocaleString()}</p>
+    <p><strong>Estado:</strong> ${op.estado}</p>
+    <h4>Productos:</h4>
+    ${productosHtml}
+  `;
+
+  const modal = document.getElementById('modalOrden');
+  document.getElementById('detalleOrden').innerHTML = html;
+  modal.style.display = 'flex';
+
+  modal.onclick = function(e){
+    if(e.target === modal) cerrarModal();
+  }
+}
+
+// Cerrar modal
+function cerrarModal(){
+  const modal = document.getElementById('modalOrden');
+  modal.style.display = 'none';
+  modal.onclick = null;
+}
+
+// ELIMINAR ORDEN
+function eliminarOP(id){
+  if(!confirm('¿Eliminar esta OP completa?')) return;
+  ordenesProduccion = ordenesProduccion.filter(o=>o.id!==id);
+  guardarOPs();
+  cargarOP();
+}
+
+// EDITAR OP
+function editarOP(id){
+  const op = ordenesProduccion.find(o=>o.id===id); if(!op) return;
+  const nuevoNumero = prompt('Editar número de OP:', op.opNumero);
+  if(nuevoNumero) op.opNumero = nuevoNumero;
+  op.productos.forEach((p,i)=>{
+    const cantidad = prompt(`Editar cantidad de ${p.nombre}:`, p.cantidad);
+    if(cantidad) p.cantidad = cantidad;
+  });
+  guardarOPs();
+  cargarOP();
+}
+
+// Inicial
+agregarProducto();
+</script>
 </body>
 </html>
