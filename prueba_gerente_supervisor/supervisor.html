@@ -6,50 +6,242 @@
 <title>Panel de Supervisor - Local</title>
 <link rel="stylesheet" href="css/ventas.css">
 <style>
-  .producto-item { 
-    border:1px solid #ccc; 
-    padding:10px; 
-    margin-bottom:10px; 
-    border-radius:5px; 
-    display: flex; 
-    align-items: center; 
-    gap: 10px;
-  }
-  .producto-item select, .producto-item input {
-    padding:5px;
-    font-size: 14px;
-  }
-  .mp-container { 
-    max-height: 150px; 
-    overflow-y: auto; 
-    border:1px solid #eee; 
-    padding:5px; 
-    margin-top:5px; 
-    border-radius:5px;
-  }
-  .mp-list { margin-left:20px; margin-bottom:10px; }
-  .mp-list div { margin-bottom:3px; }
+/* --- Aquí va todo tu CSS que me pasaste --- */
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
-  button.agregarProducto {
-    padding: 5px 8px;
+/* Dashboard */
+.dashboard {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    padding: 20px;
+    border-right: 1px solid #333;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #55a630;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    margin-bottom: 15px;
+}
+
+.sidebar button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.sidebar button:hover {
+    background-color: #55a630;
+    color: #000;
+}
+
+/* Main */
+.main-content {
+    flex: 1;
+    padding: 30px;
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+/* Encabezados */
+h1, h2 {
+    color: #ffffff;
+    margin-bottom: 20px;
+}
+
+/* Sección */
+.seccion {
+    background-color: #1e1e1e;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0px 2px 8px rgba(0,0,0,0.5);
+    margin-bottom: 20px;
+}
+
+/* Formularios */
+form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    grid-column: span 2;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    margin-top: 5px;
     font-size: 14px;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #55a630;
+    box-shadow: 0 0 5px rgba(85, 166, 48, 0.3);
+}
+
+/* Botones */
+.btn-submit {
+    grid-column: span 2;
+    padding: 12px;
+    background-color: #55a630;
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-submit:hover {
+    background-color: #4a8c2a;
+    color: #fff;
+}
+
+/* Tablas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 14px;
+    background-color: #2a2a2a;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #333;
+    color: #e0e0e0;
+}
+
+th {
+    background-color: #1e1e1e;
+}
+
+tr:hover {
+    background-color: #3e3e3e;
+}
+
+/* Productos dinámicos */
+.producto-item {
+    display: flex;
+    gap: 10px;        
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.producto-item select,
+.producto-item input {
+    padding: 5px;
+    font-size: 14px;
+    background-color: #2a2a2a;
+    border: 1px solid #333;
+    color: #e0e0e0;
+    border-radius: 4px;
+}
+
+.producto-item button {
+    padding: 5px 10px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.producto-item button:hover {
+    background-color: #a71d2a;
+}
+
+/* Botón editar */
+.btn-editar {
     background-color: #007bff;
     color: white;
-    border-radius: 4px;
     border: none;
-    cursor:pointer;
-  }
-  button.agregarProducto:hover {
-    background-color: #0056b3;
-  }
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+}
 
-  @media(max-width:600px){
-    .dashboard{display:block;}
-    .sidebar{width:100%; margin-bottom:10px;}
-    .main-content{width:100%;}
-    input, select, button { width: 100%; margin-top:5px; }
-    .mp-container { max-height: 200px; }
-  }
+.btn-editar:hover {
+    background-color: #0056b3;
+}
+
+/* Botón eliminar */
+.btn-eliminar {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+    margin-left: 5px;
+}
+
+.btn-eliminar:hover {
+    background-color: #a71d2a;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .dashboard {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 15px 0;
+        border-right: none;
+        border-bottom: 1px solid #333;
+    }
+
+    form {
+        grid-template-columns: 1fr;
+    }
+}
 </style>
 </head>
 <body>
@@ -74,7 +266,7 @@
         <div class="form-group">
           <label>Productos:</label>
           <div id="productosContainer"></div>
-          <button type="button" onclick="agregarProducto()" class="agregarProducto">➕ Agregar Producto</button>
+          <button type="button" onclick="agregarProducto()" class="agregarProducto btn-submit">➕ Agregar Producto</button>
         </div>
         <button type="submit" class="btn-submit">Crear OP</button>
         <button type="button" onclick="cancelarOP()" class="btn-eliminar">Cancelar</button>
@@ -84,36 +276,61 @@
     <!-- SEGUIMIENTO OP -->
     <div id="seguimientoOP" class="seccion" style="display:none;">
       <h2>Seguimiento de Órdenes de Producción</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Orden</th>
-            <th>Estado</th>
-            <th>Fecha Emisión</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tablaOP"></tbody>
-      </table>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Numero de OP</th>
+              <th>Orden</th>
+              <th>Estado</th>
+              <th>Fecha Emisión</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaOP"></tbody>
+        </table>
+      </div>
     </div>
   </main>
 </div>
 
 <!-- Modal Ver Orden -->
-<div class="modal" id="modalOrden">
-  <div class="modal-content">
-    <span class="close-modal" onclick="cerrarModal()">&times;</span>
+<div class="modal" id="modalOrden" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color: rgba(0,0,0,0.7); justify-content:center; align-items:center;">
+  <div class="modal-content" style="background-color:#1e1e1e; padding:20px; border-radius:10px; width:90%; max-width:500px; position:relative;">
+    <span class="close-modal" onclick="cerrarModal()" style="position:absolute; top:10px; right:15px; font-size:24px; cursor:pointer; color:#fff;">&times;</span>
     <h2>Detalle de Orden</h2>
     <div id="detalleOrden"></div>
   </div>
 </div>
 
-<script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co";
+    const supabaseKey =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 let ordenesProduccion = JSON.parse(localStorage.getItem("ordenesProduccion")) || [];
-const productosDisponibles = ["Medallón de Pollo", "Arvejas", "Choclo", "Patitas de Pollo", "Milanesa de Carne"];
+// Inicializamos el array vacío
+let productosDisponibles = [];
 
-// Guardar OPs
+async function cargarProductosDisponibles() {
+  const { data, error } = await supabaseClient.from('productos').select('nombre');
+
+  if (error) {
+    console.error("Error al cargar productos:", error);
+    return;
+  }
+
+  productosDisponibles = data.map(p => p.nombre);
+  console.log("Productos disponibles:", productosDisponibles);
+}
+
+// Llamada de ejemplo:
+(async () => {
+  await cargarProductosDisponibles();
+  agregarProducto(); // Ahora tendrá los productos cargados
+})();
+
 function guardarOPs() { localStorage.setItem("ordenesProduccion", JSON.stringify(ordenesProduccion)); }
 
 function mostrarSeccion(id){
@@ -123,21 +340,18 @@ function mostrarSeccion(id){
   if(id==="seguimientoOP") cargarOP();
 }
 
-// Generar número incremental de OP
 function generarNumeroOP(){
   const año = 2025;
   const numero = (ordenesProduccion.length + 1).toString().padStart(3,"0");
   return `OP-${año}-${numero}`;
 }
 
-// Preparar nueva OP
 function prepararNuevaOP(){
   document.getElementById("opNumero").value = generarNumeroOP();
   document.getElementById('productosContainer').innerHTML='';
   agregarProducto();
 }
 
-// Productos dinámicos
 function agregarProducto(){
   const container = document.getElementById('productosContainer');
   const div = document.createElement('div'); 
@@ -166,10 +380,8 @@ function cancelarOP(){
   document.getElementById('ordenProduccion').style.display='none'; 
 }
 
-// Crear OP
 document.getElementById('opForm').addEventListener('submit', (e)=>{
   e.preventDefault();
-  // Validar productos
   const productos = Array.from(document.querySelectorAll('.producto-item')).map(p=>({
     nombre:p.querySelector('select').value,
     cantidad:p.querySelector('input').value
@@ -178,14 +390,12 @@ document.getElementById('opForm').addEventListener('submit', (e)=>{
     alert("Complete todos los productos con cantidad válida");
     return;
   }
-
   const nuevaOP = {
     opNumero: document.getElementById('opNumero').value,
     productos,
     estado:'Pendiente',
     fecha_emision:new Date().toISOString()
   };
-
   ordenesProduccion.push(nuevaOP);
   guardarOPs();
   cancelarOP();
@@ -193,7 +403,6 @@ document.getElementById('opForm').addEventListener('submit', (e)=>{
   cargarOP();
 });
 
-// Cargar OPs en tabla
 function cargarOP(){
   const tabla = document.getElementById('tablaOP'); 
   tabla.innerHTML='';
@@ -215,7 +424,6 @@ function cargarOP(){
   });
 }
 
-// Modal
 function verOrden(opNumero){
   const op = ordenesProduccion.find(o=>o.opNumero===opNumero); 
   if(!op) return;
@@ -234,7 +442,6 @@ function cerrarModal(){
   document.getElementById('modalOrden').style.display='none';
 }
 
-// Editar OP
 function editarOP(opNumero){
   const op = ordenesProduccion.find(o=>o.opNumero===opNumero); 
   if(!op) return;
@@ -246,7 +453,6 @@ function editarOP(opNumero){
   cargarOP();
 }
 
-// Eliminar OP
 function eliminarOP(opNumero){
   if(confirm(`¿Eliminar OP ${opNumero}?`)){
     ordenesProduccion = ordenesProduccion.filter(o=>o.opNumero!==opNumero);
@@ -255,7 +461,6 @@ function eliminarOP(opNumero){
   }
 }
 
-// Inicial
 prepararNuevaOP();
 </script>
 </body>
