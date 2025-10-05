@@ -19,11 +19,11 @@ if (typeof emailjs !== 'undefined') {
 // ================== Funciones ==================
 async function cargarMaterias() {
     try {
-        const { data, error } = await supabaseClient.from('materia_prima').select('*');
+        const { data, error } = await supabaseClient.from('materiales').select('*');
         if (error) throw error;
 
         materiaPrimaData = data || [];
-        const select = document.getElementById('materiaSelect');
+        const select = document.getElementById('materialSelect');
         select.innerHTML = "<option value=''>Seleccione...</option>";
 
         materiaPrimaData.forEach(mp => {
@@ -33,7 +33,7 @@ async function cargarMaterias() {
             select.appendChild(opt);
         });
     } catch (err) {
-        console.error("Error cargando materias:", err);
+        console.error("Error cargando materiales:", err);
     }
 }
 
@@ -71,14 +71,14 @@ async function cargarProveedores(id_mp) {
 }
 
 // ================== Eventos ==================
-document.getElementById('materiaSelect').addEventListener('change', e => {
+document.getElementById('materialSelect').addEventListener('change', e => {
     cargarProveedores(e.target.value);
 });
 
 document.getElementById('pedidoForm').addEventListener('submit', async e => {
     e.preventDefault();
 
-    const materiaSelect = document.getElementById('materiaSelect');
+    const materiaSelect = document.getElementById('materialSelect');
     const proveedorSelect = document.getElementById('proveedorSelect');
     const cantidadInput = document.getElementById('cantidad');
     const mensajeError = document.getElementById('mensajeError');
@@ -111,7 +111,7 @@ document.getElementById('pedidoForm').addEventListener('submit', async e => {
         mensajeExito.style.display = "block";
         mensajeError.style.display = "none";
         e.target.reset();
-        proveedorSelect.innerHTML = "<option value=''>Seleccione una materia primero</option>";
+        proveedorSelect.innerHTML = "<option value=''>Seleccione un material primero</option>";
 
         // --- Actualizar tabla ---
         cargarTablaPedidos();
