@@ -14,12 +14,77 @@ function mostrarSeccion(seccionId) {
   if (seccion) seccion.style.display = 'block';
 }
 
-// Cargar usuarios
+// ================== MODAL ==================
+function abrirModal(usuario) {
+  document.getElementById('editarId').value = usuario.id;
+  document.getElementById('editarDni').value = usuario.dni || "";
+  document.getElementById('editarNombre').value = usuario.name || "";
+  document.getElementById('editarTipo').value = usuario.estado || "Activo";
+  document.getElementById('editarArea').value = usuario.area || "";
+
+  document.getElementById('modalEditar').style.display = 'flex';
+}
+
+function cerrarModal() {
+  document.getElementById('modalEditar').style.display = 'none';
+}
+
+// ================== EDITAR USUARIO (abre modal) ==================
+async function editarUsuario(e) {
+  try {
+    const tr = e.target.closest('tr');
+    const id = tr.dataset.id;
+
+    let { data: usuario, error } = await supabaseClient
+      .from('usuarios')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !usuario) return alert('No se encontró el usuario');
+
+    abrirModal(usuario);
+  } catch (err) {
+    console.error('Error al abrir modal:', err);
+    alert('Ocurrió un error al abrir el modal.');
+  }
+}
+
+// ================== GUARDAR EDICIÓN ==================
+async function guardarEdicion() {
+  try {
+    const id = document.getElementById('editarId').value;
+    const dni = document.getElementById('editarDni').value;
+    const name = document.getElementById('editarNombre').value;
+    const estado = document.getElementById('editarTipo').value;
+    const area = document.getElementById('editarArea').value;
+
+    if (!dni || !name || !estado || !area) {
+      return alert('Todos los campos son obligatorios');
+    }
+
+    const { error } = await supabaseClient
+      .from('usuarios')
+      .update({ dni, name, estado, area })
+      .eq('id', id);
+
+    if (error) return alert('Error al actualizar usuario: ' + error.message);
+
+    alert('Usuario actualizado correctamente');
+    cerrarModal();
+    cargarUsuarios();
+  } catch (err) {
+    console.error('Error al guardar edición:', err);
+    alert('Ocurrió un error al guardar los cambios.');
+  }
+}
+
+// ================== CARGAR USUARIOS ==================
 async function cargarUsuarios() {
   try {
     const usuariosDemo = [
-      { id: 1, dni: '12345678', full_name: 'Juan Perez', tipo: 'Admin', area: 'Producción', created_at: '2025-01-01' },
-      { id: 2, dni: '87654321', full_name: 'Ana Gómez', tipo: 'Usuario', area: 'Ventas', created_at: '2025-01-05' }
+      { id: 1, dni: '12345678', name: 'Juan Perez', estado: 'Activo', area: 'Producción', created_at: '2025-01-01' },
+      { id: 2, dni: '87654321', name: 'Ana Gómez', estado: 'Inactivo', area: 'Ventas', created_at: '2025-01-05' }
     ];
 
     let { data, error } = await supabaseClient.from('usuarios').select('*');
@@ -54,15 +119,18 @@ async function cargarUsuarios() {
   }
 }
 
-// Cargar accesos
+// ================== CARGAR ACCESOS ==================
 async function cargarAccesos() {
   try {
     const accesosDemo = [
-      { id: 1, usuario_id: 1, tipo: 'Login', accion: 'Ingreso al sistema', fecha_hora: '2025-09-28 10:00' },
-      { id: 2, usuario_id: 2, tipo: 'Logout', accion: 'Cierre de sesión', fecha_hora: '2025-09-28 10:30' }
+      { id: 1, usuario: { name: 'Juan Perez' }, accion: 'Ingreso al sistema', fecha_hora: '2025-09-28 10:00' },
+      { id: 2, usuario: { name: 'Ana Gómez' }, accion: 'Cierre de sesión', fecha_hora: '2025-09-28 10:30' }
     ];
 
-    let { data, error } = await supabaseClient.from('accesos').select('*');
+    let { data, error } = await supabaseClient
+      .from('accesos')
+      .select('id, accion, fecha_hora, usuario:usuarios(name)');
+
     if (error || !data || data.length === 0) {
       console.warn('Usando datos de prueba para accesos');
       data = accesosDemo;
@@ -70,12 +138,12 @@ async function cargarAccesos() {
 
     const tbody = document.querySelector('#tablaAccesos tbody');
     tbody.innerHTML = '';
+
     data.forEach(a => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${a.id}</td>
-        <td>${a.usuario_id}</td>
-        <td>${a.estado}</td>
+        <td>${a.usuario ? a.usuario.name : 'Desconocido'}</td>
         <td>${a.accion}</td>
         <td>${a.fecha_hora}</td>
       `;
@@ -87,38 +155,7 @@ async function cargarAccesos() {
   }
 }
 
-// ================== FUNCIONES DE EDICIÓN ==================
-async function editarUsuario(e) {
-  try {
-    const tr = e.target.closest('tr');
-    const id = tr.dataset.id;
-
-    let { data: usuario, error } = await supabaseClient.from('usuarios').select('*').eq('id', id).single();
-    if (error || !usuario) return alert('No se encontró el usuario');
-
-    const nuevoNombre = prompt('Nombre:', usuario.name);
-    const nuevoDNI = prompt('DNI:', usuario.dni);
-    const nuevoEstado = prompt('Estado:', usuario.estado);
-    const nuevaArea = prompt('Área:', usuario.area);
-
-    if (!nuevoNombre || !nuevoDNI || !nuevoEstado || !nuevaArea) return;
-
-    const { error: errUpdate } = await supabaseClient
-      .from('usuarios')
-      .update({ name: nuevoNombre, dni: nuevoDNI, estado: nuevoEstado, area: nuevaArea })
-      .eq('id', id);
-
-    if (errUpdate) return alert('Error al actualizar usuario: ' + errUpdate.message);
-
-    alert('Usuario actualizado');
-    cargarUsuarios();
-  } catch (err) {
-    console.error('Error al editar usuario:', err);
-    alert('Ocurrió un error al editar el usuario.');
-  }
-}
-
-// ================== FUNCIONES DE ELIMINAR ==================
+// ================== ELIMINAR USUARIO ==================
 async function eliminarUsuario(e) {
   try {
     const tr = e.target.closest('tr');
