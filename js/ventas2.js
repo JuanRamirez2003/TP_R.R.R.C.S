@@ -8,7 +8,6 @@ function mostrarSeccion(seccionId) {
     document.getElementById('formCliente').style.display = 'none';
     document.getElementById('mensajeExitoCliente').style.display = 'none';
     document.getElementById('tablaClientesContainer').style.display = 'block';
-
     listarClientes();
   }
 
@@ -16,7 +15,6 @@ function mostrarSeccion(seccionId) {
     document.getElementById('formOrden').style.display = 'none';
     document.getElementById('mensajeExitoOrden').style.display = 'none';
     document.getElementById('tablaOrdenesContainer').style.display = 'block';
-
     listarOrdenes();
   }
 }
@@ -24,12 +22,11 @@ function mostrarSeccion(seccionId) {
 // Volver al panel principal
 function volverPanel() {
   document.getElementById("mensajeExitoCliente").style.display = "none";
+  document.getElementById("mensajeExitoOrden").style.display = "none";
   document.querySelectorAll('.seccion').forEach(sec => sec.style.display = 'none');
 }
 
 // ===================== CLIENTES =====================
-
-// Mostrar formulario nuevo cliente
 function mostrarFormularioCliente() {
   document.getElementById('formCliente').style.display = 'block';
   document.getElementById('clienteForm').reset();
@@ -37,16 +34,11 @@ function mostrarFormularioCliente() {
   document.getElementById('tablaClientesContainer').style.display = 'none';
 }
 
-
 function cancelarCliente() {
-
   document.getElementById('tablaClientesContainer').style.display = 'block';
   document.getElementById('formCliente').style.display = 'none';
-
-
 }
 
-// Listar clientes en tabla
 async function listarClientes() {
   try {
     const { data, error } = await supabaseClient.from('clientes').select('*').order('dni_cuil');
@@ -79,21 +71,19 @@ async function listarClientes() {
   }
 }
 
-// ================== VALIDACIONES ==================
-
-// Validar email
+// ===================== VALIDACIONES =====================
 function validarEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 }
 
 function validarTelefono(telefono) {
-  const regex = /^[0-9]{8,15}$/;//15 por numero internacional
+  const regex = /^[0-9]{8,15}$/;
   return regex.test(telefono);
 }
 
 function validarDNI(dni) {
-  const regex = /^[0-9]{8}$/;
+  const regex = /^[0-9]{7,8}$/;
   return regex.test(dni);
 }
 
@@ -104,182 +94,10 @@ function validarCUIL(cuil) {
 
 function mostrarError(mensaje) {
   const div = document.getElementById('mensajeError');
-  if (!div) return alert(mensaje); // fallback si no hay div
+  if (!div) return alert(mensaje);
   div.innerText = mensaje;
   div.style.display = 'block';
   setTimeout(() => div.style.display = 'none', 4000);
-}
-
-
-// ================== CAMBIO DINÁMICO LABEL DOCUMENTO ==================
-const tipoClienteSelect = document.getElementById("tipoCliente");
-const documentoLabel = document.getElementById("labelDocumento");
-const documentoInput = document.getElementById("documento");
-
-
-tipoClienteSelect.addEventListener("change", () => {
-  if (tipoClienteSelect.value === "consumidor final") {
-    documentoLabel.innerText = "DNI:";
-    documentoInput.placeholder = "Ej: 12345678";
-    documentoInput.value = "";
-  } else if (tipoClienteSelect.value === "comercial") {
-    documentoLabel.innerText = "CUIL:";
-    documentoInput.placeholder = "Ej CUIL: 20-12345678-3";
-  } else {
-    documentoLabel.innerText = "Documento:";
-    documentoInput.placeholder = "Seleccione tipo primero";
-    documentoInput.value = "";
-  }
-});
-
-// ================== EVENTO SUBMIT ==================
-document.getElementById("clienteForm").addEventListener("submit", async function (e) {
-  e.preventDefault();
-
-  // Tomar valores
-  const id_cliente = document.getElementById("id_cliente").value;
-  const nombre = document.getElementById("nombre").value.trim();
-  const tipo_cliente = document.getElementById("tipoCliente").value;
-  const dni_cuil = document.getElementById("documento").value.trim();
-  const pref_cont = document.getElementById("preferenciaContacto").value;
-  const email = document.getElementById("email").value.trim();
-  const telefono = document.getElementById("telefono").value.trim();
-  const direccion = document.getElementById("direccion").value.trim();
-  const estado = document.getElementById("estado").value;
-
-  // ============ VALIDACIONES ============
-  if (!nombre) return mostrarError("El nombre es obligatorio");
-  if (!tipo_cliente) return mostrarError("Debe seleccionar el tipo de cliente");
-
-  if (tipo_cliente === "consumidor final" && !validarDNI(dni_cuil)) {
-    return mostrarError("Formato incorrecto de DNI. Ej: 12345678");
-  }
-
-  if (tipo_cliente === "comercial" && !validarCUIL(dni_cuil)) {
-    return mostrarError("Formato incorrecto de CUIL. Ej: 20-12345678-3");
-  }
-
-  if (!pref_cont) return mostrarError("Debe seleccionar la preferencia de contacto");
-  if (!validarEmail(email)) return mostrarError("El email no tiene un formato válido");
-  if (!validarTelefono(telefono)) return mostrarError("Formato incorrecto de teléfono. Solo números, Ej: 1123456789");
-  if (!direccionEsValida(direccion)) return mostrarError("Debe seleccionar una dirección de la lista de direcciones validadas");
-
-  try {
-    // ============ VERIFICAR DUPLICADOS ============
-    const { data: existente } = await supabaseClient
-      .from('clientes')
-      .select('id_cliente')
-      .eq('dni_cuil', dni_cuil)
-      .maybeSingle();
-
-    // Permite que el mismo cliente mantenga su DNI/CUIL
-    if (existente && Number(id_cliente) !== existente.id_cliente) {
-      throw new Error("Ya existe un cliente con ese DNI/CUIL");
-    }
-
-    // ============ DATOS DEL CLIENTE ============
-    const nuevoCliente = {
-      nombre,
-      tipo_cliente,
-      dni_cuil,
-      pref_cont,
-      email,
-      telefono,
-      direccion,
-      estado
-    };
-
-    // ============ CREAR O EDITAR ============
-    if (id_cliente) {
-      // === EDICIÓN ===
-      const { error } = await supabaseClient
-        .from("clientes")
-        .update(nuevoCliente)
-        .eq('id_cliente', id_cliente);
-      if (error) throw error;
-      document.getElementById("textoExitoCliente").innerText = "Cliente actualizado con éxito";
-    } else {
-      const { error } = await supabaseClient
-        .from("clientes")
-        .insert([nuevoCliente]);
-      if (error) throw error;
-      document.getElementById("textoExitoCliente").innerText = "Cliente creado con éxito";
-    }
-
-    document.getElementById("formCliente").style.display = "none";
-    document.getElementById("mensajeExitoCliente").style.display = "block";
-
-    listarClientes();
-
-  } catch (err) {
-    console.error("Error:", err);
-    mostrarError(err.message || "Error al procesar el cliente");
-  }
-});
-
-
-// ================== EDITAR CLIENTE ==================
-async function editarCliente(dni) {
-  try {
-
-    const { data, error } = await supabaseClient
-      .from('clientes')
-      .select('*')
-      .eq('dni_cuil', dni)
-      .single();
-    if (error) throw error;
-
-    // Mapear tipo_cliente de DB al value del select
-    let tipoValue = '';
-    if (data.tipo_cliente === "consumidor final") tipoValue = "consumidor final";
-    else if (data.tipo_cliente === "comercial") tipoValue = "comercial";
-
-    tipoClienteSelect.value = tipoValue;
-
-    if (tipoValue === "consumidor final") {
-
-      documentoLabel.innerText = "DNI:";
-      documentoInput.placeholder = "Ingrese DNI (7 u 8 dígitos)";
-    } else if (tipoValue === "comercial") {
-      documentoLabel.innerText = "CUIL:";
-      documentoInput.placeholder = "Ingrese CUIL (XX-XXXXXXXX-X)";
-    }
-
-    documentoInput.value = data.dni_cuil;
-
-    // Resto de campos
-    document.getElementById('nombre').value = data.nombre;
-    document.getElementById('direccion').value = data.direccion;
-    document.getElementById('email').value = data.email;
-    document.getElementById('telefono').value = data.telefono;
-    document.getElementById('preferenciaContacto').value = data.pref_cont;
-    document.getElementById('estado').value = data.estado;
-
-    document.getElementById('id_cliente').value = data.id_cliente;
-
-    // Mostrar formulario
-    document.getElementById('formCliente').style.display = 'block';
-
-    document.getElementById('tablaClientesContainer').style.display = 'none';
-  } catch (err) {
-    console.error(err);
-    mostrarError('Error al cargar datos del cliente');
-  }
-}
-
-// ================== DAR DE BAJA CLIENTE ==================
-async function bajaCliente(dni) {
-  if (!confirm('¿Desea dar de baja este cliente?')) return;
-  try {
-    const { error } = await supabaseClient.from('clientes')
-      .update({ estado: 'inactivo' })
-      .eq('dni_cuil', dni);
-    if (error) throw error;
-    listarClientes();
-  } catch (err) {
-    console.error(err);
-    mostrarError('Error al dar de baja el cliente');
-  }
 }
 
 // ===================== ÓRDENES DE VENTA =====================
@@ -293,7 +111,6 @@ async function mostrarOrdenes() {
 }
 
 function nuevaOrden() {
-
   document.getElementById('formOrden').style.display = 'block';
   document.getElementById('ordenForm').reset();
   document.getElementById('mensajeExitoOrden').style.display = 'none';
@@ -301,17 +118,14 @@ function nuevaOrden() {
   productosOrdenList = [];
   cargarClientesDropdown();
   agregarProducto();
-
-
   document.getElementById('tablaOrdenes').parentElement.style.display = 'none';
 }
-// Cancelar formulario orden
+
 function cancelarOrden() {
   document.getElementById('formOrden').style.display = 'none';
   document.getElementById('tablaOrdenes').parentElement.style.display = 'block';
 }
 
-// Cargar clientes en dropdown
 async function cargarClientesDropdown() {
   try {
     const { data, error } = await supabaseClient
@@ -324,41 +138,29 @@ async function cargarClientesDropdown() {
     select.innerHTML = '<option value="">Seleccione...</option>';
 
     data.forEach(c => {
-      const numero = c.id_cliente ?? 'Sin numero';
-      const nombre = c.nombre ?? 'Sin nombre';
-      select.innerHTML += `<option value="${c.id_cliente}">${numero} - ${nombre}</option>`;
+      select.innerHTML += `<option value="${c.id_cliente}">${c.id_cliente} - ${c.nombre}</option>`;
     });
 
-    // Inicializar Select2
     $('#clienteOrden').select2({
       placeholder: "Buscar por Nombre o Numero de Cliente",
       allowClear: true,
       dropdownParent: $('#formOrden'),
-
       matcher: function (params, data) {
         if ($.trim(params.term) === '') return data;
-
         const term = params.term.toLowerCase();
         const text = data.text.toLowerCase();
-
         if (text.includes(term)) return data;
         return null;
       }
-
     });
-
   } catch (err) {
-    console.error('Error cargando clientes para orden:', err);
+    console.error('Error cargando clientes:', err);
   }
 }
 
-// Agregar producto dinámico
 async function agregarProducto() {
   try {
     const container = document.getElementById('productosContainer');
-    if (!container) throw new Error("No se encontró el contenedor 'productosContainer'.");
-
-    // Crear el div del producto
     const div = document.createElement('div');
     div.className = 'producto-item';
     div.style.display = 'flex';
@@ -379,7 +181,6 @@ async function agregarProducto() {
         <label>Precio Unitario:</label>
         <input type="text" class="precioUnitarioInput" readonly placeholder="0.00">
       </div>
-
       <div class="form-group" style="width:150px;">
         <label>Total:</label>
         <input type="text" class="precioTotalInput" readonly placeholder="0.00">
@@ -389,13 +190,11 @@ async function agregarProducto() {
 
     container.appendChild(div);
 
-    // Obtener referencia de inputs y select
     const select = div.querySelector('.productoSelect');
     const cantidadInput = div.querySelector('.cantidadInput');
     const precioUnitarioInput = div.querySelector('.precioUnitarioInput');
     const precioTotalInput = div.querySelector('.precioTotalInput');
 
-    // Cargar productos desde la base
     const { data, error } = await supabaseClient.from('productos').select('*').eq('estado', 'activo');
     if (error) throw error;
 
@@ -408,31 +207,19 @@ async function agregarProducto() {
       select.appendChild(option);
     });
 
-    // Inicializar Select2 con padre visible
-    $(select).select2({
-      placeholder: "Buscar producto...",
-      allowClear: true,
-      dropdownParent: $(container),
-      width: '100%'
-    });
+    $(select).select2({ placeholder: "Buscar producto...", allowClear: true, dropdownParent: $(container), width: '100%' });
 
-    // Evento al cambiar producto (con Select2)
     $(select).on('change', () => {
       const precioUnitario = parseFloat(select.selectedOptions[0]?.dataset.precio || 0);
       precioUnitarioInput.value = precioUnitario.toFixed(2);
-
-      const cantidad = parseFloat(cantidadInput.value) || 0;
-      precioTotalInput.value = (precioUnitario * cantidad).toFixed(2);
+      precioTotalInput.value = (precioUnitario * (parseFloat(cantidadInput.value) || 0)).toFixed(2);
     });
 
-    // Evento al cambiar cantidad
     cantidadInput.addEventListener('input', () => {
       const precioUnitario = parseFloat(precioUnitarioInput.value) || 0;
       const cantidad = parseFloat(cantidadInput.value) || 0;
       precioTotalInput.value = (precioUnitario * cantidad).toFixed(2);
     });
-
-    console.log('Producto agregado y listo para seleccionar:', data);
 
   } catch (err) {
     console.error('Error agregando producto:', err);
@@ -440,59 +227,89 @@ async function agregarProducto() {
   }
 }
 
-
-// Quitar producto
 function quitarProducto(btn) {
   btn.parentElement.remove();
-   if(document.querySelectorAll('.producto-item').length === 0) agregarProducto();
+  if(document.querySelectorAll('.producto-item').length === 0) agregarProducto();
 }
 
-// Guardar orden
+// ===================== GUARDAR ORDEN =====================
 document.getElementById('ordenForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+
   try {
     const cliente = document.getElementById('clienteOrden').value;
     const productosDivs = document.querySelectorAll('#productosContainer .producto-item');
 
-    if (!cliente) { alert('Seleccione un cliente'); return; }
-    if (productosDivs.length === 0) { alert('Agregue al menos un producto'); return; }
+    if (!cliente) return alert('Seleccione un cliente');
+    if (productosDivs.length === 0) return alert('Agregue al menos un producto');
 
     const productos = [];
+    let stockSuficiente = true;
+
+    // Verificar stock y armar productos
     for (const div of productosDivs) {
       const id_producto = div.querySelector('.productoSelect').value;
       const cantidad = parseInt(div.querySelector('.cantidadInput').value);
-      if (!id_producto || cantidad < 1) { alert('Complete todos los productos y cantidades'); return; }
-      productos.push({ id_producto, cantidad });
+
+      if (!id_producto || cantidad < 1) return alert('Complete todos los productos y cantidades');
+
+      const { data: prodData, error: prodError } = await supabaseClient
+        .from('productos')
+        .select('stock, nombre')
+        .eq('id_producto', id_producto)
+        .single();
+      if (prodError) throw prodError;
+
+      if (!prodData || prodData.stock < cantidad) {
+        stockSuficiente = false;
+        alert(`No hay suficiente stock para "${prodData?.nombre}". Stock disponible: ${prodData?.stock ?? 0}`);
+      }
+
+      productos.push({ id_producto, cantidad, stock_actual: prodData.stock });
     }
 
-    // Insertar orden principal
+    // Crear orden
+    const estadoInicial = stockSuficiente ? 'listo para entregar' : 'pendiente';
     const { data: ordenData, error: ordenError } = await supabaseClient
       .from('orden_ventas')
-      .insert([{ id_cliente: cliente, fecha: new Date().toISOString(), estado: 'pendiente' }])
+      .insert([{ id_cliente: cliente, fecha: new Date().toISOString(), estado: estadoInicial }])
       .select()
       .single();
     if (ordenError) throw ordenError;
 
-    // Insertar detalle de productos
+    // Insertar detalle y restar stock si hay suficiente
     for (const p of productos) {
-      const { error } = await supabaseClient.from('detalle_ordenes').insert([{ id_orden: ordenData.id_orden, id_producto: p.id_producto, cantidad: p.cantidad }]);
-      if (error) throw error;
+      const { error: detalleError } = await supabaseClient
+        .from('detalle_ordenes')
+        .insert([{ id_orden: ordenData.id_orden, id_producto: p.id_producto, cantidad: p.cantidad }]);
+      if (detalleError) throw detalleError;
+
+      if (stockSuficiente) {
+        const { error: updateError } = await supabaseClient
+          .from('productos')
+          .update({ stock: p.stock_actual - p.cantidad })
+          .eq('id_producto', p.id_producto);
+        if (updateError) throw updateError;
+      }
     }
 
     document.getElementById('formOrden').style.display = 'none';
-    document.getElementById('textoExitoOrden').innerText = `Orden registrada exitosamente.`;
+    document.getElementById('textoExitoOrden').innerText = `Orden registrada exitosamente (${estadoInicial}).`;
     document.getElementById('mensajeExitoOrden').style.display = 'block';
     listarOrdenes();
+
   } catch (err) {
     console.error('Error guardando orden:', err);
     alert('Ocurrió un error al registrar la orden.');
   }
 });
 
-// Listar órdenes
+// ===================== LISTAR ÓRDENES =====================
 async function listarOrdenes() {
   try {
-    const { data, error } = await supabaseClient.from('orden_ventas').select('*, clientes(nombre), detalle_ordenes(id_producto, cantidad, productos(nombre, precio_unitario))');
+    const { data, error } = await supabaseClient
+      .from('orden_ventas')
+      .select('*, clientes(nombre), detalle_ordenes(id_producto, cantidad, productos(nombre, precio_unitario))');
     if (error) throw error;
 
     const tbody = document.querySelector('#tablaOrdenes tbody');
@@ -508,7 +325,7 @@ async function listarOrdenes() {
         <td>${productosText}</td>
         <td>${new Date(o.fecha).toLocaleDateString()}</td>
         <td>${o.estado}</td>
-        <td>${total}</td>
+        <td>${total.toFixed(2)}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -516,5 +333,3 @@ async function listarOrdenes() {
     console.error('Error listando órdenes:', err);
   }
 }
-
-
