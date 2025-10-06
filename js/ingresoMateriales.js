@@ -3,6 +3,12 @@ let materialData = [];
 // ============================
 // Utilidades
 // ============================
+function habilitarMaterial(habilitar = true) {
+        const el = document.getElementById('Id_Material');
+        if (el) el.disabled = !habilitar;
+        cargarMateriales();
+}
+
 function habilitarCampos(campos, habilitar = true) {
     campos.forEach(c => {
         const el = document.getElementById(c);
@@ -44,8 +50,10 @@ function mostrarSeccion(seccionId) {
 // Cargar Materia Prima
 // ============================
 async function cargarMateriales() {
+    const tipo = document.getElementById('Tipo_Material').value;
+    console.log("Tipo seleccionado:", tipo);
     try {
-        const { data, error } = await supabaseClient.from('materiales').select('*');
+        const { data, error } = await supabaseClient.from('materiales').select('*').eq('Tipo', tipo);
         if (error) throw error;
 
         materialData = data || [];

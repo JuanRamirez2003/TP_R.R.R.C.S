@@ -66,9 +66,17 @@
                 <h2>Ingreso de Materiales</h2>
                 <p>Seleccione el material y registre la entrada del lote:</p>
                 <form id="MaterialesForm">
+                  <div class="form-group">
+                        <label for="Tipo_Material">Tipo_Material:</label>
+                        <select id="Tipo_Material" name="tipo_Material" required onchange="habilitarMaterial()">
+                            <option value="">Seleccione...</option>
+                            <option value="Insumo">Insumo</option>
+                            <option value="Materia prima">Materia prima</option>
+                        </select>
+                    </div>
                     <div class="form-group">
-                        <label for="Id_Material">Material:</label>
-                        <select id="Id_Material" name="Id_Material" required onchange="mostrarDatosMaterial()">
+                        <label for="Id_Material">Material:</label> 
+                        <select id="Id_Material" name="Id_Material" required onchange="mostrarDatosMaterial()" disabled>
                             <option value="">Seleccione...</option>
                         </select>
                     </div>
