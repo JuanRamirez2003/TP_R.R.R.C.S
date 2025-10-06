@@ -28,6 +28,27 @@ function abrirModal(usuario) {
 function cerrarModal() {
   document.getElementById('modalEditar').style.display = 'none';
 }
+const messageBox = document.getElementById('messageBox');
+
+function showMessage(text, type = "info") {
+    messageBox.textContent = text;
+
+    // Cambiar colores según tipo
+    switch(type) {
+        case "success": messageBox.style.background = "green"; break;
+        case "error": messageBox.style.background = "red"; break;
+        case "warning": messageBox.style.background = "orange"; break;
+        default: messageBox.style.background = "blue";
+    }
+
+    messageBox.style.display = "block";
+    messageBox.style.opacity = 1;
+
+    setTimeout(() => {
+        messageBox.style.opacity = 0;
+        setTimeout(() => messageBox.style.display = "none", 500);
+    }, 3000);
+}
 
 // ================== EDITAR USUARIO (abre modal) ==================
 async function editarUsuario(e) {
@@ -50,35 +71,66 @@ async function editarUsuario(e) {
   }
 }
 
-// ================== GUARDAR EDICIÓN ==================
 async function guardarEdicion() {
+  const mensajeModal = document.getElementById('mensajeModal');
+  mensajeModal.textContent = '';
   try {
     const id = document.getElementById('editarId').value;
-    const dni = document.getElementById('editarDni').value;
-    const name = document.getElementById('editarNombre').value;
+    const dni = document.getElementById('editarDni').value.trim();
+    const name = document.getElementById('editarNombre').value.trim();
     const estado = document.getElementById('editarTipo').value;
     const area = document.getElementById('editarArea').value;
 
     if (!dni || !name || !estado || !area) {
-      return alert('Todos los campos son obligatorios');
+      mensajeModal.textContent = 'Todos los campos son obligatorios';
+      return;
+    }
+
+    if (!/^\d{7,8}$/.test(dni)) {
+      mensajeModal.textContent = 'El DNI debe contener solo números y tener 7 u 8 dígitos';
+      return;
+    }
+
+    const areasValidas = ["Ventas","Recursos Humanos","TI","Operario","Supervisor","Gerente General"];
+    if (!areasValidas.includes(area)) {
+      mensajeModal.textContent = 'Área de trabajo inválida';
+      return;
+    }
+
+    const { data: usuariosConDni, error: errorDni } = await supabaseClient
+      .from('usuarios').select('id').eq('dni', dni);
+
+    if (errorDni) {
+      mensajeModal.textContent = 'Error al verificar DNI';
+      return;
+    }
+
+    if (usuariosConDni.some(u => u.id != id)) {
+      mensajeModal.textContent = 'El DNI ya pertenece a otro usuario';
+      return;
     }
 
     const { error } = await supabaseClient
-      .from('usuarios')
-      .update({ dni, name, estado, area })
-      .eq('id', id);
+      .from('usuarios').update({ dni, name, estado, area }).eq('id', id);
 
-    if (error) return alert('Error al actualizar usuario: ' + error.message);
+    if (error) {
+      mensajeModal.textContent = 'Error al actualizar usuario';
+      return;
+    }
 
-    alert('Usuario actualizado correctamente');
-    cerrarModal();
-    cargarUsuarios();
+    mensajeModal.style.color = 'green';
+    mensajeModal.textContent = 'Usuario actualizado correctamente';
+    setTimeout(() => {
+        cerrarModal();
+        cargarUsuarios();
+        mensajeModal.textContent = '';
+    }, 1500);
+
   } catch (err) {
-    console.error('Error al guardar edición:', err);
-    alert('Ocurrió un error al guardar los cambios.');
+    mensajeModal.textContent = 'Error inesperado';
+    console.error(err);
   }
 }
-
 // ================== CARGAR USUARIOS ==================
 async function cargarUsuarios() {
   try {
@@ -155,24 +207,27 @@ async function cargarAccesos() {
   }
 }
 
-// ================== ELIMINAR USUARIO ==================
 async function eliminarUsuario(e) {
+  const tr = e.target.closest('tr');
+  const id = tr.dataset.id;
+
+  // Confirmación opcional con HTML en lugar de confirm()
+  if (!id) return;
+
   try {
-    const tr = e.target.closest('tr');
-    const id = tr.dataset.id;
-
-    if (!confirm('¿Seguro que deseas eliminar este usuario?')) return;
-
     const { error } = await supabaseClient.from('usuarios').delete().eq('id', id);
-    if (error) return alert('Error al eliminar usuario: ' + error.message);
-
-    alert('Usuario eliminado');
+    if (error) {
+      showMessage('Error al eliminar usuario', 'error');
+      return;
+    }
+    showMessage('Usuario eliminado correctamente', 'success');
     cargarUsuarios();
   } catch (err) {
-    console.error('Error al eliminar usuario:', err);
-    alert('Ocurrió un error al eliminar el usuario.');
+    console.error(err);
+    showMessage('Ocurrió un error inesperado', 'error');
   }
 }
+
 
 // ================== EVENT DELEGATION ==================
 document.querySelector('#tablaUsuarios tbody').addEventListener('click', function(e) {
@@ -182,6 +237,24 @@ document.querySelector('#tablaUsuarios tbody').addEventListener('click', functio
     eliminarUsuario(e);
   }
 });
+// ================== FILTRADO UNIVERSAL ==================
+function filtrarTabla(inputId, tablaId) {
+  const filtro = document.getElementById(inputId).value.toLowerCase();
+  const filas = document.querySelectorAll(`#${tablaId} tbody tr`);
+
+  filas.forEach(tr => {
+    let textoFila = '';
+    Array.from(tr.children).forEach(td => {
+      textoFila += td.textContent.toLowerCase() + ' ';
+    });
+
+    tr.style.display = textoFila.includes(filtro) ? '' : 'none';
+  });
+}
+
+// Event listeners de los inputs
+document.getElementById('filtroUsuarios').addEventListener('input', () => filtrarTabla('filtroUsuarios', 'tablaUsuarios'));
+document.getElementById('filtroAccesos').addEventListener('input', () => filtrarTabla('filtroAccesos', 'tablaAccesos'));
 
 // ================== INICIALIZACIÓN ==================
 document.addEventListener('DOMContentLoaded', () => {

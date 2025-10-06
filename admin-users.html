@@ -31,6 +31,17 @@
   </style>
 </head>
 <body>
+  <div id="messageBox" class="message-box" style="
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    color: #fff;
+    display: none;
+    font-weight: bold;
+    z-index: 1000;
+"></div>
   <!-- Sidebar -->
   <aside class="sidebar">
     <h2>Administrador</h2>
@@ -46,47 +57,61 @@
     <h1>Panel de Administrador</h1>
 
     <!-- Sección Usuarios -->
-    <div id="usuarios" class="seccion">
-      <h2>Lista de Empleados</h2>
-      <button class="btn btn-edit btn-volver" onclick="window.location.href='rrhh.html'">Volver Inicio</button>
-      <table id="tablaUsuarios">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>DNI</th>
-            <th>Nombre</th>
-            <th>Estado</th>
-            <th>Área</th>
-            <th>Creado en</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+<div id="usuarios" class="seccion">
+  <h2>Lista de Empleados</h2>
+  <button class="btn btn-edit btn-volver" onclick="window.location.href='rrhh.html'">Volver Inicio</button>
 
-    <!-- Sección Accesos -->
-    <div id="accesos" class="seccion">
-      <h2>Historial de Accesos de Empleados</h2>
-      <button class="btn btn-edit btn-volver" onclick="window.location.href='rrhh.html'">Volver Inicio</button>
-      <table id="tablaAccesos">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Usuario</th>
-            <th>Acción</th>
-            <th>Fecha/Hora</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </main>
+  <!-- Filtro solo para empleados -->
+  <div style="margin-bottom:10px;">
+    <input type="text" id="filtroUsuarios" placeholder="Buscar empleados..." 
+           style="padding:8px; width:100%; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0;">
+  </div>
 
-  <!-- Modal edición -->
-<div id="modalEditar" class="modal">
+  <table id="tablaUsuarios">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>DNI</th>
+        <th>Nombre</th>
+        <th>Estado</th>
+        <th>Área</th>
+        <th>Creado en</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- Sección Accesos -->
+<div id="accesos" class="seccion">
+  <h2>Historial de Accesos de Empleados</h2>
+  <button class="btn btn-edit btn-volver" onclick="window.location.href='rrhh.html'">Volver Inicio</button>
+
+  <!-- Filtro solo para accesos -->
+  <div style="margin-bottom:10px;">
+    <input type="text" id="filtroAccesos" placeholder="Buscar accesos..." 
+           style="padding:8px; width:100%; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0;">
+  </div>
+
+  <table id="tablaAccesos">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Usuario</th>
+        <th>Acción</th>
+        <th>Fecha/Hora</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+ <div id="modalEditar" class="modal">
   <div class="modal-content">
     <h3>Editar Usuario</h3>
+    <div id="mensajeModal" style="color:red; margin-bottom:10px; min-height:20px;"></div>
+
     <input type="hidden" id="editarId">
 
     <label for="editarDni">DNI</label>
@@ -102,7 +127,15 @@
     </select>
 
     <label for="editarArea">Área</label>
-    <input type="text" id="editarArea">
+    <select id="editarArea">
+      <option value="" disabled selected>Seleccionar Área</option>
+      <option value="Ventas">Ventas</option>
+      <option value="Recursos Humanos">Recursos Humanos</option>
+      <option value="TI">TI</option>
+      <option value="Operario">Operario</option>
+      <option value="Supervisor">Supervisor</option>
+      <option value="Gerente General">Gerente General</option>
+    </select>
 
     <div style="display:flex; justify-content:space-between;">
       <button onclick="guardarEdicion()" class="btn-edit">Guardar</button>
