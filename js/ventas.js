@@ -39,10 +39,10 @@ function mostrarFormularioCliente() {
 
 
 function cancelarCliente() {
-  
+
   document.getElementById('tablaClientesContainer').style.display = 'block';
   document.getElementById('formCliente').style.display = 'none';
-  
+
 
 }
 
@@ -267,9 +267,6 @@ async function editarCliente(dni) {
   }
 }
 
-
-
-
 // ================== DAR DE BAJA CLIENTE ==================
 async function bajaCliente(dni) {
   if (!confirm('¿Desea dar de baja este cliente?')) return;
@@ -294,8 +291,6 @@ async function mostrarOrdenes() {
   document.getElementById('tablaOrdenesContainer').style.display = 'block';
   await listarOrdenes();
 }
-// Mostrar formulario nueva orden
-
 
 function nuevaOrden() {
 
@@ -305,9 +300,9 @@ function nuevaOrden() {
   document.getElementById('productosContainer').innerHTML = '';
   productosOrdenList = [];
   cargarClientesDropdown();
-  agregarProducto(); // siempre inicia con un producto
+  agregarProducto();
 
-  // Ocultar tabla de órdenes
+
   document.getElementById('tablaOrdenes').parentElement.style.display = 'none';
 }
 // Cancelar formulario orden
@@ -327,13 +322,29 @@ async function cargarClientesDropdown() {
 
     const select = document.getElementById('clienteOrden');
     select.innerHTML = '<option value="">Seleccione...</option>';
-    data.forEach(c => select.innerHTML += `<option value="${c.id_cliente}">${c.nombre}</option>`);
+
+    data.forEach(c => {
+      const numero = c.id_cliente ?? 'Sin numero';
+      const nombre = c.nombre ?? 'Sin nombre';
+      select.innerHTML += `<option value="${c.id_cliente}">${numero} - ${nombre}</option>`;
+    });
 
     // Inicializar Select2
     $('#clienteOrden').select2({
-      placeholder: "Buscar cliente...",
+      placeholder: "Buscar por Nombre o Numero de Cliente",
       allowClear: true,
-      dropdownParent: $('#formOrden') // necesario si está dentro de un modal
+      dropdownParent: $('#formOrden'),
+
+      matcher: function (params, data) {
+        if ($.trim(params.term) === '') return data;
+
+        const term = params.term.toLowerCase();
+        const text = data.text.toLowerCase();
+
+        if (text.includes(term)) return data;
+        return null;
+      }
+
     });
 
   } catch (err) {
@@ -345,6 +356,9 @@ async function cargarClientesDropdown() {
 async function agregarProducto() {
   try {
     const container = document.getElementById('productosContainer');
+    if (!container) throw new Error("No se encontró el contenedor 'productosContainer'.");
+
+    // Crear el div del producto
     const div = document.createElement('div');
     div.className = 'producto-item';
     div.style.display = 'flex';
@@ -353,42 +367,84 @@ async function agregarProducto() {
     div.style.alignItems = 'center';
 
     div.innerHTML = `
-      <div class="form-group" style="flex:1;">
+      <div class="form-group" style="width:300px;">
         <label>Producto:</label>
         <select class="productoSelect" required style="width:100%; padding:8px; margin-top:5px; border:1px solid #ccc; border-radius:5px;"></select>
       </div>
-      <div class="form-group" style="width:100px;">
-        <label>Cantidad:</label>
+      <div class="form-group" style="width:120px;">
+        <label>Cant. Cajas:</label>
         <input type="number" class="cantidadInput" min="1" placeholder="Cantidad" required style="width:100%; padding:8px; margin-top:5px; border:1px solid #ccc; border-radius:5px;">
+      </div>
+      <div class="form-group" style="width:150px;">
+        <label>Precio Unitario:</label>
+        <input type="text" class="precioUnitarioInput" readonly placeholder="0.00">
+      </div>
+
+      <div class="form-group" style="width:150px;">
+        <label>Total:</label>
+        <input type="text" class="precioTotalInput" readonly placeholder="0.00">
       </div>
       <button type="button" onclick="quitarProducto(this)" class="btn-submit" style="background-color:#e74c3c; padding:8px 12px; margin-top:22px;">❌ Quitar</button>
     `;
 
     container.appendChild(div);
 
-    // Cargar productos en el select
+    // Obtener referencia de inputs y select
+    const select = div.querySelector('.productoSelect');
+    const cantidadInput = div.querySelector('.cantidadInput');
+    const precioUnitarioInput = div.querySelector('.precioUnitarioInput');
+    const precioTotalInput = div.querySelector('.precioTotalInput');
+
+    // Cargar productos desde la base
     const { data, error } = await supabaseClient.from('productos').select('*').eq('estado', 'activo');
     if (error) throw error;
 
-    const select = div.querySelector('.productoSelect');
     select.innerHTML = '<option value="">Seleccione...</option>';
-    data.forEach(p => select.innerHTML += `<option value="${p.id_producto}">${p.nombre} </option>`);//- Stock: ${p.stock}
-  
-     $(select).select2({
+    data.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p.id_producto;
+      option.textContent = p.nombre;
+      option.dataset.precio = p.precio_unitario ?? 0;
+      select.appendChild(option);
+    });
+
+    // Inicializar Select2 con padre visible
+    $(select).select2({
       placeholder: "Buscar producto...",
       allowClear: true,
-      dropdownParent: $(div) // el dropdown aparece sobre el div del producto
+      dropdownParent: $(container),
+      width: '100%'
     });
-  
+
+    // Evento al cambiar producto (con Select2)
+    $(select).on('change', () => {
+      const precioUnitario = parseFloat(select.selectedOptions[0]?.dataset.precio || 0);
+      precioUnitarioInput.value = precioUnitario.toFixed(2);
+
+      const cantidad = parseFloat(cantidadInput.value) || 0;
+      precioTotalInput.value = (precioUnitario * cantidad).toFixed(2);
+    });
+
+    // Evento al cambiar cantidad
+    cantidadInput.addEventListener('input', () => {
+      const precioUnitario = parseFloat(precioUnitarioInput.value) || 0;
+      const cantidad = parseFloat(cantidadInput.value) || 0;
+      precioTotalInput.value = (precioUnitario * cantidad).toFixed(2);
+    });
+
+    console.log('Producto agregado y listo para seleccionar:', data);
+
   } catch (err) {
     console.error('Error agregando producto:', err);
     alert('Ocurrió un error al agregar el producto.');
   }
 }
 
+
 // Quitar producto
 function quitarProducto(btn) {
   btn.parentElement.remove();
+   if(document.querySelectorAll('.producto-item').length === 0) agregarProducto();
 }
 
 // Guardar orden

@@ -316,4 +316,12 @@ tr:hover {
     color: #000000 !important;
 }
 
- 
+ .producto-item input,
+.producto-item select {
+    padding: 5px;
+    font-size: 14px;
+    background-color: #2a2a2a;
+    border: 1px solid #333;
+    color: #e0e0e0;
+    border-radius: 4px;
+}
