@@ -50,8 +50,8 @@
         <aside class="sidebar">
             <h2>Operario</h2>
             <ul>
-                <li><button onclick="mostrarSeccion('ingresoMP')">Ingreso Materia Prima</button></li>
-                <li><button onclick="mostrarSeccion('vistaMP')">Listado Materias Primas</button></li>
+                <li><button onclick="mostrarSeccion('IngresoMateriales')">Ingreso Materiales</button></li>
+                <li><button onclick="mostrarSeccion('VistaMateriales')">Listado Materiales</button></li>
                 <!-- Más opciones futuras -->
             </ul>
             <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
@@ -61,14 +61,14 @@
         <main class="main-content">
             <h1>Panel de Operario</h1>
 
-            <!-- Sección de ingreso de materia prima -->
-            <div id="ingresoMP" class="seccion" style="display:none;">
-                <h2>Ingreso de Materia Prima</h2>
-                <p>Seleccione la materia prima y registre la entrada del lote:</p>
-                <form id="materiaPrimaForm">
+            <!-- Sección de ingreso de materiales -->
+            <div id="IngresoMateriales" class="seccion" style="display:none;">
+                <h2>Ingreso de Materiales</h2>
+                <p>Seleccione el material y registre la entrada del lote:</p>
+                <form id="MaterialesForm">
                     <div class="form-group">
-                        <label for="id_mp">Materia Prima:</label>
-                        <select id="id_mp" name="id_mp" required onchange="mostrarDatosMP()">
+                        <label for="Id_Material">Material:</label>
+                        <select id="Id_Material" name="Id_Material" required onchange="mostrarDatosMaterial()">
                             <option value="">Seleccione...</option>
                         </select>
                     </div>
@@ -76,17 +76,17 @@
                     <!-- Campos solo de visualización -->
                     <div class="form-group">
                         <label>Descripción:</label>
-                        <input type="text" id="descMP" disabled>
+                        <input type="text" id="descMaterial" disabled>
                     </div>
 
                     <div class="form-group">
                         <label>Unidad de medida:</label>
-                        <input type="text" id="unidadMP" disabled>
+                        <input type="text" id="unidadMaterial" disabled>
                     </div>
                     <!-- Campos que completa el operario -->
                     <div class="form-group">
-                        <label for="provMP">Proveedor:</label>
-                        <select id="provMP" name="id_proveedor" disabled required>
+                        <label for="provMaterial">Proveedor:</label>
+                        <select id="provMaterial" name="id_proveedor" disabled required>
                             <option value="">Seleccione...</option>
                         </select>
                     </div>
@@ -117,6 +117,7 @@
                             <option value="No conforme">No conforme</option>
                         </select>
                     </div>
+                      
 
                     <button type="submit" class="btn-submit" disabled>Registrar Lote</button>
                     <button type="submit" id="btnCancelar" class="btn-submit">Cancelar</button>
@@ -129,11 +130,11 @@
                 <div id="mensaje" class="mensaje"></div>
             </div>
 
-            <!-- Vista de Materias Primas -->
-            <div id="vistaMP" class="seccion" style="display:none;">
-                <h2>Listado de Materias Primas</h2>
+            <!-- Vista de Materiales -->
+            <div id="VistaMateriales" class="seccion" style="display:none;">
+                <h2>Listado de Materiales</h2>
                 <div class="table-wrapper">
-                    <table id="tablaMP">
+                    <table id="tablaMateriales">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -154,7 +155,7 @@
 
             <!-- Vista de Lotes -->
             <div id="vistaLotes" class="seccion" style="display:none;">
-                <h2 id="tituloLotes">Lote de Materia Prima</h2>
+                <h2 id="tituloLotes">Lote de Material</h2>
                 <div class="table-wrapper">
                     <table id="tablaLotes">
                         <thead>
@@ -173,7 +174,7 @@
                         <tbody></tbody>
                     </table>
                 </div>
-                <button onclick="volverMP()" class="btn-submit">Volver a Materias Primas</button>
+                <button onclick="volverMateriales()" class="btn-submit">Volver a Materiales</button>
             </div>
 
         </main>
@@ -185,6 +186,6 @@
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
     </script>
-    <script src="js/ingresoMP.js"></script>
+    <script src="js/ingresoMateriales.js"></script>
 </body>
 </html>

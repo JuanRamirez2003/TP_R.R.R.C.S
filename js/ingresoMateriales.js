@@ -1,4 +1,4 @@
-let materiaPrimaData = [];
+let materialData = [];
 
 // ============================
 // Utilidades
@@ -24,17 +24,17 @@ function mostrarSeccion(seccionId) {
     try {
         document.querySelectorAll('.seccion').forEach(sec => {
             sec.style.display = 'none';
-            if(sec.id === 'ingresoMP') {
+            if(sec.id === 'IngresoMateriales') {
                 const form = sec.querySelector('form');
                 if(form) form.reset();
-                habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMP'], false);
-                resetSelect('provMP');
+                habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
+                resetSelect('provMaterial');
             }
         });
 
         const target = document.getElementById(seccionId);
         if(target) target.style.display = 'block';
-        if(seccionId === 'vistaMP') cargarMP();
+        if(seccionId === 'VistaMateriales') cargarMaterial();
     } catch(err) {
         console.error("Error mostrando sección:", err);
     }
@@ -43,48 +43,48 @@ function mostrarSeccion(seccionId) {
 // ============================
 // Cargar Materia Prima
 // ============================
-async function cargarMateriaPrima() {
+async function cargarMateriales() {
     try {
-        const { data, error } = await supabaseClient.from('materia_prima').select('*');
+        const { data, error } = await supabaseClient.from('materiales').select('*');
         if (error) throw error;
 
-        materiaPrimaData = data || [];
+        materialData = data || [];
 
-        const select = document.getElementById('id_mp');
+        const select = document.getElementById('Id_Material');
         if (select) {
-            resetSelect('id_mp');
-            materiaPrimaData.forEach(mp => {
+            resetSelect('Id_Material');
+            materialData.forEach(material => {
                 const option = document.createElement('option');
-                option.value = mp.id_mp;
-                option.textContent = mp.nombre;
+                option.value = material.id_mp;
+                option.textContent = material.nombre;
                 select.appendChild(option);
             });
         }
     } catch(err) {
-        console.error("Error cargando materia prima:", err);
+        console.error("Error cargando material:", err);
     }
 }
 
 // ============================
-// Mostrar datos al seleccionar MP
+// Mostrar datos al seleccionar Material
 // ============================
-async function mostrarDatosMP() {
+async function mostrarDatosMaterial() {
     try {
-        const id = document.getElementById('id_mp').value;
+        const id = document.getElementById('Id_Material').value;
         const campos = ['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado'];
-        const mp = materiaPrimaData.find(item => item.id_mp == id);
+        const material = materialData.find(item => item.id_mp == id);
 
-        if (!mp) {
+        if (!material) {
             campos.forEach(c => document.getElementById(c).disabled = true);
-            habilitarCampos(['provMP'], false);
-            resetSelect('provMP');
-            document.getElementById('descMP').value = '';
-            document.getElementById('unidadMP').value = '';
+            habilitarCampos(['provMaterial'], false);
+            resetSelect('provMaterial');
+            document.getElementById('descMaterial').value = '';
+            document.getElementById('unidadMaterial').value = '';
             return;
         }
 
-        document.getElementById('descMP').value = mp.descr || '';
-        document.getElementById('unidadMP').value = mp.unidad || '';
+        document.getElementById('descMaterial').value = material.descr || '';
+        document.getElementById('unidadMaterial').value = material.unidad || '';
 
         // Obtener proveedores asociados
         const { data: relaciones, error: errRel } = await supabaseClient
@@ -93,7 +93,7 @@ async function mostrarDatosMP() {
             .eq('id_mp', id);
         if (errRel) throw errRel;
 
-        resetSelect('provMP');
+        resetSelect('provMaterial');
         if (relaciones && relaciones.length) {
             const idsProveedores = relaciones.map(r => r.id_proveedor);
             const { data: proveedores, error: errProv } = await supabaseClient
@@ -106,12 +106,12 @@ async function mostrarDatosMP() {
                 const option = document.createElement('option');
                 option.value = p.id_proveedor;
                 option.textContent = p.nombre;
-                document.getElementById('provMP').appendChild(option);
+                document.getElementById('provMaterial').appendChild(option);
             });
         }
 
         habilitarCampos(campos, true);
-        habilitarCampos(['provMP'], true);
+        habilitarCampos(['provMaterial'], true);
 
         // Configurar fechas
         const fechaIngreso = document.getElementById('fecha_ingreso');
@@ -127,7 +127,7 @@ async function mostrarDatosMP() {
         });
 
     } catch(err) {
-        console.error("Error mostrando datos MP:", err);
+        console.error("Error mostrando datos Material:", err);
     }
 }
 
@@ -135,38 +135,38 @@ async function mostrarDatosMP() {
 // Eventos Botones
 // ============================
 document.getElementById('btnCancelar')?.addEventListener('click', () => {
-    const form = document.getElementById('materiaPrimaForm');
+    const form = document.getElementById('MaterialesForm');
     form.reset();
     form.style.display = 'grid';
     document.getElementById('mensajeExito').style.display = 'none';
-    habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMP'], false);
-    resetSelect('provMP');
-    mostrarSeccion('vistaMP');
+    habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
+    resetSelect('provMaterial');
+    mostrarSeccion('vistaMateriales');
 });
 
 document.getElementById('btnOtroLote')?.addEventListener('click', () => {
-    const form = document.getElementById('materiaPrimaForm');
+    const form = document.getElementById('MaterialesForm');
     form.reset();
     form.style.display = 'grid';
     document.getElementById('mensajeExito').style.display = 'none';
-    habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMP'], false);
-    resetSelect('provMP');
+    habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
+    resetSelect('provMaterial');
 });
 
 document.getElementById('btnVolverPrincipal')?.addEventListener('click', () => {
     document.getElementById('mensajeExito').style.display = 'none';
-    mostrarSeccion('vistaMP');
+    mostrarSeccion('vistaMateriales');
 });
 
 // ============================
 // Insertar lote
 // ============================
-document.getElementById('materiaPrimaForm')?.addEventListener('submit', async (e) => {
+document.getElementById('MaterialesForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
         const nuevoLote = {
-            id_mp: parseInt(document.getElementById('id_mp').value),
-            id_proveedor: parseInt(document.getElementById('provMP').value),
+            id_mp: parseInt(document.getElementById('Id_Material').value),
+            id_proveedor: parseInt(document.getElementById('provMaterial').value),
             lote: document.getElementById('lote').value,
             cantidad: parseFloat(document.getElementById('cantidad').value),
             fecha_ingreso: document.getElementById('fecha_ingreso').value,
@@ -176,7 +176,7 @@ document.getElementById('materiaPrimaForm')?.addEventListener('submit', async (e
         const { error } = await supabaseClient.from('lote_mp').insert([nuevoLote]);
         if (error) throw error;
 
-        const form = document.getElementById('materiaPrimaForm');
+        const form = document.getElementById('MaterialesForm');
         form.style.display = 'none';
         const mensajeExito = document.getElementById('mensajeExito');
         document.getElementById('textoExito').textContent = "Lote registrado correctamente";
@@ -191,49 +191,49 @@ document.getElementById('materiaPrimaForm')?.addEventListener('submit', async (e
 // ============================
 // Cargar tabla Materias Primas
 // ============================
-async function cargarMP() {
+async function cargarMaterial() {
     try {
-        const { data: materias, error } = await supabaseClient.from('materia_prima').select(`*, lote_mp(cantidad)`);
+        const { data: materias, error } = await supabaseClient.from('materiales').select(`*, lote_mp(cantidad)`);
         if (error) throw error;
 
         const { data: proveedores } = await supabaseClient.from('proveedor').select('id_proveedor,nombre');
-        const tbody = document.querySelector('#tablaMP tbody');
+        const tbody = document.querySelector('#tablaMateriales tbody');
         tbody.innerHTML = '';
 
-        materias.forEach(mp => {
-            const stock = mp.lote_mp?.reduce((acc,l)=> acc+l.cantidad,0) || 0;
-            const nombreProv = proveedores.find(p=>p.id_proveedor===mp.id_proveedor)?.nombre || '';
-            const nombreProvSec = proveedores.find(p=>p.id_proveedor===mp.id_proveedorsec)?.nombre || '';
+        materias.forEach(material => {
+            const stock = material.lote_mp?.reduce((acc,l)=> acc+l.cantidad,0) || 0;
+            const nombreProv = proveedores.find(p=>p.id_proveedor===material.id_proveedor)?.nombre || '';
+            const nombreProvSec = proveedores.find(p=>p.id_proveedor===material.id_proveedorsec)?.nombre || '';
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${mp.id_mp}</td>
-                <td>${mp.nombre}</td>
-                <td>${mp.descr}</td>
-                <td>${mp.unidad}</td>
+                <td>${material.id_mp}</td>
+                <td>${material.nombre}</td>
+                <td>${material.descr}</td>
+                <td>${material.unidad}</td>
                 <td>${stock}</td>
                 <td>${nombreProv}</td>
                 <td>${nombreProvSec}</td>
-                <td><button class="btn-editar" onclick="verLotes(${mp.id_mp})">Ver Lotes</button></td>
+                <td><button class="btn-editar" onclick="verLotes(${material.id_mp})">Ver Lotes</button></td>
             `;
             tbody.appendChild(tr);
         });
 
     } catch(err) {
-        console.error("Error cargando tabla MP:", err);
+        console.error("Error cargando tabla Material:", err);
     }
 }
 
 // ============================
-// Ver lotes de una MP
+// Ver lotes de un material
 // ============================
-async function verLotes(idMP) {
+async function verLotes(idMaterial) {
     try {
         mostrarSeccion('vistaLotes');
-        const mp = materiaPrimaData.find(m=>m.id_mp==idMP);
-        document.getElementById('tituloLotes').textContent = `Lotes de ${mp?.nombre || 'Materia Prima'}`;
+        const material = materialData.find(m=>m.id_mp==idMaterial);
+        document.getElementById('tituloLotes').textContent = `Lotes de ${material?.nombre || 'Material'}`;
 
-        const { data: lotes, error: errorLotes } = await supabaseClient.from('lote_mp').select('*').eq('id_mp', idMP);
+        const { data: lotes, error: errorLotes } = await supabaseClient.from('lote_mp').select('*').eq('id_mp', idMaterial);
         if(errorLotes) throw errorLotes;
 
         const idsProveedores = [...new Set(lotes.map(l=>l.id_proveedor))];
@@ -266,11 +266,11 @@ async function verLotes(idMP) {
 }
 
 // ============================
-// Volver a vista MP
+// Volver a vista material
 // ============================
-function volverMP() {
+function volverMateriales() {
     document.getElementById('vistaLotes').style.display = 'none';
-    document.getElementById('vistaMP').style.display = 'block';
+    document.getElementById('vistaMateriales').style.display = 'block';
 }
 
-document.addEventListener('DOMContentLoaded', cargarMateriaPrima);
+document.addEventListener('DOMContentLoaded', cargarMateriales);
