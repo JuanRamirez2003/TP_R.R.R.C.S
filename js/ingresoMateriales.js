@@ -33,7 +33,7 @@ function mostrarSeccion(seccionId) {
             if(sec.id === 'IngresoMateriales') {
                 const form = sec.querySelector('form');
                 if(form) form.reset();
-                habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
+                habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
                 resetSelect('provMaterial');
             }
         });
@@ -79,7 +79,7 @@ async function cargarMateriales() {
 async function mostrarDatosMaterial() {
     try {
         const id = document.getElementById('Id_Material').value;
-        const campos = ['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado'];
+        const campos = ['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado'];
         const material = materialData.find(item => item.id_mp == id);
 
         if (!material) {
@@ -147,7 +147,7 @@ document.getElementById('btnCancelar')?.addEventListener('click', () => {
     form.reset();
     form.style.display = 'grid';
     document.getElementById('mensajeExito').style.display = 'none';
-    habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
+    habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
     resetSelect('provMaterial');
     mostrarSeccion('vistaMateriales');
 });
@@ -157,7 +157,7 @@ document.getElementById('btnOtroLote')?.addEventListener('click', () => {
     form.reset();
     form.style.display = 'grid';
     document.getElementById('mensajeExito').style.display = 'none';
-    habilitarCampos(['lote', 'cantidad', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
+    habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
     resetSelect('provMaterial');
 });
 
@@ -176,7 +176,7 @@ document.getElementById('MaterialesForm')?.addEventListener('submit', async (e) 
             id_mp: parseInt(document.getElementById('Id_Material').value),
             id_proveedor: parseInt(document.getElementById('provMaterial').value),
             lote: document.getElementById('lote').value,
-            cantidad: parseFloat(document.getElementById('cantidad').value),
+            cantidad_disponible: parseFloat(document.getElementById('cantidad_disponible').value),
             fecha_ingreso: document.getElementById('fecha_ingreso').value,
             fecha_caducidad: document.getElementById('fecha_cad').value,
             estado: document.getElementById('estado').value
@@ -201,7 +201,7 @@ document.getElementById('MaterialesForm')?.addEventListener('submit', async (e) 
 // ============================
 async function cargarMaterial() {
     try {
-        const { data: materias, error } = await supabaseClient.from('materiales').select(`*, lote_mp(cantidad)`);
+        const { data: materias, error } = await supabaseClient.from('materiales').select(`*, lote_mp(cantidad_disponible)`);
         if (error) throw error;
 
         const { data: proveedores } = await supabaseClient.from('proveedor').select('id_proveedor,nombre');
@@ -209,7 +209,7 @@ async function cargarMaterial() {
         tbody.innerHTML = '';
 
         materias.forEach(material => {
-            const stock = material.lote_mp?.reduce((acc,l)=> acc+l.cantidad,0) || 0;
+            const stock = material.lote_mp?.reduce((acc,l)=> acc+l.cantidad_disponible,0) || 0;
             const nombreProv = proveedores.find(p=>p.id_proveedor===material.id_proveedor)?.nombre || '';
             const nombreProvSec = proveedores.find(p=>p.id_proveedor===material.id_proveedorsec)?.nombre || '';
 
@@ -257,7 +257,7 @@ async function verLotes(idMaterial) {
             tr.innerHTML = `
                 <td data-label="ID Lote">${lote.id_lote}</td>
                 <td data-label="Lote">${lote.lote}</td>
-                <td data-label="Cantidad">${lote.cantidad}</td>
+                <td data-label="Cantidad">${lote.cantidad_disponible}</td>
                 <td data-label="Fecha Ingreso">${lote.fecha_ingreso}</td>
                 <td data-label="Fecha Caducidad">${lote.fecha_caducidad}</td>
                 <td data-label="Estado">${lote.estado}</td>
