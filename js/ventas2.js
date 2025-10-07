@@ -503,3 +503,194 @@ function descargarFacturaPDF() {
     alert("PDF no disponible para descarga.");
   }
 }
+async function generarOrdenesProduccion() {
+  try {
+    // 1️⃣ Obtener IDs de órdenes de venta pendientes
+    const ordenesPendientesIds = await getOrdenesPendientesIds();
+    if (ordenesPendientesIds.length === 0) {
+      return alert('No hay órdenes pendientes para procesar.');
+    }
+
+    // 2️⃣ Obtener detalles de órdenes de venta pendientes
+    const { data: ovData, error: ovError } = await supabaseClient
+      .from('detalle_ordenes')
+      .select('id_orden, id_producto, cantidad')
+      .in('id_orden', ordenesPendientesIds);
+    if (ovError) throw ovError;
+
+    // 3️⃣ Agrupar por producto
+    const productosTotales = {};
+    ovData.forEach(d => {
+      if (!productosTotales[d.id_producto]) productosTotales[d.id_producto] = 0;
+      productosTotales[d.id_producto] += Number(d.cantidad);
+    });
+
+    let resumen = '';
+
+    // 4️⃣ Procesar cada producto
+    for (const id_producto of Object.keys(productosTotales)) {
+      let cantidadRestanteProducto = productosTotales[id_producto];
+
+      if (cantidadRestanteProducto < 50) {
+        resumen += `<p>⚠️ Producto ${id_producto} → No alcanza 50 cajas para generar OP (restan ${cantidadRestanteProducto}).</p>`;
+        continue;
+      }
+
+      // Obtener receta del producto
+      const { data: recetaData, error: recetaError } = await supabaseClient
+        .from('producto_materia')
+        .select('*')
+        .eq('id_producto', id_producto);
+      if (recetaError) throw recetaError;
+
+      if (!recetaData || recetaData.length === 0) {
+        resumen += `<p>⚠️ Producto ${id_producto} → No tiene receta definida.</p>`;
+        continue;
+      }
+
+      // Generar OP mientras haya al menos 50 cajas
+      while (cantidadRestanteProducto >= 50) {
+        const cantidadLote = 50;
+        const multiplicador = cantidadLote / 10; // receta para 10 cajas
+
+        // Calcular materiales necesarios
+        const materialesNecesarios = recetaData.map(r => ({
+          id_mp: r.id_mp,
+          cantidad: Math.ceil(Number(r.cantidad || 0) * multiplicador)
+        }));
+
+        const detalle_materiales = [];
+        let stockInsuficiente = false;
+        const faltanteMateriales = [];
+
+        // Verificar stock FEFO
+        for (const mat of materialesNecesarios) {
+          const { data: lotes, error: loteError } = await supabaseClient
+            .from('lote_mp')
+            .select('*')
+            .eq('id_mp', mat.id_mp)
+            .eq('estado', 'Conforme')
+            .order('fecha_ingreso', { ascending: true });
+          if (loteError) throw loteError;
+
+          let cantidadRestante = mat.cantidad;
+          const lotesUsados = [];
+
+          for (const lote of lotes) {
+            if (cantidadRestante <= 0) break;
+            const disponible = Number(lote.cantidad_disponible || 0);
+            if (disponible <= 0) continue;
+
+            const aReservar = Math.min(disponible, cantidadRestante);
+            lotesUsados.push({ id_lote: lote.id_lote, cantidad: aReservar });
+            cantidadRestante -= aReservar;
+          }
+
+          if (cantidadRestante > 0) {
+            stockInsuficiente = true;
+            faltanteMateriales.push({ id_mp: mat.id_mp, faltante: cantidadRestante });
+            break;
+          }
+
+          detalle_materiales.push({ id_mp: mat.id_mp, lotes: lotesUsados });
+        }
+
+        if (!stockInsuficiente) {
+          // Crear OP
+          const { data: opData, error: opError } = await supabaseClient
+            .from('orden_produccion')
+            .insert([{
+              estado: 'pendiente',
+              fecha_emision: new Date().toISOString(),
+              id_producto: parseInt(id_producto),
+              cant_lote: cantidadLote,
+              detalle_materiales
+            }])
+            .select()
+            .single();
+          if (opError) throw opError;
+
+          // Actualizar lotes y detalle_lote_op
+          for (const mat of detalle_materiales) {
+            for (const lote of mat.lotes) {
+              const { data: loteActual } = await supabaseClient
+                .from('lote_mp')
+                .select('cantidad_reservada, cantidad_disponible')
+                .eq('id_lote', lote.id_lote)
+                .single();
+
+              const nuevaCantidadReservada = Number(loteActual.cantidad_reservada || 0) + Number(lote.cantidad);
+              const nuevaCantidadDisponible = Number(loteActual.cantidad_disponible || 0) - Number(lote.cantidad);
+
+              await supabaseClient
+                .from('lote_mp')
+                .update({
+                  cantidad_reservada: nuevaCantidadReservada,
+                  cantidad_disponible: nuevaCantidadDisponible
+                })
+                .eq('id_lote', lote.id_lote);
+
+              await supabaseClient
+                .from('detalle_lote_op')
+                .insert([{
+                  id_orden_produccion: opData.id_orden_produccion,
+                  id_lote: lote.id_lote,
+                  cantidad_lote: lote.cantidad
+                }]);
+            }
+          }
+
+          // Relacionar OP con OV
+          const ovIds = ovData.filter(d => d.id_producto == id_producto).map(d => d.id_orden);
+          for (const id_ov of ovIds) {
+            await supabaseClient.from('op_ov').insert([{ id_op: opData.id_orden_produccion, id_ov }]);
+          }
+
+          resumen += `<p>✅ Producto ${id_producto} → OP generada para ${cantidadLote} cajas (5 lotes de 10).</p>`;
+          cantidadRestanteProducto -= cantidadLote;
+
+        } else {
+          resumen += `<p>⚠️ Producto ${id_producto} → Stock insuficiente para generar OP de 50 cajas.</p>`;
+          faltanteMateriales.forEach(f => {
+            resumen += `<p>   - Material ID ${f.id_mp} → faltan ${f.faltante} unidades.</p>`;
+          });
+          break;
+        }
+      }
+    }
+
+    mostrarModalOP(resumen);
+    await listarOrdenes();
+
+  } catch (err) {
+    console.error('Error generando OP:', JSON.stringify(err, null, 2));
+    alert('Error generando órdenes de producción. Revisar consola.');
+  }
+}
+
+
+// Auxiliares
+async function getOrdenesPendientesIds() {
+  const { data, error } = await supabaseClient
+    .from('orden_ventas')
+    .select('id_orden')
+    .eq('estado', 'pendiente');
+  if (error) throw error;
+  return data.map(d => d.id_orden);
+}
+
+function mostrarModalOP(contenidoHTML) {
+  document.getElementById('contenidoOP').innerHTML = contenidoHTML;
+  document.getElementById('modalOP').style.display = 'flex';
+}
+
+function cerrarModalOP() {
+  document.getElementById('modalOP').style.display = 'none';
+  document.getElementById('contenidoOP').innerHTML = '';
+}
+
+document.getElementById('btnGenerarOP').addEventListener('click', async () => {
+  if (confirm('¿Desea generar las órdenes de producción según las órdenes de venta pendientes?')) {
+    await generarOrdenesProduccion();
+  }
+});
