@@ -17,6 +17,9 @@ function mostrarSeccion(seccionId) {
     document.getElementById('tablaOrdenesContainer').style.display = 'block';
     listarOrdenes();
   }
+   if (seccionId === 'facturas') {
+    listarFacturas();
+  }
 }
 
 // Volver al panel principal
@@ -232,11 +235,12 @@ function quitarProducto(btn) {
   if(document.querySelectorAll('.producto-item').length === 0) agregarProducto();
 }
 
-// ===================== GUARDAR ORDEN =====================
+// ===================== GUARDAR ORDEN Y CREAR FACTURA =====================
 document.getElementById('ordenForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   try {
+    // Obtener cliente y productos del formulario
     const cliente = document.getElementById('clienteOrden').value;
     const productosDivs = document.querySelectorAll('#productosContainer .producto-item');
 
@@ -246,16 +250,16 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
     const productos = [];
     let stockSuficiente = true;
 
-    // Verificar stock y armar productos
+    // Verificar stock y armar lista de productos
     for (const div of productosDivs) {
-      const id_producto = div.querySelector('.productoSelect').value;
+      const id_producto = parseInt(div.querySelector('.productoSelect').value);
       const cantidad = parseInt(div.querySelector('.cantidadInput').value);
 
       if (!id_producto || cantidad < 1) return alert('Complete todos los productos y cantidades');
 
       const { data: prodData, error: prodError } = await supabaseClient
         .from('productos')
-        .select('stock, nombre')
+        .select('stock, nombre, precio_unitario')
         .eq('id_producto', id_producto)
         .single();
       if (prodError) throw prodError;
@@ -265,19 +269,28 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
         alert(`No hay suficiente stock para "${prodData?.nombre}". Stock disponible: ${prodData?.stock ?? 0}`);
       }
 
-      productos.push({ id_producto, cantidad, stock_actual: prodData.stock });
+      productos.push({
+        id_producto,
+        cantidad,
+        stock_actual: prodData.stock,
+        precio_unitario: parseFloat(prodData.precio_unitario)
+      });
     }
 
-    // Crear orden
+    // Crear la orden
     const estadoInicial = stockSuficiente ? 'listo para entregar' : 'pendiente';
     const { data: ordenData, error: ordenError } = await supabaseClient
       .from('orden_ventas')
-      .insert([{ id_cliente: cliente, fecha: new Date().toISOString(), estado: estadoInicial }])
+      .insert([{
+        id_cliente: parseInt(cliente),
+        fecha: new Date().toISOString(),
+        estado: estadoInicial
+      }])
       .select()
       .single();
     if (ordenError) throw ordenError;
 
-    // Insertar detalle y restar stock si hay suficiente
+    // Insertar detalle de la orden y actualizar stock si hay suficiente
     for (const p of productos) {
       const { error: detalleError } = await supabaseClient
         .from('detalle_ordenes')
@@ -293,16 +306,45 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
       }
     }
 
+    // Crear factura automáticamente si la orden está lista
+    if (stockSuficiente) {
+      try {
+        const totalOrden = productos.reduce((sum, p) => sum + (p.precio_unitario * p.cantidad), 0);
+
+        const { data: facturaData, error: facturaError } = await supabaseClient
+          .from('factura')
+          .insert([{
+            id_orden: parseInt(ordenData.id_orden),
+            id_cliente: parseInt(cliente),
+            fecha: new Date().toISOString(),
+            total: totalOrden
+          }])
+          .select()
+          .single();
+
+        if (facturaError) throw facturaError;
+
+        // Actualizar tabla de facturas en pantalla
+        if (typeof listarFacturas === 'function') listarFacturas();
+
+      } catch (err) {
+        console.error('Error creando factura completo:', JSON.stringify(err, null, 2));
+        alert('Orden lista pero no se pudo generar la factura.');
+      }
+    }
+
+    // Mostrar mensaje de éxito
     document.getElementById('formOrden').style.display = 'none';
     document.getElementById('textoExitoOrden').innerText = `Orden registrada exitosamente (${estadoInicial}).`;
     document.getElementById('mensajeExitoOrden').style.display = 'block';
     listarOrdenes();
 
   } catch (err) {
-    console.error('Error guardando orden:', err);
+    console.error('Error guardando orden completo:', JSON.stringify(err, null, 2));
     alert('Ocurrió un error al registrar la orden.');
   }
 });
+
 
 // ===================== LISTAR ÓRDENES =====================
 async function listarOrdenes() {
@@ -331,5 +373,81 @@ async function listarOrdenes() {
     });
   } catch (err) {
     console.error('Error listando órdenes:', err);
+  }
+}
+async function listarFacturas() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('factura')
+      .select('id_factura, id_orden, fecha, total, clientes(id_cliente, nombre)')
+      .order('fecha', { ascending: false });
+
+    if (error) throw error;
+
+    const tbody = document.querySelector('#tablaFacturas tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(f => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${f.id_factura}</td>
+        <td>${f.id_orden}</td>
+        <td>${f.clientes?.nombre || '-'}</td>
+        <td>${f.fecha ? new Date(f.fecha).toLocaleDateString() : '-'}</td>
+        <td>${f.total !== null ? parseFloat(f.total).toFixed(2) : '0.00'}</td>
+        <td>
+          <button onclick="verFactura(${f.id_factura})">Ver</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('Error listando facturas:', err);
+    alert('Ocurrió un error al cargar las facturas.');
+  }
+}
+
+
+async function verFactura(id_factura) {
+  try {
+    const { data: factura, error: errFactura } = await supabaseClient
+      .from('factura')
+      .select(`
+        id_factura,
+        id_orden,
+        fecha,
+        total,
+        clientes(id_cliente, nombre),
+        orden_ventas(
+          id_orden,
+          fecha,
+          estado,
+          detalle_ordenes(
+            id_producto,
+            cantidad,
+            productos(nombre, precio_unitario)
+          )
+        )
+      `)
+      .eq('id_factura', id_factura)
+      .single();
+
+    if (errFactura) throw errFactura;
+
+    const detallesText = factura.orden_ventas?.detalle_ordenes
+      .map(d => `${d.productos?.nombre || '-'} x${d.cantidad} = ${(d.productos?.precio_unitario * d.cantidad || 0).toFixed(2)}`)
+      .join('\n');
+
+    alert(
+      `Factura ID: ${factura.id_factura}\n` +
+      `Cliente: ${factura.clientes?.nombre || '-'}\n` +
+      `Orden: ${factura.id_orden}\n` +
+      `Fecha: ${factura.fecha ? new Date(factura.fecha).toLocaleDateString() : '-'}\n` +
+      `Total: ${factura.total !== null ? parseFloat(factura.total).toFixed(2) : '0.00'}\n\n` +
+      `Detalle de productos:\n${detallesText || '-'}`
+    );
+  } catch (err) {
+    console.error('Error al ver factura:', err);
+    alert('No se pudo cargar la factura.');
   }
 }

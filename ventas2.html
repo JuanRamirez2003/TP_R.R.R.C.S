@@ -214,24 +214,45 @@
       </div>
 
       <!-- ===================== SECCIÓN FACTURAS ===================== -->
-      <div id="facturas" class="seccion" style="display:none;">
-        <h2>Facturación</h2>
-        <table id="tablaFacturas">
-          <thead>
-            <tr>
-              <th>ID Factura</th>
-              <th>Orden</th>
-              <th>Cliente</th>
-              <th>Fecha</th>
-              <th>Total</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </main>
+<div id="facturas" class="seccion" style="display:none;">
+  <h2>Facturación</h2>
+
+  <!-- Tabla de Facturas -->
+  <div style="margin-top:20px;">
+    <table id="tablaFacturas" class="table-wrapper" style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background-color:#f2f2f2;">
+          <th>ID Factura</th>
+          <th>Orden</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
+
+  <!-- Modal Detalle Factura -->
+  <div id="modalFactura" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+      background: rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000;">
+    <div style="background:white; padding:20px; border-radius:8px; max-width:600px; width:90%; position:relative;">
+      <h3>Detalle de Factura</h3>
+      <p><strong>Factura ID:</strong> <span id="modalIdFactura"></span></p>
+      <p><strong>Orden:</strong> <span id="modalIdOrden"></span></p>
+      <p><strong>Cliente:</strong> <span id="modalCliente"></span></p>
+      <p><strong>Fecha:</strong> <span id="modalFecha"></span></p>
+      <p><strong>Total:</strong> $<span id="modalTotal"></span></p>
+      <h4>Productos:</h4>
+      <ul id="modalProductos" style="list-style:none; padding-left:0;"></ul>
+      <button onclick="cerrarModalFactura()" 
+        style="margin-top:10px; padding:8px 15px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer;">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
 
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
