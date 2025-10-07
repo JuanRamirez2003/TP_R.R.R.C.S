@@ -240,17 +240,16 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   try {
-    // Obtener cliente y productos del formulario
     const cliente = document.getElementById('clienteOrden').value;
     const productosDivs = document.querySelectorAll('#productosContainer .producto-item');
 
     if (!cliente) return alert('Seleccione un cliente');
     if (productosDivs.length === 0) return alert('Agregue al menos un producto');
 
-    const productos = [];
     const productosConStock = [];
+    const productosPendientes = [];
 
-    // Armar lista de productos y verificar stock individual
+    // Revisar stock de cada producto
     for (const div of productosDivs) {
       const id_producto = parseInt(div.querySelector('.productoSelect').value);
       const cantidad = parseInt(div.querySelector('.cantidadInput').value);
@@ -259,90 +258,89 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
 
       const { data: prodData, error: prodError } = await supabaseClient
         .from('productos')
-        .select('stock, nombre, precio_unitario')
+        .select('nombre, precio_unitario, stock')
         .eq('id_producto', id_producto)
         .single();
-      if (prodError) throw prodError;
 
-      productos.push({
-        id_producto,
-        cantidad,
-        stock_actual: prodData.stock,
-        precio_unitario: parseFloat(prodData.precio_unitario),
-        nombre: prodData.nombre
-      });
+      if (prodError) throw prodError;
 
       if (prodData.stock >= cantidad) {
         productosConStock.push({
           id_producto,
           cantidad,
-          stock_actual: prodData.stock,
+          nombre: prodData.nombre,
           precio_unitario: parseFloat(prodData.precio_unitario),
-          nombre: prodData.nombre
+          stock_actual: prodData.stock
         });
       } else {
-        alert(`No hay suficiente stock para "${prodData.nombre}". Solo se reservará lo que haya disponible.`);
+        productosPendientes.push({
+          id_producto,
+          cantidad,
+          nombre: prodData.nombre,
+          precio_unitario: parseFloat(prodData.precio_unitario),
+          stock_actual: prodData.stock
+        });
       }
     }
 
-    // Crear la orden (siempre se crea)
-    const { data: ordenData, error: ordenError } = await supabaseClient
-      .from('orden_ventas')
-      .insert([{
-        id_cliente: parseInt(cliente),
-        fecha: new Date().toISOString(),
-        estado: 'pendiente'
-      }])
-      .select()
-      .single();
-    if (ordenError) throw ordenError;
-
-    // Insertar detalle de la orden y actualizar stock solo para los productos con stock
-    for (const p of productosConStock) {
-      const { error: detalleError } = await supabaseClient
-        .from('detalle_ordenes')
-        .insert([{ id_orden: ordenData.id_orden, id_producto: p.id_producto, cantidad: p.cantidad }]);
-      if (detalleError) throw detalleError;
-
-      const { error: updateError } = await supabaseClient
-        .from('productos')
-        .update({ stock: p.stock_actual - p.cantidad })
-        .eq('id_producto', p.id_producto);
-      if (updateError) throw updateError;
-    }
-
-    // Crear factura solo si hay productos con stock
+    // === Crear orden de productos con stock (facturable) ===
+    let ordenFacturable = null;
     if (productosConStock.length > 0) {
-      const totalOrden = productosConStock.reduce((sum, p) => sum + (p.precio_unitario * p.cantidad), 0);
-
-      const { data: facturaData, error: facturaError } = await supabaseClient
-        .from('factura')
-        .insert([{
-          id_orden: parseInt(ordenData.id_orden),
-          id_cliente: parseInt(cliente),
-          fecha: new Date().toISOString(),
-          total: totalOrden
-        }])
+      const { data: ordenData, error: ordenError } = await supabaseClient
+        .from('orden_ventas')
+        .insert([{ id_cliente: parseInt(cliente), fecha: new Date().toISOString(), estado: 'completada' }])
         .select()
         .single();
+      if (ordenError) throw ordenError;
+      ordenFacturable = ordenData;
 
-      if (facturaError) throw facturaError;
+      for (const p of productosConStock) {
+        await supabaseClient.from('detalle_ordenes').insert([{ id_orden: ordenData.id_orden, id_producto: p.id_producto, cantidad: p.cantidad }]);
+        await supabaseClient.from('productos').update({ stock: p.stock_actual - p.cantidad }).eq('id_producto', p.id_producto);
+      }
+
+      // Crear factura
+      const totalFactura = productosConStock.reduce((sum, p) => sum + p.cantidad * p.precio_unitario, 0);
+      await supabaseClient.from('factura').insert([{
+        id_orden: ordenData.id_orden,
+        id_cliente: parseInt(cliente),
+        fecha: new Date().toISOString(),
+        total: totalFactura
+      }]);
     }
 
-    // Mostrar mensaje de éxito
+    // === Crear orden pendiente para productos sin stock ===
+    let ordenPendiente = null;
+    if (productosPendientes.length > 0) {
+      const { data: ordenPendData, error: ordenPendError } = await supabaseClient
+        .from('orden_ventas')
+        .insert([{ id_cliente: parseInt(cliente), fecha: new Date().toISOString(), estado: 'pendiente' }])
+        .select()
+        .single();
+      if (ordenPendError) throw ordenPendError;
+      ordenPendiente = ordenPendData;
+
+      for (const p of productosPendientes) {
+        await supabaseClient.from('detalle_ordenes').insert([{ id_orden: ordenPendData.id_orden, id_producto: p.id_producto, cantidad: p.cantidad }]);
+      }
+    }
+
+    // Mensaje final
+    let mensaje = '';
+    if (ordenFacturable) mensaje += `Productos facturados: ${productosConStock.map(p => p.nombre).join(', ')}.\n`;
+    if (ordenPendiente) mensaje += `Productos pendientes: ${productosPendientes.map(p => p.nombre).join(', ')}.`;
+
+    alert(mensaje);
+
     document.getElementById('formOrden').style.display = 'none';
-    document.getElementById('textoExitoOrden').innerText = `Orden registrada exitosamente. Productos reservados: ${productosConStock.length}, faltantes: ${productos.length - productosConStock.length}`;
-    document.getElementById('mensajeExitoOrden').style.display = 'block';
     listarOrdenes();
     listarFacturas();
 
   } catch (err) {
-    console.error('Error guardando orden completo:', JSON.stringify(err, null, 2));
+    console.error('Error guardando orden completa:', err);
     alert('Ocurrió un error al registrar la orden.');
   }
 });
-
-
 
 // ===================== LISTAR ÓRDENES =====================
 async function listarOrdenes() {
