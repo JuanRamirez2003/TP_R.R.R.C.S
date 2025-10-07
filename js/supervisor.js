@@ -263,6 +263,33 @@ function mostrarDetalleMateriales(detalle) {
   });
 }
 
+//----------------------------------------------------------------
+//Generar numero de orden automatico
+async function generarNumeroOP() {
+  // usar id_orden_produccion para asegurar que traes la última fila creada
+  const { data, error } = await supabaseClient
+    .from('orden_produccion')
+    .select('id_orden_produccion, numero_op')
+    .order('id_orden_produccion', { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.error("Error al generar número de OP:", error);
+    return "OP-2025-000"; // defecto: empieza en 000
+  }
+
+  if (!data || data.length === 0) {
+    return "OP-2025-000"; // si no hay OP -> primera será 000
+  }
+
+  const ultimo = data[0].numero_op || "";
+  // extraer el número final con regex (más seguro que split)
+  const m = ultimo.match(/-(\d+)$/);
+  const lastNum = m ? parseInt(m[1], 10) : 0;
+  const nuevoNum = lastNum + 1;
+  const nuevo = `OP-2025-${String(nuevoNum).padStart(3, '0')}`;
+  return nuevo;
+}
 
 
 // Cargar/Ver OP desde Supabase
