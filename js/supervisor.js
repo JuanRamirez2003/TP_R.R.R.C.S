@@ -24,7 +24,7 @@ async function cargarProductosDisponibles() {
   }
 
   productosDisponibles = data.map(p => p.nombre);
-  console.log("Productos disponibles:", productosDisponibles);
+ // console.log("Productos disponibles:", productosDisponibles);
 }
 
 // Llamada de ejemplo:
@@ -84,12 +84,16 @@ function agregarProducto(){
       <option value="" disabled selected>Seleccione un producto</option>
       ${opciones}
     </select>
+    <lebel>Cant. Lote:</label>
     <input type="number" name="productoCantidad[]" min="1" value="1" required>
-    <button type="button" onclick="eliminarProducto(this)" class="btn-eliminar">❌</button>
+    
   `;
+
+   div.querySelector('select').addEventListener('change', actualizarDetalleMateriales);
+  div.querySelector('input').addEventListener('input', actualizarDetalleMateriales);
   container.appendChild(div);
 }
-
+//<button type="button" onclick="eliminarProducto(this)" class="btn-eliminar">❌</button>
 function eliminarProducto(btn){ 
   btn.parentElement.remove(); 
   if(document.querySelectorAll('.producto-item').length===0) agregarProducto(); 
@@ -113,13 +117,30 @@ document.getElementById('opForm').addEventListener('submit', async (e)=>{
     alert("Complete todos los productos con cantidad válida");
     return;
   }
-
+    console.log(productos[0].nombre);
   const numeroOP = document.getElementById('opNumero').value;
   const fecha = new Date().toISOString();
+
+    const idProducto = await obtnerIdProducto(productos[0].nombre);
+  if(!idProducto){
+    alert("No se pudo obtener el ID del producto");
+    return;
+  }
+const idReceta = await obtenerRecetaPorProducto(idProducto);
+if(!idReceta){
+  alert("No se encontró receta para este producto");
+  return;
+}
+
+ const detalleReceta = await detalleMateriales(idProducto, productos[0].cantidad);
 
   const { data, error } = await supabaseClient.from('orden_produccion').insert([{
     numero_op: numeroOP,
     ver_orden: productos,
+    id_producto: idProducto, 
+    cant_lote: productos[0].cantidad, 
+    id_receta: idReceta,
+    detalle_materiales: detalleReceta,
     fecha_emision: fecha,
     estado: 'Pendiente'
   }]);
@@ -130,6 +151,119 @@ document.getElementById('opForm').addEventListener('submit', async (e)=>{
   mostrarSeccion('seguimientoOP');
   cargarOP();
 });
+
+
+async function obtnerIdProducto(nombreProducto) {
+  const { data, error } = await supabaseClient
+      .from('productos')
+      .select('id_producto')  
+      .eq('nombre', nombreProducto)
+      .single();
+
+  if(error){
+    console.error("Error al obtener id del producto:", error);
+    return null;
+  }
+  console.log("ID del producto obtenido:", data.id_producto);
+  return data.id_producto;
+}
+
+async function obtenerRecetaPorProducto(idProducto) {
+  const { data, error } = await supabaseClient
+      .from('receta')
+      .select('*')
+      .eq('id_producto', idProducto)
+      .single();
+
+  if(error){
+    console.error("Error al obtener receta:", error);
+    return null;
+  }
+
+  return data.id_receta;
+}
+
+
+async function detalleMateriales(idProducto, cantLote) {
+  // Traemos las materias primas del producto
+  const { data, error } = await supabaseClient
+    .from('producto_materia')
+    .select('*')
+    .eq('id_producto', idProducto);
+
+  if (error) {
+    console.error("Error al obtener detalle de materia:", error);
+    return [];
+  }
+
+  if (!data || data.length === 0) return [];
+
+  const idsMP = data.map(item => item.id_mp);
+  const { data: materiales, error: errorMat } = await supabaseClient
+    .from('materiales')
+    .select('id_mp, nombre')
+    .in('id_mp', idsMP);
+
+  if (errorMat) {
+    console.error("Error al obtener nombres de materiales:", errorMat);
+    return [];
+  }
+
+  // Mapeamos cada item agregando su nombre y multiplicando por el lote
+  const detalleMultiplicado = data.map(item => {
+    const mat = materiales.find(m => m.id_mp === item.id_mp);
+    return {
+      //id_mp: item.id_mp,
+      nombre_material: mat ? mat.nombre : 'Desconocido',
+      id_producto: item.id_producto,
+      cantidad_base: item.cantidad,
+      unidad: item.unidad,
+      cantidad_total: item.cantidad * cantLote
+    };
+  });
+
+  return detalleMultiplicado;
+}
+
+async function actualizarDetalleMateriales() {
+  const productos = Array.from(document.querySelectorAll('.producto-item'));
+  let detalleTotal = [];
+
+  for (const p of productos) {
+    const nombreProd = p.querySelector('select').value;
+    const cantLote = parseInt(p.querySelector('input').value, 10);
+    if (!nombreProd || cantLote <= 0) continue;
+
+    const idProducto = await obtnerIdProducto(nombreProd); // await aquí está bien
+    if (!idProducto) continue;
+
+    const detalle = await detalleMateriales(idProducto, cantLote);
+    detalleTotal = detalleTotal.concat(detalle);
+  }
+
+  mostrarDetalleMateriales(detalleTotal);
+}
+function mostrarDetalleMateriales(detalle) {
+  const tabla = document.getElementById('tablaMateriales').querySelector('tbody');
+  tabla.innerHTML = ''; // limpiar la tabla antes de agregar
+
+  if (!detalle || detalle.length === 0) {
+    tabla.innerHTML = `<tr><td colspan="3" style="text-align:center;">Sin datos aún</td></tr>`;
+    return;
+  }
+
+  detalle.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.nombre_material || item.id_mp}</td>
+      <td>${item.cantidad_total}</td>
+      <td>${item.unidad}</td>
+    `;
+    tabla.appendChild(tr);
+  });
+}
+
+
 
 // Cargar/Ver OP desde Supabase
 async function cargarOP(){
