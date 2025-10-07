@@ -235,19 +235,19 @@
   </div>
 
   <!-- Modal Detalle Factura -->
-  <div id="modalFactura" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-      background: rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000;">
-    <div style="background:white; padding:20px; border-radius:8px; max-width:600px; width:90%; position:relative;">
-      <h3>Detalle de Factura</h3>
-      <p><strong>Factura ID:</strong> <span id="modalIdFactura"></span></p>
-      <p><strong>Orden:</strong> <span id="modalIdOrden"></span></p>
-      <p><strong>Cliente:</strong> <span id="modalCliente"></span></p>
-      <p><strong>Fecha:</strong> <span id="modalFecha"></span></p>
-      <p><strong>Total:</strong> $<span id="modalTotal"></span></p>
-      <h4>Productos:</h4>
-      <ul id="modalProductos" style="list-style:none; padding-left:0;"></ul>
-      <button onclick="cerrarModalFactura()" 
-        style="margin-top:10px; padding:8px 15px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer;">
+  <!-- Modal PDF de Factura -->
+<div id="modalFacturaPDF" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+    background: rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000;">
+  <div style="background:white; padding:20px; border-radius:8px; max-width:800px; width:95%; max-height:90%; overflow:auto; position:relative;">
+    <h3>Factura PDF</h3>
+    <iframe id="iframeFactura" style="width:100%; height:500px; border:none;"></iframe>
+    <div style="margin-top:15px; display:flex; justify-content:flex-end; gap:10px;">
+      <button onclick="descargarFacturaPDF()" 
+        style="padding:8px 15px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer;">
+        Descargar PDF
+      </button>
+      <button onclick="cerrarModalFacturaPDF()" 
+        style="padding:8px 15px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer;">
         Cerrar
       </button>
     </div>
@@ -258,7 +258,7 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
