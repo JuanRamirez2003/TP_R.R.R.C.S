@@ -329,3 +329,12 @@ tr:hover {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+#modalOrden .modal-content {
+  color: #fff;
+}
+
+
+#modalOrden table, #modalOrden th, #modalOrden td {
+  color: #fff;
+}

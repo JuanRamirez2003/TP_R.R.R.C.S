@@ -412,6 +412,40 @@ async function reservarLotes(idOrden, idMP, cantidadTotal) {
 }
 
 
+async function mostrarDetalleLotes(idOrden) {
+  // 1️⃣ Traer los detalles de los lotes reservados para esta OP
+  const { data: detalle, error } = await supabaseClient
+    .from('detalle_lote_op')
+    .select(`
+      cantidad_lote,
+      lote_mp(id_lote, id_mp, fecha_caducidad, cantidad_disponible, nombre_material:materiales!inner.nombre)
+    `)
+    .eq('id_orden_produccion', idOrden);
+
+  if (error) return console.error("Error al traer detalle de lotes:", error);
+
+  const tabla = document.getElementById('tablaLotes').querySelector('tbody');
+  tabla.innerHTML = '';
+
+  if (!detalle || detalle.length === 0) {
+    tabla.innerHTML = `<tr><td colspan="4" style="text-align:center;">No hay lotes reservados</td></tr>`;
+    return;
+  }
+
+  detalle.forEach(d => {
+    const lote = d.lote_mp;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${lote.nombre_material}</td>
+      <td>${lote.id_lote}</td>
+      <td>${d.cantidad_lote}</td>
+      <td>${new Date(lote.fecha_caducidad).toLocaleDateString()}</td>
+    `;
+    tabla.appendChild(tr);
+  });
+}
+
+
 //------------------------------------------------
 
 
@@ -470,18 +504,79 @@ async function cargarOP() {
 
 // Ver detalle de OP
 async function verOrden(id_orden_produccion) {
-  const { data, error } = await supabaseClient.from('orden_produccion')
-    .select('*').eq('id_orden_produccion', id_orden_produccion).single();
+  // 1️⃣ Traer datos de la OP
+  const { data, error } = await supabaseClient
+    .from('orden_produccion')
+    .select('*')
+    .eq('id_orden_produccion', id_orden_produccion)
+    .single();
   if (error) return console.error("Error al ver OP:", error);
 
-  const productosHtml = data.ver_orden.map(p => `<p>${p.nombre} - Cantidad: ${p.cantidad}</p>`).join('');
+  // 2️⃣ Mostrar productos de la OP
+  const productosHtml = data.ver_orden
+    .map(p => `<p>${p.nombre} - Cantidad: ${p.cantidad}</p>`)
+    .join('');
+
+  // 3️⃣ Traer detalle de lotes reservados
+  const { data: detalleLotes, error: errorLotes } = await supabaseClient
+    .from('detalle_lote_op')
+    .select('*')
+    .eq('id_orden_produccion', id_orden_produccion);
+
+  if (errorLotes) return console.error("Error al cargar detalle de lotes:", errorLotes);
+
+  // 4️⃣ Para cada lote, traer información del lote y del material
+  let lotesHtml = '';
+  if (detalleLotes && detalleLotes.length > 0) {
+    for (const d of detalleLotes) {
+      const { data: lote } = await supabaseClient
+        .from('lote_mp')
+        .select('id_lote, id_mp, fecha_caducidad')
+        .eq('id_lote', d.id_lote)
+        .single();
+
+      const { data: mat } = await supabaseClient
+        .from('materiales')
+        .select('nombre')
+        .eq('id_mp', lote.id_mp)
+        .single();
+
+      lotesHtml += `<tr>
+        <td>${mat ? mat.nombre : 'Desconocido'}</td>
+        <td>${lote.id_lote}</td>
+        <td>${d.cantidad_lote}</td>
+        <td>${lote.fecha_caducidad ? new Date(lote.fecha_caducidad).toLocaleDateString() : '-'}</td>
+      </tr>`;
+    }
+
+    lotesHtml = `<table border="1" style="width:100%; margin-top:10px;">
+      <thead>
+        <tr>
+          <th>Material</th>
+          <th>Lote</th>
+          <th>Cantidad reservada</th>
+          <th>Fecha caducidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lotesHtml}
+      </tbody>
+    </table>`;
+  } else {
+    lotesHtml = '<p>No hay lotes reservados para esta OP.</p>';
+  }
+
+  // 5️⃣ Mostrar modal con productos y lotes
   document.getElementById('detalleOrden').innerHTML = `
     <p><strong>Número OP:</strong> ${data.numero_op}</p>
     <p><strong>Fecha Emisión:</strong> ${new Date(data.fecha_emision).toLocaleString()}</p>
     <p><strong>Estado:</strong> ${data.estado}</p>
     <h4>Productos:</h4>
     ${productosHtml}
+    <h4>Lotes reservados:</h4>
+    ${lotesHtml}
   `;
+
   document.getElementById('modalOrden').style.display = 'flex';
 }
 
