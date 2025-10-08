@@ -36,40 +36,43 @@ async function cargarProductosDisponibles() {
 let ordenesProduccion = JSON.parse(localStorage.getItem("ordenesProduccion")) || [];
 function guardarOPs() { localStorage.setItem("ordenesProduccion", JSON.stringify(ordenesProduccion)); }
 
+
+//Generar numero de orden automatico
 async function generarNumeroOP() {
-  const año = 2025;
-
-  // Traemos todos los numero_op existentes de este año
+  // usar id_orden_produccion para asegurar que traes la última fila creada
   const { data, error } = await supabaseClient
-      .from('orden_produccion')
-      .select('numero_op');
+    .from('orden_produccion')
+    .select('id_orden_produccion, numero_op')
+    .order('id_orden_produccion', { ascending: false })
+    .limit(1);
 
-  if(error){
-      console.error("Error al obtener OP existentes:", error);
-      return `OP-${año}-000`;
+  if (error) {
+    console.error("Error al generar número de OP:", error);
+    return "OP-2025-000"; // defecto: empieza en 000
   }
 
-  // Extraemos los números y obtenemos el mayor
-  let maxNum = 0;
-  data.forEach(op => {
-      const partes = op.numero_op.split('-');
-      if(partes[1] == año.toString()){
-          const num = parseInt(partes[2], 10);
-          if(num > maxNum) maxNum = num;
-      }
-  });
+  if (!data || data.length === 0) {
+    return "OP-2025-000"; // si no hay OP -> primera será 000
+  }
 
-  const siguiente = maxNum + 1;
-  return `OP-${año}-${String(siguiente).padStart(3,'0')}`;
+  const ultimo = data[0].numero_op || "";
+  // extraer el número final con regex (más seguro que split)
+  const m = ultimo.match(/-(\d+)$/);
+  const lastNum = m ? parseInt(m[1], 10) : 0;
+  const nuevoNum = lastNum + 1;
+  const nuevo = `OP-2025-${String(nuevoNum).padStart(3, '0')}`;
+  return nuevo;
 }
 
 prepararNuevaOP();
 
 function prepararNuevaOP() {
+   document.getElementById('btnCrearOP').disabled = true; // 🔒 deshabilitado por defecto
   document.getElementById('productosContainer').innerHTML = '';
   agregarProducto();
 
   generarNumeroOP().then(numeroOP => {
+     console.log("Número OP generado:", numeroOP);
     document.getElementById('opNumero').value = numeroOP;
   });
 }
@@ -118,6 +121,7 @@ document.getElementById('opForm').addEventListener('submit', async (e)=>{
     return;
   }
     console.log(productos[0].nombre);
+
   const numeroOP = document.getElementById('opNumero').value;
   const fecha = new Date().toISOString();
 
@@ -185,7 +189,7 @@ async function obtenerRecetaPorProducto(idProducto) {
 
 
 async function detalleMateriales(idProducto, cantLote) {
-  // Traemos las materias primas del producto
+
   const { data, error } = await supabaseClient
     .from('producto_materia')
     .select('*')
@@ -234,14 +238,30 @@ async function actualizarDetalleMateriales() {
     const cantLote = parseInt(p.querySelector('input').value, 10);
     if (!nombreProd || cantLote <= 0) continue;
 
-    const idProducto = await obtnerIdProducto(nombreProd); // await aquí está bien
+    const idProducto = await obtnerIdProducto(nombreProd); 
     if (!idProducto) continue;
 
     const detalle = await detalleMateriales(idProducto, cantLote);
     detalleTotal = detalleTotal.concat(detalle);
   }
 
-  mostrarDetalleMateriales(detalleTotal);
+ const boton = document.getElementById('btnCrearOP'); 
+
+
+  if (detalleTotal.length === 0) {
+    mostrarDetalleMateriales([]);
+    boton.disabled = true; 
+    return;
+  }
+
+  const verificacion = await verificarStockSuficiente(detalleTotal);
+
+  mostrarDetalleMateriales(verificacion.detalle);
+
+  if (!verificacion.ok) {
+    alert("⚠️ Algunos materiales no tienen suficiente stock. Revisa la tabla para más detalles.");
+  }
+    boton.disabled = !verificacion.ok; 
 }
 function mostrarDetalleMateriales(detalle) {
   const tabla = document.getElementById('tablaMateriales').querySelector('tbody');
@@ -258,12 +278,43 @@ function mostrarDetalleMateriales(detalle) {
       <td>${item.nombre_material || item.id_mp}</td>
       <td>${item.cantidad_total}</td>
       <td>${item.unidad}</td>
+      <td>${item.condicion || '⏳ Verificando...'}</td>
     `;
     tabla.appendChild(tr);
   });
 }
+//---------------------------------------
 
-//----------------------------------------------------------------
+async function verificarStockSuficiente(detalleReceta) {
+  for (const item of detalleReceta) {
+    const { data, error } = await supabaseClient
+      .from('materiales')
+      .select('stock_disponible')
+      .eq('nombre', item.nombre_material)
+      .single();
+
+    if (error || !data) {
+      console.error("Error consultando material:", error);
+      item.condicion = "❌ Error o material no encontrado";
+      continue;
+    }
+
+    if (data.stock_disponible < item.cantidad_total) {
+      item.condicion = `⚠️ Insuficiente (${data.stock_disponible} disp.)`;
+    } else {
+      item.condicion = "✅ Disponible";
+    }
+  }
+
+  mostrarDetalleMateriales(detalleReceta);
+
+  const todoOk = detalleReceta.every(i => i.condicion.includes("✅"));
+  return { ok: todoOk, detalle: detalleReceta };
+}
+
+//------------------------------------------------
+
+
 //Generar numero de orden automatico
 async function generarNumeroOP() {
   // usar id_orden_produccion para asegurar que traes la última fila creada
