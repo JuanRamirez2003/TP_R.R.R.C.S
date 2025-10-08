@@ -413,7 +413,6 @@ async function reservarLotes(idOrden, idMP, cantidadTotal) {
 
 
 async function mostrarDetalleLotes(idOrden) {
-  // 1️⃣ Traer los detalles de los lotes reservados para esta OP
   const { data: detalle, error } = await supabaseClient
     .from('detalle_lote_op')
     .select(`
@@ -446,6 +445,45 @@ async function mostrarDetalleLotes(idOrden) {
 }
 
 
+
+
+
+
+
+// Mostrar/ocultar contenedor según selección
+document.getElementById('tieneOV').addEventListener('change', (e) => {
+  const valor = e.target.value;
+  document.getElementById('containerOVs').style.display = (valor === 'si') ? 'block' : 'none';
+});
+
+// Función para agregar un input/select de OV
+function agregarOV() {
+  const lista = document.getElementById('listaOVs');
+
+  const div = document.createElement('div');
+  div.className = 'ov-item';
+  div.style.marginTop = '5px';
+  div.style.border = '1px solid #555';
+  div.style.padding = '5px';
+  div.style.borderRadius = '5px';
+
+  div.innerHTML = `
+    <label>ID de OV: <input type="number" name="ov_id[]" min="1" required></label>
+    <label>Producto:
+      <select name="ov_producto[]" required>
+        <option value="" disabled selected>Seleccione producto</option>
+        ${productosDisponibles.map(p => `<option value="${p.id_producto}">${p.nombre}</option>`).join('')}
+      </select>
+    </label>
+    <label>Cantidad: <input type="number" name="ov_cantidad[]" min="1" required></label>
+    <button type="button" onclick="eliminarOV(this)">❌</button>
+  `;
+  lista.appendChild(div);
+}
+// Función para eliminar OV
+function eliminarOV(btn) {
+  btn.parentElement.remove();
+}
 //------------------------------------------------
 
 
@@ -504,7 +542,6 @@ async function cargarOP() {
 
 // Ver detalle de OP
 async function verOrden(id_orden_produccion) {
-  // 1️⃣ Traer datos de la OP
   const { data, error } = await supabaseClient
     .from('orden_produccion')
     .select('*')
@@ -512,12 +549,10 @@ async function verOrden(id_orden_produccion) {
     .single();
   if (error) return console.error("Error al ver OP:", error);
 
-  // 2️⃣ Mostrar productos de la OP
   const productosHtml = data.ver_orden
     .map(p => `<p>${p.nombre} - Cantidad: ${p.cantidad}</p>`)
     .join('');
 
-  // 3️⃣ Traer detalle de lotes reservados
   const { data: detalleLotes, error: errorLotes } = await supabaseClient
     .from('detalle_lote_op')
     .select('*')
@@ -525,7 +560,6 @@ async function verOrden(id_orden_produccion) {
 
   if (errorLotes) return console.error("Error al cargar detalle de lotes:", errorLotes);
 
-  // 4️⃣ Para cada lote, traer información del lote y del material
   let lotesHtml = '';
   if (detalleLotes && detalleLotes.length > 0) {
     for (const d of detalleLotes) {
@@ -566,7 +600,6 @@ async function verOrden(id_orden_produccion) {
     lotesHtml = '<p>No hay lotes reservados para esta OP.</p>';
   }
 
-  // 5️⃣ Mostrar modal con productos y lotes
   document.getElementById('detalleOrden').innerHTML = `
     <p><strong>Número OP:</strong> ${data.numero_op}</p>
     <p><strong>Fecha Emisión:</strong> ${new Date(data.fecha_emision).toLocaleString()}</p>
