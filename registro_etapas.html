@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área Operario - Empresa de Alimentos</title>
+    <link rel="stylesheet" href="css/ventas.css">
+    <style>
+        /* Contenedores de tablas con scroll horizontal */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border:1px solid #ccc;
+            padding:5px 10px;
+            text-align:center;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        /* Responsivo general */
+        @media (max-width: 768px) {
+            input, select, button {
+                width: 100%;
+                margin-top:5px;
+            }
+            .sidebar {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            .main-content {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            th, td {
+                font-size: 12px;
+                padding: 4px 6px;
+            }
+        }
+   #registroEtapas {
+    padding: 20px;
+  }
+
+  #registroEtapas label {
+    display: inline-block;
+    margin: 10px 5px 5px 0;
+    font-weight: 600;
+  }
+
+  #registroEtapas select, 
+  #registroEtapas button {
+    margin: 5px 10px 15px 0;
+    padding: 5px 10px;
+  }
+
+  #registroTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  #registroTable th, #registroTable td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+
+  #registroTable th {
+    background-color: #f2f2f2;
+  }
+
+  #registroTable tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+
+  #registroTable tr:hover {
+    background-color: #e6f7ff;
+  }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Menú lateral -->
+        <aside class="sidebar">
+            <h2>Operario</h2>
+            <ul>
+                <li><button onclick="mostrarSeccion('IngresoMateriales')">Ingreso Materiales</button></li>
+                <li><button onclick="mostrarSeccion('VistaMateriales')">Listado Materiales</button></li>
+                <li><button onclick="mostrarSeccion('registroEtapas')">Registro de Etapas</button></li>
+                <!-- Más opciones futuras -->
+            </ul>
+            <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
+        </aside>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+            <h1>Panel de Operario</h1>
+
+            <!-- Sección de ingreso de materiales -->
+            <div id="IngresoMateriales" class="seccion" style="display:none;">
+                <h2>Ingreso de Materiales</h2>
+                <p>Seleccione el material y registre la entrada del lote:</p>
+                <form id="MaterialesForm">
+                  <div class="form-group">
+                        <label for="Tipo_Material">Tipo_Material:</label>
+                        <select id="Tipo_Material" name="tipo_Material" required onchange="habilitarMaterial()">
+                            <option value="">Seleccione...</option>
+                            <option value="Insumo">Insumo</option>
+                            <option value="Materia prima">Materia prima</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="Id_Material">Material:</label> 
+                        <select id="Id_Material" name="Id_Material" required onchange="mostrarDatosMaterial()" disabled>
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+
+                    <!-- Campos solo de visualización -->
+                    <div class="form-group">
+                        <label>Descripción:</label>
+                        <input type="text" id="descMaterial" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Unidad de medida:</label>
+                        <input type="text" id="unidadMaterial" disabled>
+                    </div>
+                    <!-- Campos que completa el operario -->
+                    <div class="form-group">
+                        <label for="provMaterial">Proveedor:</label>
+                        <select id="provMaterial" name="id_proveedor" disabled required>
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lote">Número de Lote:</label>
+                        <input type="text" id="lote" name="lote" disabled required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cantidad_disponible">Cantidad ingresada:</label>
+                        <input type="number" id="cantidad_disponible" name="cantidad_disponible" min="1" step="1" disabled required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha_ingreso">Fecha de ingreso:</label>
+                        <input type="date" id="fecha_ingreso" name="fecha_ingreso" disabled required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_cad">Fecha de caducidad:</label>
+                        <input type="date" id="fecha_cad" name="fecha_cad" disabled required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="estado">Estado:</label>
+                        <select id="estado" name="estado" disabled>
+                            <option value="Conforme">Conforme</option>
+                            <option value="No conforme">No conforme</option>
+                        </select>
+                    </div>
+                      
+
+                    <button type="submit" class="btn-submit" disabled>Registrar Lote</button>
+                    <button type="submit" id="btnCancelar" class="btn-submit">Cancelar</button>
+                </form>
+                <div id="mensajeExito" class="mensaje" style="display:none; text-align:center; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; margin-top:20px;">
+                    <p id="textoExito" style="font-size:18px; font-weight:bold; color:#155724;"></p>
+                    <button id="btnOtroLote" class="btn-submit">Cargar otro lote</button>
+                    <button id="btnVolverPrincipal" class="btn-submit">Volver a página principal</button>
+                </div>
+                <div id="mensaje" class="mensaje"></div>
+            </div>
+
+            <!-- Vista de Materiales -->
+            <div id="VistaMateriales" class="seccion" style="display:none;">
+                <h2>Listado de Materiales</h2>
+                <div class="table-wrapper">
+                    <table id="tablaMateriales">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Unidad</th>
+                                <th>Stock Disponible</th>
+                                <th>Proveedor</th>
+                                <th>Proveedor Sec.</th>
+                                <!--<th>Imagen</th> -->
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Vista de Lotes -->
+            <div id="vistaLotes" class="seccion" style="display:none;">
+                <h2 id="tituloLotes">Lote de Material</h2>
+                <div class="table-wrapper">
+                    <table id="tablaLotes">
+                        <thead>
+                            <tr>
+                                <th>ID Lote</th>
+                                <th>Lote</th>
+                                <th>Cantidad</th>
+                                <th>Fecha Ingreso</th>
+                                <th>Fecha Caducidad</th>
+                                <th>Estado</th>
+                                <th>Cant Disponible</th>
+                                <th>Cant Consumida</th>
+                                <th>Proveedor</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <button onclick="volverMateriales()" class="btn-submit">Volver a Materiales</button>
+            </div>
+
+ <!-- Registro de Etapas -->
+<div id="registroEtapas" class="seccion" style="display:none;">
+  <h2>Registro de Etapas de Producción</h2>
+
+  <!-- Selección de Orden de Producción -->
+  <label for="opSelect">Seleccionar OP Aprobada:</label>
+  <select id="opSelect">
+    <option value="">Cargando...</option>
+  </select>
+
+  <!-- Tabla de registro -->
+  <table id="registroTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>OP</th>
+        <th>Etapa</th>
+        <th>Estado</th>
+        <th>Operario</th>
+        <th>Fecha Inicio</th>
+        <th>Fecha Fin</th>
+        <th>Observaciones</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script>
+    const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co"
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+    </script>
+    <script src="js/ingresoMateriales.js"></script>
+    <script src="js/registro_etapas.js"></script>
+</body>
+</html>
