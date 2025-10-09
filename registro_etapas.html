@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Área Operario - Empresa de Alimentos</title>
     <link rel="stylesheet" href="css/ventas.css">
+    <link rel="stylesheet" href="css/lineasProduccion.css">
     <style>
         /* Contenedores de tablas con scroll horizontal */
         table {
@@ -225,39 +226,34 @@
                 <button onclick="volverMateriales()" class="btn-submit">Volver a Materiales</button>
             </div>
 
- <!-- Registro de Etapas -->
+<!-- Registro de Etapas -->
 <div id="registroEtapas" class="seccion" style="display:none;">
   <h2>Registro de Etapas de Producción</h2>
 
-  <!-- Selección de Orden de Producción -->
-  <label for="opSelect">Seleccionar OP Aprobada:</label>
-  <select id="opSelect">
-    <option value="">Cargando...</option>
-  </select>
+  <!-- Contenedor para líneas de producción tipo cinta -->
+  <div id="lineasContainer"></div>
 
-  <!-- Tabla de registro -->
-  <table id="registroTable">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>OP</th>
-        <th>Etapa</th>
-        <th>Estado</th>
-        <th>Operario</th>
-        <th>Fecha Inicio</th>
-        <th>Fecha Fin</th>
-        <th>Observaciones</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <!-- Tabla de registro de etapas finalizadas -->
+  <div class="table-wrapper">
+    <h3>Órdenes Finalizadas</h3>
+    <table id="registroTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>OP</th>
+          <th>Etapa</th>
+          <th>Estado</th>
+          <th>Operario</th>
+          <th>Fecha Inicio</th>
+          <th>Fecha Fin</th>
+          <th>Observaciones</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
-
-
-        </main>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <script>
     const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co"

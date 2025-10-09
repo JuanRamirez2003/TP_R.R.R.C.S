@@ -1,0 +1,210 @@
+/* 🎯 Estilos para líneas de producción */
+#lineasProduccion {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-top: 18px;
+  font-family: "Segoe UI", Roboto, sans-serif;
+}
+
+.linea-produccion {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 16px 18px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.linea-produccion:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
+}
+
+/* ===== Encabezado ===== */
+.linea-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 6px;
+}
+.linea-header h4 { 
+  margin:0; 
+  font-size:16px; 
+  font-weight:700; 
+  color:#1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== Estado (con LED) ===== */
+.estado-linea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight:600;
+  font-size:13px;
+  text-transform: uppercase;
+  color:#1e293b;
+}
+
+.estado-led {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #b91c1c;
+  box-shadow: 0 0 6px rgba(185, 28, 28, 0.6);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.estado-en-marcha .estado-led {
+  background-color: #16a34a;
+  box-shadow: 0 0 8px rgba(22, 163, 74, 0.7);
+}
+.estado-detenida .estado-led {
+  background-color: #b91c1c;
+  box-shadow: 0 0 8px rgba(185, 28, 28, 0.6);
+}
+
+/* ===== Cinta transportadora ===== */
+.cinta-wrapper {
+  position: relative;
+  height: 44px;
+  background: linear-gradient(180deg, #475569, #334155);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+  margin-top: 6px;
+}
+
+.cinta-wrapper::before,
+.cinta-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  width: 12px;
+  height: 36px;
+  background: #1e293b;
+  border-radius: 50px;
+  box-shadow: inset 0 1px 3px rgba(255,255,255,0.1);
+}
+.cinta-wrapper::before { left: -6px; }
+.cinta-wrapper::after { right: -6px; }
+
+@keyframes moverCinta {
+  0% { transform: translateX(-100%) translateY(-50%); }
+  100% { transform: translateX(100%) translateY(-50%); }
+}
+
+.cinta-items {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-size: 18px;
+  color: #f8fafc;
+  letter-spacing: 1px;
+  animation: moverCinta 10s linear infinite;
+}
+
+.cinta-wrapper.stop .cinta-items {
+  animation-play-state: paused;
+  opacity: 0.4;
+}
+
+/* ===== Botones ===== */
+.linea-actions { 
+  display:flex; 
+  justify-content: flex-end;
+  gap:12px; 
+  align-items:center; 
+  margin-top:10px;
+}
+.linea-actions button {
+  padding: 8px 16px;
+  border: none;
+  background:#2563eb;
+  color:#fff;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:600;
+  font-size:14px;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.linea-actions button:hover { background:#1e40af; transform: scale(1.03); }
+.linea-actions button:active { transform: scale(0.98); }
+
+/* Mejor formato para detalles dentro de tabla */
+.detalle-op {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.detalle-op .etiqueta {
+    font-weight: 600;
+    color: #475569;
+    font-size: 12px;
+}
+
+.detalle-op .valor {
+    font-weight: 500;
+    color: #1e293b;
+    font-size: 14px;
+    margin-top: 2px;
+}
+
+/* Estados */
+.estado-en-progreso {
+    background-color: #fef3c7;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #b45309;
+}
+
+.estado-finalizada {
+    background-color: #d1fae5;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #065f46;
+}
+
+.estado-detenida {
+    background-color: #fee2e2;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #991b1b;
+}
+
+/* Botones en tabla más bonitos */
+#registroTable tbody tr td button {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: none;
+    background-color: #3b82f6;
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+#registroTable tbody tr td button:hover {
+    background-color: #1e40af;
+}
+
+/* Tarjetas dentro de celdas responsive */
+@media (max-width: 768px) {
+    .detalle-op .etiqueta {
+        font-size: 11px;
+    }
+    .detalle-op .valor {
+        font-size: 12px;
+    }
+}
