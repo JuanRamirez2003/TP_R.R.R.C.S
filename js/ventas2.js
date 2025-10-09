@@ -503,6 +503,7 @@ function descargarFacturaPDF() {
     alert("PDF no disponible para descarga.");
   }
 }
+/*
 async function generarOrdenesProduccion() {
   try {
     // 1️⃣ Obtener IDs de órdenes de venta pendientes
@@ -702,4 +703,4 @@ document.getElementById('btnGenerarOP').addEventListener('click', async () => {
     await generarOrdenesProduccion();
   }
 });
-
+*/
