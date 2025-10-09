@@ -550,20 +550,19 @@ async function generarOrdenesProduccion() {
 
       // Generar OP mientras haya al menos 50 cajas
       while (cantidadRestanteProducto >= 50) {
-        const cantidadLote = 50;
-        const multiplicador = cantidadLote / 10; // receta para 10 cajas
+        const cantidadLote = 50; // tamaño fijo del lote
 
-        // Calcular materiales necesarios
+        // ✅ Calcular materiales necesarios (receta expresada por caja)
         const materialesNecesarios = recetaData.map(r => ({
           id_mp: r.id_mp,
-          cantidad: Math.ceil(Number(r.cantidad || 0) * multiplicador)
+          cantidad: Math.ceil(Number(r.cantidad || 0) * cantidadLote)
         }));
 
         const detalle_materiales = [];
         let stockInsuficiente = false;
         const faltanteMateriales = [];
 
-        // Verificar stock FEFO
+        // 5️⃣ Verificar stock FEFO
         for (const mat of materialesNecesarios) {
           const { data: lotes, error: loteError } = await supabaseClient
             .from('lote_mp')
@@ -571,6 +570,7 @@ async function generarOrdenesProduccion() {
             .eq('id_mp', mat.id_mp)
             .eq('estado', 'Conforme')
             .order('fecha_ingreso', { ascending: true });
+
           if (loteError) throw loteError;
 
           let cantidadRestante = mat.cantidad;
@@ -578,12 +578,13 @@ async function generarOrdenesProduccion() {
 
           for (const lote of lotes) {
             if (cantidadRestante <= 0) break;
+
             const disponible = Number(lote.cantidad_disponible || 0);
             if (disponible <= 0) continue;
 
             const aReservar = Math.min(disponible, cantidadRestante);
             lotesUsados.push({ id_lote: lote.id_lote, cantidad: aReservar });
-            cantidadRestante -= aReservar;
+            cantidadRestante = Math.max(0, cantidadRestante - aReservar);
           }
 
           if (cantidadRestante > 0) {
@@ -595,8 +596,8 @@ async function generarOrdenesProduccion() {
           detalle_materiales.push({ id_mp: mat.id_mp, lotes: lotesUsados });
         }
 
+        // 6️⃣ Crear OP si hay stock suficiente
         if (!stockInsuficiente) {
-          // Crear OP
           const { data: opData, error: opError } = await supabaseClient
             .from('orden_produccion')
             .insert([{
@@ -610,7 +611,7 @@ async function generarOrdenesProduccion() {
             .single();
           if (opError) throw opError;
 
-          // Actualizar lotes y detalle_lote_op
+          // 7️⃣ Actualizar lotes y detalle_lote_op
           for (const mat of detalle_materiales) {
             for (const lote of mat.lotes) {
               const { data: loteActual } = await supabaseClient
@@ -619,8 +620,10 @@ async function generarOrdenesProduccion() {
                 .eq('id_lote', lote.id_lote)
                 .single();
 
-              const nuevaCantidadReservada = Number(loteActual.cantidad_reservada || 0) + Number(lote.cantidad);
-              const nuevaCantidadDisponible = Number(loteActual.cantidad_disponible || 0) - Number(lote.cantidad);
+              const nuevaCantidadReservada =
+                Number(loteActual.cantidad_reservada || 0) + Number(lote.cantidad);
+              const nuevaCantidadDisponible =
+                Number(loteActual.cantidad_disponible || 0) - Number(lote.cantidad);
 
               await supabaseClient
                 .from('lote_mp')
@@ -640,13 +643,18 @@ async function generarOrdenesProduccion() {
             }
           }
 
-          // Relacionar OP con OV
-          const ovIds = ovData.filter(d => d.id_producto == id_producto).map(d => d.id_orden);
+          // 8️⃣ Relacionar OP con OV
+          const ovIds = ovData
+            .filter(d => d.id_producto == id_producto)
+            .map(d => d.id_orden);
+
           for (const id_ov of ovIds) {
-            await supabaseClient.from('op_ov').insert([{ id_op: opData.id_orden_produccion, id_ov }]);
+            await supabaseClient
+              .from('op_ov')
+              .insert([{ id_op: opData.id_orden_produccion, id_ov }]);
           }
 
-          resumen += `<p>✅ Producto ${id_producto} → OP generada para ${cantidadLote} cajas (5 lotes de 10).</p>`;
+          resumen += `<p>✅ Producto ${id_producto} → OP generada para ${cantidadLote} cajas (1 lote).</p>`;
           cantidadRestanteProducto -= cantidadLote;
 
         } else {
@@ -668,8 +676,8 @@ async function generarOrdenesProduccion() {
   }
 }
 
+// ================== FUNCIONES AUXILIARES ==================
 
-// Auxiliares
 async function getOrdenesPendientesIds() {
   const { data, error } = await supabaseClient
     .from('orden_ventas')
@@ -694,3 +702,4 @@ document.getElementById('btnGenerarOP').addEventListener('click', async () => {
     await generarOrdenesProduccion();
   }
 });
+
