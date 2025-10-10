@@ -14,9 +14,10 @@ function mostrarSeccion(id) {
 
 
 let productosDisponibles = [];
-let productoSeleccionado = null;
+let nombreProductoSelec = null;
+let idProductoSeleccionado = null;
 let cantidadPorLote = 10;
-let cantidadTotalOP = null;//para el limete de cantida de reserva 
+let cantTotalCajasOP = null;//para el limete de cantida de reserva 
 
 async function cargarProductosDisponibles() {
   const { data, error } = await supabaseClient.from('productos').select('nombre');
@@ -127,7 +128,7 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
   const numeroOP = document.getElementById('opNumero').value;
   const fecha = new Date().toISOString();
 
-  const idProducto = await obtnerIdProducto(productos[0].nombre);
+  const idProducto = await obtnerIdProducto(productos[0].nombre, false);
   if (!idProducto) {
     alert("No se pudo obtener el ID del producto");
     return;
@@ -180,8 +181,7 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
   cargarOP();
 });
 
-
-async function obtnerIdProducto(nombreProducto) {
+async function obtnerIdProducto(nombreProducto, limpiar) {
   const { data, error } = await supabaseClient
     .from('productos')
     .select('id_producto')
@@ -192,8 +192,10 @@ async function obtnerIdProducto(nombreProducto) {
     console.error("Error al obtener id del producto:", error);
     return null;
   }
-  productoSeleccionado = data.id_producto;
-  console.log("ID del producto obtenido:", data.id_producto, "productoSeleccionado:", productoSeleccionado);
+  idProductoSeleccionado = data.id_producto;
+  nombreProductoSelec = nombreProducto;
+  console.log("ID del producto obtenido:", data.id_producto, "productoSeleccionado:", idProductoSeleccionado, "nombre producto", nombreProductoSelec);
+  if (limpiar) limpiarOVs();
   return data.id_producto;
 }
 
@@ -237,7 +239,8 @@ async function detalleMateriales(idProducto, cantLote) {
     console.error("Error al obtener nombres de materiales:", errorMat);
     return [];
   }
-  cantidadPorLote = 10 * cantLote;
+  cantTotalCajasOP = 10 * cantLote;
+  console.log("cantidad total de cajas por LOTE:", cantTotalCajasOP);
   // Mapeamos cada item agregando su nombre y multiplicando por el lote
   const detalleMultiplicado = data.map(item => {
     const mat = materiales.find(m => m.id_mp === item.id_mp);
@@ -263,7 +266,7 @@ async function actualizarDetalleMateriales() {
     const cantLote = parseInt(p.querySelector('input').value, 10);
     if (!nombreProd || cantLote <= 0) continue;
 
-    const idProducto = await obtnerIdProducto(nombreProd);
+    const idProducto = await obtnerIdProducto(nombreProd, true);
     if (!idProducto) continue;
 
     const detalle = await detalleMateriales(idProducto, cantLote);
@@ -290,7 +293,7 @@ async function actualizarDetalleMateriales() {
 }
 function mostrarDetalleMateriales(detalle) {
   const tabla = document.getElementById('tablaMateriales').querySelector('tbody');
-  tabla.innerHTML = ''; 
+  tabla.innerHTML = '';
 
   if (!detalle || detalle.length === 0) {
     tabla.innerHTML = `<tr><td colspan="3" style="text-align:center;">Sin datos aún</td></tr>`;
@@ -467,22 +470,6 @@ document.getElementById('tieneOV').addEventListener('change', (e) => {
   }
 });
 
-/*//Escuchar cambios en el producto y reiniciar OV
-document.querySelectorAll('.producto-select').forEach(select => {
-  select.addEventListener('change', async (e) => {
-    // Actualizar producto seleccionado global
-    productoSeleccionado = await obtnerIdProducto(e.target.value);
-
-    // Limpiar y ocultar contenedor de OV
-    const containerOVs = document.getElementById('containerOVs');
-    const listaOVs = document.getElementById('listaOVs');
-    listaOVs.innerHTML = '';          // borrar OV existentes
-    containerOVs.style.display = 'none'; // ocultar contenedor
-
-    console.log('Producto cambiado, contenedor de OV reiniciado.');
-  });
-});
-*/
 //agregar un input/select de OV
 //ID_OV SE UN SELECTE QUE MUESTRE TODAS LAS ID_OV QUE HAY PENDIENTES
 //ID_PRODUCTO ESTE RELACIONADO A ESA ID_OV
@@ -492,7 +479,7 @@ document.querySelectorAll('.producto-select').forEach(select => {
 async function agregarOV() {
   const lista = document.getElementById('listaOVs');
 
-  const ovDisponibles = await obtenerOVsDisponibles(productoSeleccionado);
+  const ovDisponibles = await obtenerOVsDisponibles(idProductoSeleccionado);
 
   if (!ovDisponibles || ovDisponibles.length === 0) {
     alert("No hay OV pendientes con este producto.");
@@ -547,6 +534,14 @@ function llenarOV(selectElement) {
 
 
 function eliminarOV(btn) {
+  const lista = document.getElementById('listaOVs');
+  const ovItems = lista.querySelectorAll('.ov-item');
+  const tieneOV = document.getElementById('tieneOV').value === 'si';
+
+  if (tieneOV && ovItems.length === 1) {
+    alert("Debe haber al menos una OV si marcó que hay relación con OP.");
+    return;
+  }
   btn.parentElement.remove();
 }
 
@@ -565,7 +560,7 @@ async function obtenerOVsDisponibles(idProducto) {
       .from('detalle_ordenes')
       .select('id_detalle, id_orden, id_producto, cantidad, estado_detalle_ov')
       .eq('id_producto', idProducto)
-      .eq('estado_detalle_ov', 'pendiente'); 
+      .eq('estado_detalle_ov', 'pendiente');
 
     if (errorDetalles) throw errorDetalles;
     if (!detalles || detalles.length === 0) return [];
@@ -604,27 +599,41 @@ async function obtenerOVsDisponibles(idProducto) {
 //{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}
 
 
-function validarCantidadOVs() {
-  const ovItems = document.querySelectorAll('.ov-item');
-  let sumaCajas = 0;
+async function validarCantidadOVs() {
+  try {
+    const ovItems = document.querySelectorAll('.ov-item');
+    let sumaCajas = 0;
 
-  ovItems.forEach(item => {
-    const cantidadInput = item.querySelector('input[name="ov_cantidad[]"]');
-    if (cantidadInput) {
-      sumaCajas += parseInt(cantidadInput.value, 10) || 0;
+    for (const item of ovItems) {
+      const selectOV = item.querySelector('select[name="ov_id[]"]');
+      const cantidadInput = item.querySelector('input[name="ov_cantidad[]"]');
+      const idDetalle = selectOV.selectedOptions[0]?.dataset?.id_detalle || selectOV.value;
+
+      if (!idDetalle) continue;
+
+      const cantidadSeleccionada = parseInt(cantidadInput.value, 10) || 0;
+      sumaCajas += cantidadSeleccionada;
     }
-  });
+    if (sumaCajas > cantTotalCajasOP) {
+      alert(`⚠️ La suma de cajas de las OV seleccionadas (${sumaCajas}) excede la cantidad a producir en esta OP (${cantTotalCajasOP})`);
+      return false;
+    } else {
+      console.log(`✅ Cantidad total seleccionada: ${sumaCajas}, dentro del límite de OP (${cantTotalCajasOP})`);
+    }
 
-  if (sumaCajas > cantidadTotalOP) {
-    alert(`⚠️ La suma de cajas de las OV seleccionadas (${sumaCajas}) excede la cantidad a producir en esta OP (${cantidadTotalOP})`);
+    return true;
+
+  } catch (err) {
+    console.error("Error general validando cantidades de OV:", err);
+    alert("❌ Ocurrió un error al validar las cantidades de OV. Revisa la consola.");
     return false;
   }
-
-  return true;
 }
 
 async function guardarOVsEnOP(idOP) {
   try {
+    const cantidadValida = await validarCantidadOVs();
+    if (!cantidadValida) return;
 
     console.log("SE ESTA RESERVANDOOOOOO OV");
     const ovItems = document.querySelectorAll('.ov-item');
@@ -681,6 +690,17 @@ async function actualizarEstadoDetalleOV(idDetalleOV, nuevoEstado) {
   }
 }
 //{{{{{{{{{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
+function limpiarOVs() {
+  const selectTieneOV = document.getElementById('tieneOV');
+  const containerOV = document.getElementById('containerOVs');
+  const listaOVs = document.getElementById('listaOVs');
+
+  if (selectTieneOV) selectTieneOV.value = 'no';
+  if (containerOV) containerOV.style.display = 'none';
+  if (listaOVs) listaOVs.innerHTML = '';
+
+  console.log("🧹 OV limpiadas porque cambió el producto");
+}
 //------------------------------------------------
 
 
