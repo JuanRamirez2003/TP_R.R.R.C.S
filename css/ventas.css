@@ -270,47 +270,44 @@ tr:hover {
         }
     }
 
-/* Contenedor principal del select */
 .select2-container--default .select2-selection--single {
     background-color: #2a2a2a !important;
     border: 1px solid #333 !important;
     border-radius: 6px;
-    height: 38px !important;          /* misma altura que tus inputs */
+    height: 38px !important;          
     display: flex;
-    align-items: center;               /* centra verticalmente el texto */
-    padding: 0 10px !important;       /* espacio a los lados */
+    align-items: center;               
+    padding: 0 10px !important;       
     font-size: 14px;
     color: #ffffff !important;
 }
 
-/* Texto del valor seleccionado */
+
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: 38px !important;      /* alinea verticalmente */
+    line-height: 38px !important;      
     color: #ffffff !important;
 }
 
-/* Input interno de búsqueda */
+
 .select2-container--default .select2-search--dropdown .select2-search__field {
     background-color: #2a2a2a !important;
     color: #ffffff !important;
     border: 1px solid #333 !important;
-    height: 34px !important;           /* altura similar al select */
+    height: 34px !important;          
     padding: 3px 5px !important;
 }
 
-/* Flecha del select */
+
 .select2-container--default .select2-selection--single .select2-selection__arrow b {
     border-color: #ffffff transparent transparent transparent !important;
 }
 
-/* Dropdown de resultados */
 .select2-container--default .select2-results__option {
     background-color: #2a2a2a !important;
     color: #ffffff !important;
     padding: 5px 10px;
 }
 
-/* Resultado resaltado */
 .select2-container--default .select2-results__option--highlighted {
     background-color: #007bff !important;
     color: #000000 !important;
@@ -338,3 +335,84 @@ tr:hover {
 #modalOrden table, #modalOrden th, #modalOrden td {
   color: #fff;
 }
+
+
+
+.ov-item {
+  background-color: #2a2a2a;
+  border: 1px solid #333;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+  color: #e0e0e0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+  transition: all 0.3s ease;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.ov-item label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+}
+
+.ov-item input,
+.ov-item select {
+  padding: 8px;
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 14px;
+  margin-top: 4px;
+  transition: border-color 0.3s ease;
+}
+
+.ov-item input:focus,
+.ov-item select:focus {
+  border-color: #55a630;
+  box-shadow: 0 0 5px rgba(85, 166, 48, 0.3);
+}
+
+.ov-item button {
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  height: fit-content;
+  transition: background-color 0.2s ease;
+}
+
+.ov-item button:hover {
+  background-color: #a71d2a;
+}
+
+@keyframes fadeInOV {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ov-item {
+  animation: fadeInOV 0.25s ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .ov-item {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+/*
+#listaOVs .ov-item {
+  border: 1px solid red;
+  margin-top: 5px;
+  padding: 5px;
+}*/

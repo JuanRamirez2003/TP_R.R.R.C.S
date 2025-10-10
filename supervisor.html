@@ -52,12 +52,12 @@
               </tbody>
             </table>
           </div>
-          
 
 
 
 
-          <div style="margin-bottom: 10px;">
+
+          <div class="form-group">
             <label for="tieneOV">¿Relacionar OV con esta OP?</label>
             <select id="tieneOV">
               <option value="no" selected>No</option>
@@ -65,13 +65,10 @@
             </select>
           </div>
 
-          <div id="containerOVs"
-            style="display:none; margin-bottom: 10px; border: 1px solid #555; padding: 10px; border-radius: 5px;">
-            <button type="button" onclick="agregarOV()">➕ Agregar OV</button>
+          <div id="containerOVs" class="form-group" style="display:none;">
+            <button type="button" onclick="agregarOV()" class="btn-editar">➕ Agregar OV</button>
             <div id="listaOVs"></div>
           </div>
-
-
 
 
           <button type="submit" id="btnCrearOP" class="btn-submit" disabled>Crear OP</button>
