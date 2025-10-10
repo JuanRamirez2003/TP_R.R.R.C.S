@@ -74,6 +74,8 @@ function prepararNuevaOP() {
   document.getElementById('productosContainer').innerHTML = '';
   agregarProducto();
 
+  mostrarDetalleMateriales([]);
+
   generarNumeroOP().then(numeroOP => {
     console.log("Número OP generado:", numeroOP);
     document.getElementById('opNumero').value = numeroOP;
@@ -176,9 +178,12 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
       return;
     }
   }
+
+mostrarMensajeExito(idOrden);
+/*
   cancelarOP();
   mostrarSeccion('seguimientoOP');
-  cargarOP();
+  cargarOP();*/
 });
 
 async function obtnerIdProducto(nombreProducto, limpiar) {
@@ -689,6 +694,168 @@ async function actualizarEstadoDetalleOV(idDetalleOV, nuevoEstado) {
     return false;
   }
 }
+
+// Función para mostrar mensaje de éxito tras crear OP
+async function mostrarMensajeExito(idOrden) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('orden_produccion')
+      .select('*')
+      .eq('id_orden_produccion', idOrden)
+      .single();
+
+    if (error || !data) {
+      console.error("Error al obtener datos de OP:", error);
+      return;
+    }
+
+    const productosHtml = data.ver_orden
+      .map(p => `<p>${p.nombre} - Cantidad: ${p.cantidad}</p>`)
+      .join('');
+
+    const { data: detalleLotes, error: errorLotes } = await supabaseClient
+      .from('detalle_lote_op')
+      .select('*')
+      .eq('id_orden_produccion', idOrden);
+
+    let lotesHtml = '';
+    if (detalleLotes && detalleLotes.length > 0) {
+      for (const d of detalleLotes) {
+        const { data: lote } = await supabaseClient
+          .from('lote_mp')
+          .select('id_lote, id_mp, fecha_caducidad')
+          .eq('id_lote', d.id_lote)
+          .single();
+
+        const { data: mat } = await supabaseClient
+          .from('materiales')
+          .select('nombre')
+          .eq('id_mp', lote.id_mp)
+          .single();
+
+        lotesHtml += `<tr>
+          <td>${mat ? mat.nombre : 'Desconocido'}</td>
+          <td>${lote.id_lote}</td>
+          <td>${d.cantidad_lote}</td>
+          <td>${lote.fecha_caducidad ? new Date(lote.fecha_caducidad).toLocaleDateString() : '-'}</td>
+        </tr>`;
+      }
+
+      lotesHtml = `<table border="1" style="width:100%; margin-top:10px;">
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Lote</th>
+            <th>Cantidad reservada</th>
+            <th>Fecha caducidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lotesHtml}
+        </tbody>
+      </table>`;
+    } else {
+      lotesHtml = '<p>No hay lotes reservados para esta OP.</p>';
+    }
+
+    const { data: detalleOVs, error: errorOVs } = await supabaseClient
+      .from('op_ov')
+      .select('id_detalle_ov')
+      .eq('id_op', idOrden);
+
+    let ovsHtml = '';
+    if (detalleOVs && detalleOVs.length > 0) {
+      for (const ov of detalleOVs) {
+        const { data: detalle } = await supabaseClient
+          .from('detalle_ordenes')
+          .select('id_detalle,id_orden, id_producto, cantidad, estado_detalle_ov')
+          .eq('id_detalle', ov.id_detalle_ov)
+          .single();
+
+        const { data: prod } = await supabaseClient
+          .from('productos')
+          .select('nombre')
+          .eq('id_producto', detalle.id_producto)
+          .single();
+
+        ovsHtml += `<tr>
+          <td>${prod ? prod.nombre : 'Desconocido'}</td>
+          <td>${detalle.id_orden}</td>
+          <td>${detalle.id_detalle}</td>
+          <td>${detalle.cantidad}</td>
+          <td>${detalle.estado_detalle_ov}</td>
+        </tr>`;
+      }
+
+      ovsHtml = `<h4>OV involucradas:</h4>
+        <table border="1" style="width:100%; margin-top:10px;">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>ID Orden OV</th>
+              <th>ID Det. OV</th>
+              <th>Cantidad</th>
+              <th>Est. det. OV</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ovsHtml}
+          </tbody>
+        </table>`;
+    } else {
+      ovsHtml = '<p>No hay OV involucradas en esta OP.</p>';
+    }
+
+    const mensaje = document.getElementById('mensajeExito');
+    const texto = document.getElementById('textoExito');
+
+    texto.innerHTML = `
+      <h3>✅ Orden de Producción Creada</h3>
+      <p><strong>Número OP:</strong> ${data.numero_op}</p>
+      <p><strong>Fecha Emisión:</strong> ${new Date(data.fecha_emision).toLocaleString()}</p>
+      <p><strong>Estado:</strong> ${data.estado}</p>
+      <h4>Productos:</h4>
+      ${productosHtml}
+      <h4>Lotes reservados:</h4>
+      ${lotesHtml}
+      ${ovsHtml}
+    `;
+
+    mensaje.style.display = 'block';
+    document.getElementById('ordenProduccion').style.display = 'none';
+
+    document.getElementById('btnCrearOPNuevo').onclick = () => {
+      mensaje.style.display = 'none';
+      document.getElementById('opForm').reset();
+      document.getElementById('ordenProduccion').style.display = 'block';
+      prepararNuevaOP();
+    };
+
+    document.getElementById('btnVolverMenu').onclick = () => {
+      mensaje.style.display = 'none';
+      volverMenuPrincipal();
+    };
+
+    document.getElementById('btnVerListaOP').onclick = () => {
+      mensaje.style.display = 'none';
+      mostrarSeccion('seguimientoOP');
+      cargarOP();
+    };
+
+  } catch (err) {
+    console.error("Error en mostrarMensajeExito:", err);
+  }
+}
+
+function volverMenuPrincipal() {
+  const secciones = document.querySelectorAll('.seccion');
+  secciones.forEach(sec => sec.style.display = 'none');
+
+  const mensajeExito = document.getElementById('mensajeExito');
+  if (mensajeExito) mensajeExito.style.display = 'none';
+
+  document.querySelector('.main-content h1').style.display = 'block';
+}
 //{{{{{{{{{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
 function limpiarOVs() {
   const selectTieneOV = document.getElementById('tieneOV');
@@ -699,7 +866,7 @@ function limpiarOVs() {
   if (containerOV) containerOV.style.display = 'none';
   if (listaOVs) listaOVs.innerHTML = '';
 
-  console.log("🧹 OV limpiadas porque cambió el producto");
+  console.log("#### OV limpiadas porque cambió el producto");
 }
 //------------------------------------------------
 

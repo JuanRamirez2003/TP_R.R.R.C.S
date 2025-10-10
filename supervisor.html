@@ -53,10 +53,6 @@
             </table>
           </div>
 
-
-
-
-
           <div class="form-group">
             <label for="tieneOV">¿Relacionar OV con esta OP?</label>
             <select id="tieneOV">
@@ -74,6 +70,14 @@
           <button type="submit" id="btnCrearOP" class="btn-submit" disabled>Crear OP</button>
           <button type="button" onclick="cancelarOP()" class="btn-eliminar">Cancelar</button>
         </form>
+      </div>
+      <!-- Mensaje de éxito -->
+      <div id="mensajeExito" class="mensaje"
+        style="display:none; text-align:center; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; margin-top:20px;">
+        <p id="textoExito" style="font-size:18px; font-weight:bold; color:#155724;"></p>
+        <button id="btnCrearOPNuevo" class="btn-submit">Crear otra OP</button>
+        <button id="btnVerListaOP" class="btn-submit">Ver lista de OP</button>
+        <button id="btnVolverMenu" class="btn-submit">Volver al menú</button>
       </div>
       <!-- SEGUIMIENTO OP -->
       <div id="seguimientoOP" class="seccion" style="display:none;">
