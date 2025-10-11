@@ -12,9 +12,13 @@
   <div class="dashboard">
     <aside class="sidebar">
       <h2>Supervisor</h2>
-      <button onclick="mostrarSeccion('ordenProduccion')">Creación OP</button>
-      <button onclick="mostrarSeccion('seguimientoOP'); cargarOP()">Seguimiento OP</button>
-      <button onclick="mostrarSeccion('Gestión de Proveedores')">Gestión de Proveedores</button>
+      <ul>
+        <li><button onclick="mostrarSeccion('ordenProduccion')">Creación OP</button></li>
+        <li><button onclick="mostrarSeccion('seguimientoOP'); cargarOP()">Seguimiento OP</button></li>
+        <li><button onclick="mostrarSeccion('Gestión de Proveedores')">Gestión de Proveedores</button></li>
+
+        <li><button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button></li>
+      </ul>
     </aside>
 
     <main class="main-content">
@@ -111,6 +115,11 @@
       <div id="detalleOrden"></div>
     </div>
   </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="js/supervisor.js"></script>
 </body>

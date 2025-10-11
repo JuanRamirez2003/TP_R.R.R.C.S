@@ -110,7 +110,7 @@ form {
 .btn-submit {
     grid-column: span 2;
     padding: 12px;
-    background-color: #55a630;
+    background-color: #4a8c2a;
     color: #000;
     border: none;
     border-radius: 6px;
@@ -233,15 +233,16 @@ tr:hover {
 
 /* Botón eliminar */
 .btn-eliminar {
+    grid-column: span 2;
     background-color: #dc3545; /* rojo */
     color: white;
     border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
+    padding: 12px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     transition: 0.3s;
-    margin-left: 5px;
+    
 }
 
 .btn-eliminar:hover {
@@ -416,3 +417,27 @@ tr:hover {
   margin-top: 5px;
   padding: 5px;
 }*/
+
+
+
+#containerOVs .select2-container .select2-selection--single {
+  background-color: #1e1e1e !important;
+  border: 1px solid #333 !important;
+  border-radius: 6px !important;
+  height: 38px !important;
+  display: flex;
+  align-items: center;
+}
+
+#containerOVs .select2-container .select2-selection__rendered {
+  color: #e0e0e0 !important;
+  font-size: 14px;
+  padding-left: 8px !important;
+}
+
+#containerOVs .select2-dropdown {
+  background-color: #1e1e1e !important;
+  border: 1px solid #333 !important;
+  color: #e0e0e0 !important;
+  border-radius: 6px !important;
+}

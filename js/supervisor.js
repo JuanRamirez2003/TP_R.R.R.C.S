@@ -71,11 +71,15 @@ prepararNuevaOP();
 
 function prepararNuevaOP() {
   document.getElementById('btnCrearOP').disabled = true;
+  $('.select-ov').select2('destroy');
+  document.getElementById('listaOVs').innerHTML = '';
   document.getElementById('productosContainer').innerHTML = '';
   agregarProducto();
 
   mostrarDetalleMateriales([]);
-
+  idProductoSeleccionado = null;
+  nombreProductoSelec = null;
+  
   generarNumeroOP().then(numeroOP => {
     console.log("Número OP generado:", numeroOP);
     document.getElementById('opNumero').value = numeroOP;
@@ -178,7 +182,7 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
       return;
     }
   }
-
+  
 mostrarMensajeExito(idOrden);
 /*
   cancelarOP();
@@ -481,6 +485,8 @@ document.getElementById('tieneOV').addEventListener('change', (e) => {
 //CANTIDAD QUE SE AUTO COMPLETE CON LOS OTROS DATOS 
 
 // Función para agregar un contenedor de OV
+
+/*
 async function agregarOV() {
   const lista = document.getElementById('listaOVs');
 
@@ -512,12 +518,12 @@ async function agregarOV() {
     </label>
 
     <label>
-      Producto
+      Producto:
       <input type="text" name="ov_producto[]" readonly>
     </label>
 
     <label>
-      Cantidad (unid. de Caja/s)
+      Cantidad: (unid. de Caja/s)
       <input type="number" name="ov_cantidad[]" min="1" readonly>
     </label>
 
@@ -526,7 +532,75 @@ async function agregarOV() {
 
   lista.appendChild(div);
   document.getElementById('containerOVs').style.display = 'block';
+}*/
+
+// Función para agregar un contenedor de OV con Select2
+async function agregarOV() {
+  const lista = document.getElementById('listaOVs');
+  const ovDisponibles = await obtenerOVsDisponibles(idProductoSeleccionado);
+
+  if (!ovDisponibles || ovDisponibles.length === 0) {
+    alert("No hay OV pendientes con este producto.");
+    return;
+  }
+
+  const div = document.createElement('div');
+  div.className = 'ov-item';
+  div.style.marginTop = '5px';
+
+  // Crear opciones con data adicionales
+  const options = ovDisponibles.map(ov =>
+    `<option value="${ov.id_detalle}" 
+      data-id_detalle="${ov.id_detalle}" 
+      data-cantidad="${ov.cantidad}" 
+      data-producto="${ov.producto}" 
+      data-cliente="${ov.id_cliente}">
+      OV-${ov.id_orden} | Cliente: ${ov.id_cliente} | Prod: ${ov.producto}
+    </option>`
+  ).join('');
+
+  div.innerHTML = `
+    <label>
+      Orden de Venta
+      <select class="select-ov" name="ov_id[]" required onchange="llenarOV(this)">
+        <option value="" disabled selected>Seleccione OV</option>
+        ${options}
+      </select>
+    </label>
+    <label>
+      Producto:
+      <input type="text" name="ov_producto[]" readonly>
+    </label>
+
+    <label>
+      Cantidad: (unid. de Caja/s)
+      <input type="number" name="ov_cantidad[]" min="1" readonly>
+    </label>
+
+    <label>
+      Eliminar
+      <button type="button" onclick="eliminarOV(this)">❌</button>
+    </label>
+  `;
+
+  lista.appendChild(div);
+  document.getElementById('containerOVs').style.display = 'block';
+
+  const selectOV = div.querySelector('.select-ov');
+  $(selectOV).select2({////VER EL FORMATO EN QUE SE BUSCA CLIENTE " "
+    placeholder: "Buscar por OV (Ej: OV-12), Cliente (Ej: Cliente: 1).", 
+    allowClear: true,
+    dropdownParent: $(div),
+
+    matcher: function (params, data) {
+      if ($.trim(params.term) === '') return data;
+      const term = params.term.toLowerCase();
+      const text = data.text.toLowerCase();
+      return text.includes(term) ? data : null;
+    }
+  });
 }
+
 
 function llenarOV(selectElement) {
   const cantidadInput = selectElement.closest('.ov-item').querySelector('input[name="ov_cantidad[]"]');
@@ -539,6 +613,9 @@ function llenarOV(selectElement) {
 
 
 function eliminarOV(btn) {
+  const ovItem = btn.closest('.ov-item'); 
+  if (!ovItem) return;
+
   const lista = document.getElementById('listaOVs');
   const ovItems = lista.querySelectorAll('.ov-item');
   const tieneOV = document.getElementById('tieneOV').value === 'si';
@@ -547,7 +624,13 @@ function eliminarOV(btn) {
     alert("Debe haber al menos una OV si marcó que hay relación con OP.");
     return;
   }
-  btn.parentElement.remove();
+
+  const select = $(ovItem).find('.select-ov');
+  if (select.data('select2')) {
+    select.select2('destroy');
+  }
+
+  ovItem.remove();
 }
 
 async function obtenerOVsDisponibles(idProducto) {
@@ -710,7 +793,7 @@ async function mostrarMensajeExito(idOrden) {
     }
 
     const productosHtml = data.ver_orden
-      .map(p => `<p>${p.nombre} - Cantidad: ${p.cantidad}</p>`)
+      .map(p => `<p>${p.nombre} - Cantidad de Lote/s: ${p.cantidad} - Cantidad de Cajas Estimadas: ${p.cantidad * cantidadPorLote}</p>`)
       .join('');
 
     const { data: detalleLotes, error: errorLotes } = await supabaseClient
@@ -814,9 +897,9 @@ async function mostrarMensajeExito(idOrden) {
       <p><strong>Número OP:</strong> ${data.numero_op}</p>
       <p><strong>Fecha Emisión:</strong> ${new Date(data.fecha_emision).toLocaleString()}</p>
       <p><strong>Estado:</strong> ${data.estado}</p>
-      <h4>Productos:</h4>
+      <h4>Producto:</h4>
       ${productosHtml}
-      <h4>Lotes reservados:</h4>
+      <h4>Lotes de Materiales reservados:</h4>
       ${lotesHtml}
       ${ovsHtml}
     `;
