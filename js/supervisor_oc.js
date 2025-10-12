@@ -104,8 +104,11 @@ document.getElementById('pedidoForm').addEventListener('submit', async e => {
         // --- Guardar en Supabase ---
         const { data, error } = await supabaseClient
             .from('orden_compra_mp')
-            .insert([{ materia_prima: materia, proveedor: proveedor, cantidad, estado: 'Pendiente' }]);
+            .insert([{ materia_prima: materia, proveedor: proveedor, cantidad, estado: 'Pendiente' }])
+            .select();
         if (error) throw error;
+
+        const idPedido = data[0].id; // ID del pedido recién creado
 
         // --- Mensajes ---
         mensajeExito.style.display = "block";
@@ -117,20 +120,20 @@ document.getElementById('pedidoForm').addEventListener('submit', async e => {
         cargarTablaPedidos();
         mostrarSeccion('vistaPedidos');
 
-        // --- Enviar email ---
+        // --- Enviar email con botón de confirmación ---
         if (typeof emailjs !== 'undefined') {
+            const confirmLink = `https://tu-sitio.com/confirmar_recibido.html?id=${idPedido}`; // Cambiar URL real
             emailjs.send('service_n3qcy6p', 'template_80elrdn', {
                 materia_prima: materia,
                 proveedor: proveedor,
                 cantidad: cantidad,
-                estado: 'Pendiente'
+                estado: 'Pendiente',
+                confirm_link: confirmLink
             }).then(() => {
-                console.log("Email enviado correctamente");
+                console.log("Email enviado correctamente con link de confirmación");
             }).catch(err => {
                 console.error("Error enviando email:", err);
             });
-        } else {
-            console.warn("EmailJS no cargado. No se pudo enviar el email.");
         }
 
     } catch (err) {
@@ -155,7 +158,7 @@ async function cargarTablaPedidos() {
         }
 
         data.forEach(d => {
-            const color = d.estado === 'Pendiente' ? 'orange' : d.estado === 'Aprobado' ? 'green' : 'red';
+            const color = d.estado === 'Pendiente' ? 'orange' : d.estado === 'Aprobado' ? 'green' : d.estado === 'Recibido' ? 'blue' : 'red';
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${d.id}</td>
@@ -182,4 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await cargarMaterias();
     await cargarTablaPedidos();
     mostrarSeccion('pedidoMP');
+
+    document.getElementById('mensajeExito').style.display = 'none';
+    document.getElementById('mensajeError').style.display = 'none';
 });

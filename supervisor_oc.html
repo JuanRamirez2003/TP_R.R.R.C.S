@@ -10,14 +10,25 @@
 <body>
     <div class="dashboard">
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <h2>Gerente</h2>
-            <ul>
-                <li><button onclick="mostrarSeccion('pedidoMP')">Crear Pedido</button></li>
-                <li><button onclick="mostrarSeccion('vistaPedidos')">Ver Pedidos</button></li>
-                <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
-            </ul>
-        </aside>
+<aside class="sidebar">
+    <h2>Pedidos de Materia Prima</h2>
+    <ul>
+        <li><button onclick="mostrarSeccion('pedidoMP')">Crear Pedido</button></li>
+        <li><button onclick="mostrarSeccion('vistaPedidos')">Ver Pedidos</button></li>
+        <!-- Botón para volver al panel de Supervisor -->
+        <li>
+            <button 
+                class="btn-submit" 
+                style="background-color:#007bff; color:white; border:none; border-radius:6px; padding:10px 15px; cursor:pointer;"
+                onclick="window.location.href='supervisor.html'">
+                 Volver al Panel Supervisor
+            </button>
+        </li>
+        <li>
+            <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
+        </li>
+    </ul>
+</aside>
 
         <!-- Contenido principal -->
         <main class="main-content">
@@ -79,7 +90,7 @@
   emailjs.init("SJ34lI1ytF8WPEMSi"); // Tu public key
 </script>
 
-<script src="js/gg.js"></script>
+<script src="js/supervisor_oc.js"></script> 
     <script>
         function cerrarSesion() {
             localStorage.clear();

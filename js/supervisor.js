@@ -1169,9 +1169,71 @@ async function eliminarOP(id_orden_produccion) {
   if (error) return console.error("Error al eliminar OP:", error);
   cargarOP();
 }
+async function verificarStockMaterias() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('materiales')
+      .select('*');
 
-// Inicialización
+    if (error) {
+      console.error("Error cargando materiales:", error);
+      return;
+    }
+
+    // Filtrar materiales con stock menor al mínimo
+    const faltantes = data.filter(mat => (mat.stock_disponible ?? 0) < (mat.stock_minimo ?? 0));
+
+    const notificacion = document.getElementById('notificacionStock');
+    const tooltip = document.getElementById('tooltipStock');
+    const listaFaltantes = document.getElementById('listaFaltantes');
+    const btnIrPedido = document.getElementById('btnIrPedido');
+
+    listaFaltantes.innerHTML = ''; // limpiar la lista antes
+
+    if (faltantes.length > 0) {
+      notificacion.style.display = 'flex';
+      notificacion.style.backgroundColor = '#f44336'; // rojo alerta
+
+      // Generar lista de materiales faltantes
+      faltantes.forEach(mat => {
+        const li = document.createElement('li');
+        const cantidadFaltante = (mat.stock_minimo ?? 0) - (mat.stock_disponible ?? 0);
+        let unidad = mat.tipo?.toLowerCase() === 'kilogramos' ? 'kg' : 'unidades';
+        li.textContent = `${mat.nombre}: faltan ${cantidadFaltante} ${unidad}`;
+        listaFaltantes.appendChild(li);
+      });
+
+      btnIrPedido.style.display = 'inline-block';
+      btnIrPedido.onclick = () => {
+        localStorage.setItem('materiasFaltantes', JSON.stringify(faltantes));
+        window.location.href = 'supervisor_oc.html';
+      };
+
+    } else {
+      notificacion.style.display = 'flex';
+      notificacion.style.backgroundColor = '#4CAF50'; // verde todo OK
+      const li = document.createElement('li');
+      li.textContent = '✅ Todos los materiales tienen stock suficiente.';
+      listaFaltantes.appendChild(li);
+      btnIrPedido.style.display = 'none';
+    }
+
+    // Animación ligera al pasar el mouse
+    notificacion.onmouseenter = () => notificacion.style.transform = 'scale(1.1)';
+    notificacion.onmouseleave = () => notificacion.style.transform = 'scale(1)';
+
+    // Toggle del tooltip al hacer click en la campanita
+    notificacion.onclick = () => {
+      tooltip.style.display = tooltip.style.display === 'none' ? 'block' : 'none';
+    };
+
+  } catch (err) {
+    console.error("Error verificando stock de materias:", err);
+  }
+}
+// Inicialización al cargar la página
 (async () => {
   await cargarProductosDisponibles();
   prepararNuevaOP();
+  verificarStockMaterias(); 
 })();
