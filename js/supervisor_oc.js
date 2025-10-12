@@ -101,14 +101,14 @@ document.getElementById('pedidoForm').addEventListener('submit', async e => {
         const materia = materiaSelect.selectedOptions[0].textContent;
         const proveedor = proveedorSelect.selectedOptions[0].textContent;
 
-        // --- Guardar en Supabase ---
+        // --- Guardar en Supabase y obtener ID ---
         const { data, error } = await supabaseClient
             .from('orden_compra_mp')
             .insert([{ materia_prima: materia, proveedor: proveedor, cantidad, estado: 'Pendiente' }])
-            .select();
+            .select(); // <--- importante para recibir el id
         if (error) throw error;
 
-        const idPedido = data[0].id; // ID del pedido recién creado
+        const idPedido = data[0].id;
 
         // --- Mensajes ---
         mensajeExito.style.display = "block";
@@ -121,20 +121,25 @@ document.getElementById('pedidoForm').addEventListener('submit', async e => {
         mostrarSeccion('vistaPedidos');
 
         // --- Enviar email con botón de confirmación ---
-        if (typeof emailjs !== 'undefined') {
-            const confirmLink = `https://tu-sitio.com/confirmar_recibido.html?id=${idPedido}`; // Cambiar URL real
-            emailjs.send('service_n3qcy6p', 'template_80elrdn', {
-                materia_prima: materia,
-                proveedor: proveedor,
-                cantidad: cantidad,
-                estado: 'Pendiente',
-                confirm_link: confirmLink
-            }).then(() => {
-                console.log("Email enviado correctamente con link de confirmación");
-            }).catch(err => {
-                console.error("Error enviando email:", err);
-            });
-        }
+if (typeof emailjs !== 'undefined') {
+    // Generar link con ID del pedido
+    const confirmLink = `https://juanramirez2003.github.io/TP_R.R.R.C.S/confirmar_recibido.html?id=${idPedido}`;
+
+    // Enviar variables a la plantilla de EmailJS
+    emailjs.send('service_n3qcy6p', 'template_80elrdn', {
+        materia_prima: materia,
+        proveedor: proveedor,
+        cantidad: cantidad,
+        estado: 'Pendiente',
+        confirm_link: confirmLink
+    })
+    .then(() => {
+        console.log("Email enviado correctamente con link de confirmación");
+    })
+    .catch(err => {
+        console.error("Error enviando email:", err);
+    });
+}
 
     } catch (err) {
         console.error("Error guardando pedido:", err);
