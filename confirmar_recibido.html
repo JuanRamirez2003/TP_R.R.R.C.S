@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Confirmación de Recepción</title>
+<title>Confirmación de Pedido</title>
 <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <style>
   body {
@@ -11,34 +11,33 @@
     background: linear-gradient(to bottom, #a2d5f2, #e6f2e6);
     margin: 0;
     padding: 0;
-    overflow-x: hidden;
-    position: relative;
     height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
   }
   .container {
+    background-color: #ffffffcc;
+    padding: 40px 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    text-align: center;
     width: 90%;
     max-width: 600px;
-    margin: 50px auto;
-    background-color: #ffffffcc;
-    border-radius: 20px;
-    padding: 40px 30px;
-    text-align: center;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
     position: relative;
     z-index: 10;
   }
-  h1 {
+  h2 {
     font-family: 'Mountains of Christmas', cursive;
     color: #2e7d32;
     font-size: 36px;
     margin-bottom: 20px;
-    position: relative;
-    z-index: 10;
   }
   p {
     font-size: 18px;
-    line-height: 1.8;
     color: #333;
+    line-height: 1.6;
   }
   .success {
     color: #2e7d32;
@@ -52,9 +51,10 @@
   .error {
     color: #d32f2f;
     font-weight: bold;
-    margin-top: 20px;
     font-size: 18px;
+    margin-top: 20px;
   }
+  /* Animación de checkmark */
   .checkmark {
     width: 40px;
     height: 40px;
@@ -85,6 +85,7 @@
     0% { transform: rotate(45deg) scale(0); }
     100% { transform: rotate(45deg) scale(1); }
   }
+  /* Copos de nieve */
   .snowflake {
     position: fixed;
     top: -10px;
@@ -104,7 +105,7 @@
 </head>
 <body>
 <div class="container">
-  <h1>Confirmación de Recepción</h1>
+  <h2>Confirmación de Pedido</h2>
   <p id="mensaje">Procesando...</p>
 </div>
 
@@ -123,42 +124,43 @@ for(let i=0;i<snowCount;i++){
 }
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-function obtenerIdPedido() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('id');
-}
+const params = new URLSearchParams(window.location.search);
+const pedidoId = params.get("id");
+const mensaje = document.getElementById("mensaje");
 
-async function confirmarRecepcion() {
-    const id = obtenerIdPedido();
-    const mensaje = document.getElementById('mensaje');
-
-    if (!id) {
-        mensaje.textContent = "No se encontró el ID del pedido.";
-        mensaje.classList.add('error');
-        return;
-    }
-
+if (!pedidoId) {
+  mensaje.textContent = "No se encontró el pedido.";
+  mensaje.classList.add("error");
+} else {
+  (async () => {
     try {
-        // Llamada a función RPC segura
-        const { data, error } = await supabaseClient.rpc('confirmar_pedido', { p_id: parseInt(id) });
+      const { data, error } = await supabaseClient
+        .from('orden_compra_mp')
+        .update({ estado: 'Recibido' })
+        .eq('id', pedidoId)
+        .select();
+      if (error) throw error;
 
-        if (error) throw error;
+      if (!data || data.length === 0) {
+        mensaje.textContent = "Pedido no encontrado.";
+        mensaje.classList.add("error");
+        return;
+      }
 
-        mensaje.innerHTML = `<span class="checkmark"></span> ¡Pedido ID ${id} confirmado como <span class="success">Recibido</span>! Gracias por su respuesta.`;
+      mensaje.innerHTML = `<span class="checkmark"></span> ¡Pedido ID ${pedidoId} confirmado como <span class="success">Recibido</span>!`;
     } catch (err) {
-        console.error(err);
-        mensaje.textContent = "Ocurrió un error al confirmar el pedido. Intente nuevamente.";
-        mensaje.classList.add('error');
+      console.error(err);
+      mensaje.textContent = "Error al confirmar el pedido. Intente nuevamente.";
+      mensaje.classList.add("error");
     }
+  })();
 }
-
-document.addEventListener('DOMContentLoaded', confirmarRecepcion);
 </script>
 </body>
 </html>
