@@ -18,6 +18,9 @@ let nombreProductoSelec = null;
 let idProductoSeleccionado = null;
 let cantidadPorLote = 10;
 let cantTotalCajasOP = null;//para el limete de cantida de reserva 
+let ovDisponiblesGlobal = []; // todas las OV posibles para el producto
+let ovSeleccionadasGlobal = []; // id_detalle de OV que ya se seleccionaron
+
 
 async function cargarProductosDisponibles() {
   const { data, error } = await supabaseClient.from('productos').select('nombre');
@@ -479,64 +482,10 @@ document.getElementById('tieneOV').addEventListener('change', (e) => {
   }
 });
 
-//agregar un input/select de OV
-//ID_OV SE UN SELECTE QUE MUESTRE TODAS LAS ID_OV QUE HAY PENDIENTES
-//ID_PRODUCTO ESTE RELACIONADO A ESA ID_OV
-//CANTIDAD QUE SE AUTO COMPLETE CON LOS OTROS DATOS 
-
-// Función para agregar un contenedor de OV
-
-/*
-async function agregarOV() {
-  const lista = document.getElementById('listaOVs');
-
-  const ovDisponibles = await obtenerOVsDisponibles(idProductoSeleccionado);
-
-  if (!ovDisponibles || ovDisponibles.length === 0) {
-    alert("No hay OV pendientes con este producto.");
-    return;
-  }
-
-  const div = document.createElement('div');
-  div.className = 'ov-item';
-  div.style.marginTop = '5px';
-
-  // Crear opciones con data-cantidad y data-producto
-  const options = ovDisponibles.map(ov =>
-    `<option value="${ov.id_detalle}" data-id_detalle="${ov.id_detalle}" data-cantidad="${ov.cantidad}" data-producto="${ov.producto}" data-cliente="${ov.id_cliente}">
-    OV-${ov.id_orden} | Cliente: ${ov.id_cliente}
-  </option>`
-  ).join('');
-
-  div.innerHTML = `
-    <label>
-      Orden de Venta
-      <select name="ov_id[]" required onchange="llenarOV(this)">
-        <option value="" disabled selected>Seleccione OV</option>
-        ${options}
-      </select>
-    </label>
-
-    <label>
-      Producto:
-      <input type="text" name="ov_producto[]" readonly>
-    </label>
-
-    <label>
-      Cantidad: (unid. de Caja/s)
-      <input type="number" name="ov_cantidad[]" min="1" readonly>
-    </label>
-
-    <button type="button" onclick="eliminarOV(this)">❌</button>
-  `;
-
-  lista.appendChild(div);
-  document.getElementById('containerOVs').style.display = 'block';
-}*/
-
 // Función para agregar un contenedor de OV con Select2
 async function agregarOV() {
   const lista = document.getElementById('listaOVs');
+
   const ovDisponibles = await obtenerOVsDisponibles(idProductoSeleccionado);
 
   if (!ovDisponibles || ovDisponibles.length === 0) {
@@ -544,20 +493,30 @@ async function agregarOV() {
     return;
   }
 
+  const seleccionadas = Array.from(document.querySelectorAll('.select-ov'))
+    .map(sel => sel.value)
+    .filter(v => v !== '');
+
+  const ovFiltradas = ovDisponibles.filter(ov => !seleccionadas.includes(String(ov.id_detalle)));
+
+  if (ovFiltradas.length === 0) {
+    alert("Todas las OV disponibles ya fueron seleccionadas.");
+    return;
+  }
+
   const div = document.createElement('div');
   div.className = 'ov-item';
   div.style.marginTop = '5px';
 
-  // Crear opciones con data adicionales
-  const options = ovDisponibles.map(ov =>
-    `<option value="${ov.id_detalle}" 
-      data-id_detalle="${ov.id_detalle}" 
-      data-cantidad="${ov.cantidad}" 
-      data-producto="${ov.producto}" 
+  const options = ovFiltradas.map(ov => `
+    <option value="${ov.id_detalle}"
+      data-id_detalle="${ov.id_detalle}"
+      data-cantidad="${ov.cantidad}"
+      data-producto="${ov.producto}"
       data-cliente="${ov.id_cliente}">
-      OV-${ov.id_orden} | Cliente: ${ov.id_cliente} | Prod: ${ov.producto}
-    </option>`
-  ).join('');
+      OV-${ov.id_orden} | Cliente: ${ov.id_cliente}
+    </option>
+  `).join('');
 
   div.innerHTML = `
     <label>
@@ -573,12 +532,12 @@ async function agregarOV() {
     </label>
 
     <label>
-      Cantidad: (unid. de Caja/s)
+      Cantidad (unid. de Caja/s):
       <input type="number" name="ov_cantidad[]" min="1" readonly>
     </label>
 
     <label>
-      Eliminar
+      Eliminar:
       <button type="button" onclick="eliminarOV(this)">❌</button>
     </label>
   `;
@@ -588,7 +547,7 @@ async function agregarOV() {
 
   const selectOV = div.querySelector('.select-ov');
   $(selectOV).select2({////VER EL FORMATO EN QUE SE BUSCA CLIENTE " "
-    placeholder: "Buscar por OV (Ej: OV-12), Cliente (Ej: Cliente: 1).", 
+    placeholder: "Buscar por OV (Ej: OV-12), Cliente (Ej: Cliente: 1).",
     allowClear: true,
     dropdownParent: $(div),
 
@@ -599,7 +558,56 @@ async function agregarOV() {
       return text.includes(term) ? data : null;
     }
   });
+
+  $(selectOV).on('change', actualizarSelectsOV);
+  $(selectOV).on('select2:select', actualizarSelectsOV);
+
+  actualizarSelectsOV();
 }
+
+function actualizarSelectsOV() {
+  const seleccionadas = Array.from(document.querySelectorAll('.select-ov'))
+    .map(sel => sel.value)
+    .filter(v => v !== '');
+
+  document.querySelectorAll('.select-ov').forEach(select => {
+    const $select = $(select);
+    const currentValue = $select.val();
+
+    $select.find('option').each(function() {
+      const val = $(this).val();
+      if (val && val !== currentValue) {
+        $(this).prop('disabled', seleccionadas.includes(val));
+      }
+    });
+
+    $select.trigger('change.select2');
+  });
+}
+/*
+function actualizarTodosLosSelectsOV() {
+  const todas = document.querySelectorAll('.select-ov');
+
+  // Recalcular la lista de OV seleccionadas
+  ovSeleccionadas = new Set(
+    Array.from(todas)
+      .map(sel => sel.value)
+      .filter(v => v !== '')
+  );
+
+  // Refrescar todos los selects
+  todas.forEach(select => {
+    const currentVal = select.value;
+    $(select).find('option').each(function () {
+      const val = $(this).val();
+      if (val && val !== currentVal) {
+        $(this).prop('disabled', ovSeleccionadas.has(val));
+      }
+    });
+    $(select).trigger('change.select2');
+  });
+}
+*/
 
 
 function llenarOV(selectElement) {
@@ -609,6 +617,7 @@ function llenarOV(selectElement) {
   const selectedOption = selectElement.selectedOptions[0];
   cantidadInput.value = selectedOption?.dataset?.cantidad || 0;
   productoInput.value = selectedOption?.dataset?.producto || '';
+    //actualizarTodosLosSelectsOV();
 }
 
 
@@ -631,6 +640,8 @@ function eliminarOV(btn) {
   }
 
   ovItem.remove();
+  actualizarSelectsOV(); 
+//actualizarTodosLosSelectsOV();
 }
 
 async function obtenerOVsDisponibles(idProducto) {
