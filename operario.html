@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Área Operario - Empresa de Alimentos</title>
     <link rel="stylesheet" href="css/ventas.css">
+    <link rel="stylesheet" href="css/lineasProduccion.css">
     <style>
         /* Contenedores de tablas con scroll horizontal */
         table {
@@ -42,6 +43,45 @@
                 padding: 4px 6px;
             }
         }
+   #registroEtapas {
+    padding: 20px;
+  }
+
+  #registroEtapas label {
+    display: inline-block;
+    margin: 10px 5px 5px 0;
+    font-weight: 600;
+  }
+
+  #registroEtapas select, 
+  #registroEtapas button {
+    margin: 5px 10px 15px 0;
+    padding: 5px 10px;
+  }
+
+  #registroTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  #registroTable th, #registroTable td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+
+  #registroTable th {
+    background-color: #f2f2f2;
+  }
+
+  #registroTable tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+
+  #registroTable tr:hover {
+    background-color: #e6f7ff;
+  }
     </style>
 </head>
 <body>
@@ -52,6 +92,7 @@
             <ul>
                 <li><button onclick="mostrarSeccion('IngresoMateriales')">Ingreso Materiales</button></li>
                 <li><button onclick="mostrarSeccion('VistaMateriales')">Listado Materiales</button></li>
+                <li><button onclick="mostrarSeccion('registroEtapas')">Registro de Etapas</button></li>
                 <!-- Más opciones futuras -->
             </ul>
             <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
@@ -185,9 +226,34 @@
                 <button onclick="volverMateriales()" class="btn-submit">Volver a Materiales</button>
             </div>
 
-        </main>
-    </div>
+<!-- Registro de Etapas -->
+<div id="registroEtapas" class="seccion" style="display:none;">
+  <h2>Registro de Etapas de Producción</h2>
 
+  <!-- Contenedor para líneas de producción tipo cinta -->
+  <div id="lineasContainer"></div>
+
+  <!-- Tabla de registro de etapas finalizadas -->
+  <div class="table-wrapper">
+    <h3>Órdenes Finalizadas</h3>
+    <table id="registroTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>OP</th>
+          <th>Etapa</th>
+          <th>Estado</th>
+          <th>Operario</th>
+          <th>Fecha Inicio</th>
+          <th>Fecha Fin</th>
+          <th>Observaciones</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <script>
     const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co"
@@ -195,5 +261,6 @@
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
     </script>
     <script src="js/ingresoMateriales.js"></script>
+    <script src="js/registro_etapas.js"></script>
 </body>
 </html>
