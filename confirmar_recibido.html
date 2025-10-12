@@ -6,120 +6,106 @@
 <title>Confirmación de Recepción</title>
 <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <style>
-    body {
-        font-family: 'Roboto', sans-serif;
-        background: linear-gradient(to bottom, #a2d5f2, #e6f2e6);
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden;
-        position: relative;
-        height: 100vh;
-    }
-
-    /* Contenedor principal */
-    .container {
-        width: 90%;
-        max-width: 600px;
-        margin: 50px auto;
-        background-color: #ffffffcc;
-        border-radius: 20px;
-        padding: 40px 30px;
-        text-align: center;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-        position: relative;
-        z-index: 10;
-    }
-
-    h1 {
-        font-family: 'Mountains of Christmas', cursive;
-        color: #2e7d32;
-        font-size: 36px;
-        margin-bottom: 20px;
-        position: relative;
-        z-index: 10;
-    }
-
-    p {
-        font-size: 18px;
-        line-height: 1.8;
-        color: #333;
-    }
-
-    .success {
-        color: #2e7d32;
-        font-weight: bold;
-        font-size: 20px;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 20px;
-    }
-
-    .error {
-        color: #d32f2f;
-        font-weight: bold;
-        margin-top: 20px;
-        font-size: 18px;
-    }
-
-    /* Icono check animado */
-    .checkmark {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: inline-block;
-        border: 4px solid #2e7d32;
-        position: relative;
-        animation: pop 0.6s ease forwards;
-    }
-
-    .checkmark::after {
-        content: '';
-        position: absolute;
-        left: 10px;
-        top: 4px;
-        width: 12px;
-        height: 24px;
-        border-right: 4px solid #2e7d32;
-        border-bottom: 4px solid #2e7d32;
-        transform: rotate(45deg) scale(0);
-        animation: draw 0.6s ease 0.3s forwards;
-    }
-
-    @keyframes pop {
-        0% { transform: scale(0); }
-        60% { transform: scale(1.2); }
-        100% { transform: scale(1); }
-    }
-
-    @keyframes draw {
-        0% { transform: rotate(45deg) scale(0); }
-        100% { transform: rotate(45deg) scale(1); }
-    }
-
-    /* Copos de nieve */
-    .snowflake {
-        position: fixed;
-        top: -10px;
-        color: #fff;
-        font-size: 1em;
-        user-select: none;
-        z-index: 5;
-        pointer-events: none;
-        animation-name: fall;
-        animation-timing-function: linear;
-    }
-
-    @keyframes fall {
-        0% { transform: translateY(-10px) rotate(0deg); opacity:1; }
-        100% { transform: translateY(110vh) rotate(360deg); opacity:0.8; }
-    }
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(to bottom, #a2d5f2, #e6f2e6);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    position: relative;
+    height: 100vh;
+  }
+  .container {
+    width: 90%;
+    max-width: 600px;
+    margin: 50px auto;
+    background-color: #ffffffcc;
+    border-radius: 20px;
+    padding: 40px 30px;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 10;
+  }
+  h1 {
+    font-family: 'Mountains of Christmas', cursive;
+    color: #2e7d32;
+    font-size: 36px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 10;
+  }
+  p {
+    font-size: 18px;
+    line-height: 1.8;
+    color: #333;
+  }
+  .success {
+    color: #2e7d32;
+    font-weight: bold;
+    font-size: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .error {
+    color: #d32f2f;
+    font-weight: bold;
+    margin-top: 20px;
+    font-size: 18px;
+  }
+  .checkmark {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 4px solid #2e7d32;
+    position: relative;
+    animation: pop 0.6s ease forwards;
+  }
+  .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 4px;
+    width: 12px;
+    height: 24px;
+    border-right: 4px solid #2e7d32;
+    border-bottom: 4px solid #2e7d32;
+    transform: rotate(45deg) scale(0);
+    animation: draw 0.6s ease 0.3s forwards;
+  }
+  @keyframes pop {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  @keyframes draw {
+    0% { transform: rotate(45deg) scale(0); }
+    100% { transform: rotate(45deg) scale(1); }
+  }
+  .snowflake {
+    position: fixed;
+    top: -10px;
+    color: #fff;
+    font-size: 1em;
+    user-select: none;
+    z-index: 5;
+    pointer-events: none;
+    animation-name: fall;
+    animation-timing-function: linear;
+  }
+  @keyframes fall {
+    0% { transform: translateY(-10px) rotate(0deg); opacity:1; }
+    100% { transform: translateY(110vh) rotate(360deg); opacity:0.8; }
+  }
 </style>
 </head>
 <body>
 <div class="container">
-    <h1>Confirmación de Recepción</h1>
-    <p id="mensaje">Procesando...</p>
+  <h1>Confirmación de Recepción</h1>
+  <p id="mensaje">Procesando...</p>
 </div>
 
 <!-- Copos de nieve -->
@@ -159,19 +145,10 @@ async function confirmarRecepcion() {
     }
 
     try {
-        const { data, error } = await supabaseClient
-            .from('orden_compra_mp')
-            .update({ estado: 'Recibido' })
-            .eq('id', id)
-            .select();
+        // Llamada a función RPC segura
+        const { data, error } = await supabaseClient.rpc('confirmar_pedido', { p_id: parseInt(id) });
 
         if (error) throw error;
-
-        if (data.length === 0) {
-            mensaje.textContent = "No se encontró el pedido para actualizar.";
-            mensaje.classList.add('error');
-            return;
-        }
 
         mensaje.innerHTML = `<span class="checkmark"></span> ¡Pedido ID ${id} confirmado como <span class="success">Recibido</span>! Gracias por su respuesta.`;
     } catch (err) {
