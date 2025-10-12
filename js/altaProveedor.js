@@ -1,5 +1,4 @@
 // ===================== FUNCIONES GENERALES =====================
-// Mostrar una sección y ocultar las demás
 function mostrarSeccion(seccionId) {
   document.querySelectorAll('.seccion').forEach(sec => sec.style.display = 'none');
   document.getElementById(seccionId).style.display = 'block';
@@ -8,7 +7,6 @@ function mostrarSeccion(seccionId) {
     document.getElementById('formProveedor').style.display = 'none';
     document.getElementById('mensajeExitoProveedor').style.display = 'none';
     document.getElementById('tablaProveedorContainer').style.display = 'block';
-
     listarProveedores();
   }
 
@@ -16,20 +14,16 @@ function mostrarSeccion(seccionId) {
     document.getElementById('formOrden').style.display = 'none';
     document.getElementById('mensajeExitoOrden').style.display = 'none';
     document.getElementById('tablaOrdenesContainer').style.display = 'block';
-
     listarOrdenes();
   }
 }
 
-// Volver al panel principal
 function volverPanel() {
   document.getElementById("mensajeExitoProveedor").style.display = "none";
   document.querySelectorAll('.seccion').forEach(sec => sec.style.display = 'none');
 }
 
 // ===================== PROVEEDORES =====================
-
-// Mostrar formulario nuevo PROVEEDOR
 function mostrarFormularioProveedor() {
   document.getElementById('formProveedor').style.display = 'block';
   document.getElementById('proveedorForm').reset();
@@ -42,7 +36,6 @@ function cancelarProveedor() {
   document.getElementById('formProveedor').style.display = 'none';
 }
 
-// Listar proveedores en tabla
 async function listarProveedores() {
   try {
     const { data, error } = await supabaseClient.from('proveedor').select('*').order('dni_cuil');
@@ -62,7 +55,7 @@ async function listarProveedores() {
         <td>${proveedor.pref_cont}</td>
         <td>${proveedor.direccion}</td>
         <td>${proveedor.estado}</td>
-        <td>${proveedor.alta_id_emp}</td>
+        <td>${proveedor.alta_id_emp || '-'}</td>
         <td>
           <button class="btn-editar" onclick="editarProveedor('${proveedor.dni_cuil}')">Editar</button>
           <button class="btn-eliminar" onclick="bajaProveedor('${proveedor.dni_cuil}')">Eliminar</button>
@@ -76,23 +69,17 @@ async function listarProveedores() {
 }
 
 // ================== VALIDACIONES ==================
-
-// Validar email
 function validarEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 }
 
-// Validar teléfono: solo números, 10 dígitos
 function validarTelefono(telefono) {
   return /^[0-9]{10}$/.test(telefono);
 }
 
-// Validar CUIT según tipo de proveedor
 function validarCUIT(cuit, tipo) {
-  // Solo números
   if (!/^[0-9]{11}$/.test(cuit)) return false;
-
   const prefix = cuit.slice(0, 2);
 
   if (tipo === 'responsable inscripto') {
@@ -103,7 +90,6 @@ function validarCUIT(cuit, tipo) {
   return false;
 }
 
-// Mostrar error
 function mostrarError(mensaje) {
   const div = document.getElementById('mensajeError');
   if (!div) return alert(mensaje);
@@ -112,12 +98,12 @@ function mostrarError(mensaje) {
   setTimeout(() => div.style.display = 'none', 4000);
 }
 
-// ================== CAMBIO DINÁMICO LABEL DOCUMENTO ==================
+// ================== INPUTS Y VALIDACIONES DINÁMICAS ==================
 const tipoProveedorSelect = document.getElementById("tipoProveedor");
 const documentoLabel = document.getElementById("labelDocumento");
 const documentoInput = document.getElementById("documento");
 
-// Solo números en input CUIT/DNI y longitud máxima 11
+// CUIT/DNI: solo números, máximo 11
 documentoInput.addEventListener("input", () => {
   documentoInput.value = documentoInput.value.replace(/\D/g, '');
   if (documentoInput.value.length > 11) documentoInput.value = documentoInput.value.slice(0, 11);
@@ -139,15 +125,103 @@ tipoProveedorSelect.addEventListener("change", () => {
   }
 });
 
-// ================== CAMBIO DINÁMICO INPUT TELÉFONO ==================
+// Teléfono: solo números, máximo 10 dígitos
 const telefonoInput = document.getElementById("telefono");
 telefonoInput.addEventListener("input", () => {
   telefonoInput.value = telefonoInput.value.replace(/\D/g, '');
   if (telefonoInput.value.length > 10) telefonoInput.value = telefonoInput.value.slice(0, 10);
 });
 
-// ================== EVENTO SUBMIT ==================
-document.getElementById("proveedorForm").addEventListener("submit", async function(e) {
+// ================== AUTOCOMPLETADO Y NORMALIZACIÓN DE DIRECCIONES (OSM) ==================
+let direccionesValidas = [];
+
+function inicializarNormalizacionDireccion() {
+  const input = document.getElementById("direccion");
+
+  // Contenedor de sugerencias
+  const contenedor = document.createElement("ul");
+  contenedor.id = "listaDirecciones";
+  contenedor.style.position = "absolute";
+  contenedor.style.top = input.offsetHeight + 4 + "px";
+  contenedor.style.left = "0";
+  contenedor.style.width = "100%";
+  contenedor.style.maxHeight = "180px";
+  contenedor.style.overflowY = "auto";
+  contenedor.style.background = "#fff";
+  contenedor.style.border = "1px solid #ccc";
+  contenedor.style.borderRadius = "6px";
+  contenedor.style.padding = "0";
+  contenedor.style.margin = "0";
+  contenedor.style.listStyle = "none";
+  contenedor.style.zIndex = "1000";
+  contenedor.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+
+  input.parentNode.style.position = "relative";
+  input.parentNode.appendChild(contenedor);
+
+  let timeout;
+
+  input.addEventListener("input", () => {
+    const query = input.value.trim();
+    contenedor.innerHTML = "";
+    if (query.length < 3) return;
+
+    clearTimeout(timeout);
+    timeout = setTimeout(() => buscarDireccionOSM(query, contenedor, input), 500);
+  });
+
+  // Cerrar lista al perder foco
+  input.addEventListener("blur", () => {
+    setTimeout(() => contenedor.innerHTML = "", 150);
+  });
+}
+
+async function buscarDireccionOSM(query, contenedor, input) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=ar&limit=5`;
+
+  try {
+    const response = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+    const data = await response.json();
+
+    direccionesValidas = data;
+
+    if (!data || data.length === 0) {
+      contenedor.innerHTML = `<li style="padding:8px;">Sin resultados</li>`;
+      return;
+    }
+
+    data.forEach(item => {
+      const li = document.createElement("li");
+      li.style.padding = "8px";
+      li.style.cursor = "pointer";
+      li.style.borderBottom = "1px solid #eee";
+      li.style.fontSize = "14px";
+      li.textContent = item.display_name;
+
+      li.addEventListener("mouseover", () => li.style.background = "#f0f0f0");
+      li.addEventListener("mouseout", () => li.style.background = "#fff");
+
+      li.addEventListener("click", () => {
+        input.value = item.display_name;
+        contenedor.innerHTML = "";
+      });
+
+      contenedor.appendChild(li);
+    });
+  } catch (err) {
+    console.error("Error al buscar direcciones OSM:", err);
+  }
+}
+
+function direccionEsValida(direccion) {
+  return direccionesValidas.some(item => direccion.includes(item.display_name));
+}
+
+// Inicializar al cargar
+document.addEventListener("DOMContentLoaded", inicializarNormalizacionDireccion);
+
+// ================== SUBMIT FORM ==================
+document.getElementById("proveedorForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
   const id_proveedor = document.getElementById("id_proveedor").value;
@@ -160,17 +234,15 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
   const direccion = document.getElementById("direccion").value.trim();
   const estado = document.getElementById("estado").value;
 
-  // VALIDACIONES
   if (!nombre) return mostrarError("El nombre es obligatorio");
   if (!tipo_proveedor) return mostrarError("Debe seleccionar el tipo de proveedor");
   if (!validarCUIT(dni_cuil, tipo_proveedor)) return mostrarError("CUIT inválido según tipo de proveedor");
   if (!pref_cont) return mostrarError("Debe seleccionar la preferencia de contacto");
   if (!validarEmail(email)) return mostrarError("El email no tiene un formato válido");
   if (!validarTelefono(telefono)) return mostrarError("El teléfono debe tener 10 números");
-  if (!direccionEsValida(direccion)) return mostrarError("Debe seleccionar una dirección de la lista de direcciones validadas");
+  if (!direccionEsValida(direccion)) return mostrarError("Debe seleccionar una dirección válida de la lista");
 
   try {
-    // VERIFICAR DUPLICADOS
     const { data: existente } = await supabaseClient
       .from('proveedor')
       .select('id_proveedor')
@@ -192,7 +264,6 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
       estado
     };
 
-    // CREAR O EDITAR
     if (id_proveedor) {
       const { error } = await supabaseClient
         .from("proveedor")
@@ -210,7 +281,6 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
 
     document.getElementById("formProveedor").style.display = "none";
     document.getElementById("mensajeExitoProveedor").style.display = "block";
-
     listarProveedores();
 
   } catch (err) {
@@ -219,18 +289,13 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
   }
 });
 
-// ================== EDITAR PROVEEDOR ==================
+// ================== EDITAR / BAJA ==================
 async function editarProveedor(dni) {
   try {
-    const { data, error } = await supabaseClient
-      .from('proveedor')
-      .select('*')
-      .eq('dni_cuil', dni)
-      .single();
+    const { data, error } = await supabaseClient.from('proveedor').select('*').eq('dni_cuil', dni).single();
     if (error) throw error;
 
-    let tipoValue = data.tipo_proveedor;
-    tipoProveedorSelect.value = tipoValue;
+    tipoProveedorSelect.value = data.tipo_proveedor;
     documentoInput.value = data.dni_cuil;
     document.getElementById('nombre').value = data.nombre;
     document.getElementById('direccion').value = data.direccion;
@@ -248,7 +313,6 @@ async function editarProveedor(dni) {
   }
 }
 
-// ================== DAR DE BAJA PROVEEDOR ==================
 async function bajaProveedor(dni) {
   if (!confirm('¿Desea dar de baja este proveedor?')) return;
   try {
