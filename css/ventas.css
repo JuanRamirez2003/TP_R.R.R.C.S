@@ -441,3 +441,23 @@ tr:hover {
   color: #e0e0e0 !important;
   border-radius: 6px !important;
 }
+.btn-ver {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s, transform 0.1s;
+}
+
+.btn-ver:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+.btn-ver:active {
+  background-color: #004494;
+  transform: scale(0.97);
+}
