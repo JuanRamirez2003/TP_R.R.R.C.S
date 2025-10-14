@@ -11,18 +11,37 @@ function mostrarSeccion(id) {
 
   const mensajeExito = document.getElementById('mensajeExitoOP');
   if (mensajeExito) mensajeExito.style.display = 'none';
-  
+
   // ✅ Ocultar el mensaje de éxito de OP si estaba visible
   const textoExito = document.getElementById('textoExitoOP');
   if (textoExito) textoExito.style.display = 'none';
 
   if (id === "ordenProduccion") {
 
-
-    prepararNuevaOP();
+    prepararNuevaOP(); // vuelve a generar número OP, etc.
   }
 
+
   if (id === "seguimientoOP") cargarOP();
+}
+
+
+const btnMenuCreacionOP = document.getElementById('btnMenuCreacionOP');
+if (btnMenuCreacionOP) {
+  btnMenuCreacionOP.addEventListener('click', () => {
+    const mensaje = document.getElementById('mensajeExitoOP');
+    if (mensaje) mensaje.style.display = 'none';
+    const form = document.getElementById('opForm');
+    if (form) form.reset();
+    document.getElementById('ordenProduccion').style.display = 'block';
+
+
+    // Ocultar TODO el seguimiento
+    const seguimientoCont = document.getElementById('seguimientoOP');
+    if (seguimientoCont) seguimientoCont.style.display = 'none';
+
+    prepararNuevaOP();
+  });
 }
 
 
@@ -61,7 +80,7 @@ function guardarOPs() { localStorage.setItem("ordenesProduccion", JSON.stringify
 //prepararNuevaOP();
 
 async function prepararNuevaOP() {
-  
+
 
   document.getElementById('btnCrearOP').disabled = true;
   $('.select-ov').select2('destroy');
@@ -69,7 +88,7 @@ async function prepararNuevaOP() {
   document.getElementById('productosContainer').innerHTML = '';
   idProductoSeleccionado = null;
   nombreProductoSelec = null;
-  
+
   await cargarProductosDisponibles();
   agregarProducto();
 
@@ -85,6 +104,9 @@ async function prepararNuevaOP() {
 
 function agregarProducto() {
   const container = document.getElementById('productosContainer');
+  // ✅ Limpiar el contenedor para que solo haya un producto
+  container.innerHTML = '';
+
   const div = document.createElement('div');
   div.className = 'producto-item';
   let opciones = productosDisponibles.map(p => `<option value="${p}">${p}</option>`).join('');
@@ -914,9 +936,10 @@ async function mostrarMensajeExito(idOrden) {
       ${lotesHtml}
       ${ovsHtml}
     `;
-  
+
     mensaje.style.display = 'block';
     document.getElementById('ordenProduccion').style.display = 'none';
+
 
     document.getElementById('btnCrearOPNuevo').onclick = () => {
       mensaje.style.display = 'none';
@@ -935,6 +958,9 @@ async function mostrarMensajeExito(idOrden) {
       mostrarSeccion('seguimientoOP');
       cargarOP();
     };
+
+
+
 
   } catch (err) {
     console.error("Error en mostrarMensajeExito:", err);
@@ -996,12 +1022,11 @@ async function generarNumeroOP() {
 // Cargar/Ver OP desde Supabase
 async function cargarOP() {
 
-  const mensajeExito = document.getElementById('mensajeExitoOP');
-  if (mensajeExito) mensajeExito.style.display = 'none';
+  const mensaje = document.getElementById('mensajeExitoOP');
+  if (mensaje) mensaje.style.display = 'none';
+  const tablaOP = document.getElementById('tablaOP');
+  if (tablaOP) tablaOP.innerHTML = ''; // limpia el contenido
 
-  // ✅ Ocultar el mensaje de éxito de OP si estaba visible
-  const textoExito = document.getElementById('textoExitoOP'); // asegúrate que el ID es correcto
-  if (textoExito) textoExito.style.display = 'none';
 
   const { data, error } = await supabaseClient.from('orden_produccion').select('*').order('id_orden_produccion', { ascending: true });
   if (error) return console.error("Error al cargar OP:", error);

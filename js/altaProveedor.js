@@ -4,6 +4,10 @@ function mostrarSeccion(seccionId) {
   document.getElementById(seccionId).style.display = 'block';
 
   if (seccionId === 'proveedor') {
+
+    const mensaje = document.getElementById('mensajeExitoOP');
+    if (mensaje) mensaje.style.display = 'none';
+
     document.getElementById('formProveedor').style.display = 'none';
     document.getElementById('mensajeExitoProveedor').style.display = 'none';
     document.getElementById('tablaProveedorContainer').style.display = 'block';
