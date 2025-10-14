@@ -453,123 +453,136 @@ async function verFactura(idFactura) {
     const pageHeight = doc.internal.pageSize.height;
     let y = 20;
 
-    // ==== Logo (más grande y centrado) ====
+    const formatMoney = (n) =>
+      n.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+
+    // ==== ENCABEZADO EMPRESA ====
     const logo = await loadImageAsBase64('logo1.jpg');
+    doc.setFillColor(240, 248, 255);
+    doc.rect(15, 15, 180, 40, 'F');
+
     if (logo) {
       const img = new Image();
       img.src = logo;
       await img.decode();
       const ratio = img.width / img.height;
-      const width = 60; // más grande
+      const width = 40;
       const height = width / ratio;
-      const xCenter = (210 - width) / 2;
-      doc.addImage(logo, 'JPEG', xCenter, y, width, height);
-      y += height + 5;
+      doc.addImage(logo, 'JPEG', 20, 18, width, height);
     }
 
-    // ==== Título ====
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text("FACTURA", 105, y, { align: "center" });
-    y += 10;
-
-    // ==== Datos de la empresa ====
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("Frozen © Alimentos Congelados", 105, y, { align: "center" });
+    doc.setFontSize(16);
+    doc.text("Frozen © Alimentos Congelados", 110, 25);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    y += 5;
-    doc.text("CUIT: 30-12345678-9", 105, y, { align: "center" });
-    y += 5;
-    doc.text("Domicilio Fiscal: Av. Ejemplo 123, Ciudad, Provincia", 105, y, { align: "center" });
-    y += 5;
-    doc.text("Tel: +54 11 1234-5678", 105, y, { align: "center" });
-    y += 10;
+    doc.text("CUIT: 30-12345678-9", 110, 31);
+    doc.text("Domicilio Fiscal: Av. Ejemplo 123, Ciudad, Provincia", 110, 36);
+    doc.text("Tel: +54 11 1234-5678", 110, 41);
 
-    // ==== Datos del cliente ====
+    // 🔹 FACTURA tipo y número
     doc.setFont("helvetica", "bold");
-    doc.text("Datos del Cliente", 20, y);
-    y += 5;
+    doc.setFontSize(18);
+    doc.text("FACTURA C", 185, 48, { align: "right" });
+    doc.setFontSize(12);
+    doc.text(`N° ${data.id.toString().padStart(6, '0')}`, 185, 56, { align: "right" });
+
+    y = 65;
+
+    // ==== SELLO PENDIENTE ====
+    doc.saveGraphicsState();
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(50);
+    doc.setTextColor(255, 0, 0); // rojo
+    doc.setGState(new doc.GState({ opacity: 0.15 }));
+    doc.text("PENDIENTE", 105, 150, { align: "center", angle: 45 });
+    doc.restoreGraphicsState();
+
+    // ==== DATOS DEL CLIENTE ====
+    doc.setFillColor(235, 235, 235);
+    doc.rect(15, y, 180, 8, 'F');
+    doc.setFont("helvetica", "bold");
+    doc.text("Datos del Cliente", 20, y + 6);
+    y += 14;
     doc.setFont("helvetica", "normal");
     doc.text(`Nombre/Razón Social: ${data.clientes?.nombre || '-'}`, 20, y);
-    y += 5;
+    y += 6;
     doc.text(`CUIT/DNI: ${data.clientes?.dni_cuil || '-'}`, 20, y);
-    y += 5;
+    y += 6;
     doc.text(`Domicilio Fiscal: ${data.clientes?.direccion || '-'}`, 20, y);
     y += 10;
 
-    // ==== Identificación de la factura ====
+    // ==== DATOS DE FACTURA ====
     doc.setFont("helvetica", "bold");
-    doc.text(`Factura N°: ${data.id.toString().padStart(6,'0')}`, 150, y - 10);
+    doc.text("Datos de la Factura", 20, y);
+    y += 6;
     doc.setFont("helvetica", "normal");
-    doc.text(`Fecha de Emisión: ${new Date(data.fecha).toLocaleDateString()}`, 150, y - 5);
-    doc.text(`Fecha de Operación: ${data.orden_ventas?.fecha ? new Date(data.orden_ventas.fecha).toLocaleDateString() : '-'}`, 150, y);
+    doc.text(`Fecha de Emisión: ${new Date(data.fecha).toLocaleDateString()}`, 20, y);
+    y += 6;
+    doc.text(`Fecha de Operación: ${data.orden_ventas?.fecha ? new Date(data.orden_ventas.fecha).toLocaleDateString() : '-'}`, 20, y);
+    y += 10;
 
-    // ==== Línea separadora ====
-    doc.setLineWidth(0.4);
-    doc.line(20, y + 3, 190, y + 3);
-    y += 8;
-
-    // ==== Encabezado de tabla ====
-    const rowHeight = 7;
-    function drawTableHeader() {
-      doc.setFont("helvetica", "bold");
+    // ==== TABLA DE DETALLE ====
+    const rowHeight = 8;
+    const drawHeader = () => {
       doc.setFillColor(220, 220, 220);
       doc.rect(20, y, 170, rowHeight, 'F');
-      doc.text("Descripción", 25, y + 5);
-      doc.text("Cant.", 105, y + 5, { align: "right" });
-      doc.text("Precio Unit.", 145, y + 5, { align: "right" });
-      doc.text("Subtotal", 190, y + 5, { align: "right" });
+      doc.setFont("helvetica", "bold");
+      doc.text("Producto", 25, y + 6);
+      doc.text("Cant.", 110, y + 6, { align: "right" });
+      doc.text("Precio Unit.", 150, y + 6, { align: "right" });
+      doc.text("Subtotal", 190, y + 6, { align: "right" });
       y += rowHeight;
       doc.setFont("helvetica", "normal");
-    }
-    drawTableHeader();
+    };
+    drawHeader();
 
-    // ==== Productos ====
     let baseImponible = 0;
-    (data.orden_ventas?.detalle_ordenes || []).forEach((det, index) => {
+    (data.orden_ventas?.detalle_ordenes || []).forEach((det, i) => {
       const nombre = det.productos?.nombre || '-';
       const cantidad = det.cantidad;
       const precio = det.productos?.precio_unitario || 0;
       const subtotal = cantidad * precio;
       baseImponible += subtotal;
 
-      if (y + rowHeight + 40 > pageHeight) {
+      if (y + rowHeight + 50 > pageHeight) {
         doc.addPage();
         y = 20;
-        drawTableHeader();
+        drawHeader();
       }
 
-      if (index % 2 === 0) {
-        doc.setFillColor(245, 245, 245);
+      if (i % 2 === 0) {
+        doc.setFillColor(250, 250, 250);
         doc.rect(20, y - 1, 170, rowHeight, 'F');
       }
 
       doc.text(nombre, 25, y + 5);
-      doc.text(cantidad.toString(), 105, y + 5, { align: "right" });
-      doc.text(`$${precio.toFixed(2)}`, 145, y + 5, { align: "right" });
-      doc.text(`$${subtotal.toFixed(2)}`, 190, y + 5, { align: "right" });
+      doc.text(cantidad.toString(), 110, y + 5, { align: "right" });
+      doc.text(formatMoney(precio), 150, y + 5, { align: "right" });
+      doc.text(formatMoney(subtotal), 190, y + 5, { align: "right" });
       y += rowHeight;
     });
 
     doc.line(20, y, 190, y);
-    y += 6;
+    y += 8;
 
-    // ==== Totales ====
+    // ==== TOTALES ====
     const iva = baseImponible * 0.21;
     const total = baseImponible + iva;
 
+    doc.setFont("helvetica", "normal");
+    doc.text(`Base Imponible: ${formatMoney(baseImponible)}`, 190, y, { align: "right" });
+    y += 6;
+    doc.text(`IVA (21%): ${formatMoney(iva)}`, 190, y, { align: "right" });
+    y += 6;
+    doc.setFillColor(240, 240, 200);
+    doc.rect(120, y - 5, 70, 8, 'F');
     doc.setFont("helvetica", "bold");
-    doc.text(`Base Imponible: $${baseImponible.toFixed(2)}`, 190, y, { align: "right" });
-    y += 6;
-    doc.text(`IVA 21%: $${iva.toFixed(2)}`, 190, y, { align: "right" });
-    y += 6;
-    doc.text(`TOTAL: $${total.toFixed(2)}`, 190, y, { align: "right" });
-    y += 10;
+    doc.setFontSize(13);
+    doc.text(`TOTAL: ${formatMoney(total)}`, 190, y, { align: "right" });
+    y += 20;
 
-    // ==== QR y Código de Barras (alineados lado a lado) ====
-
-    // Generar código QR (JSON)
+    // ==== QR + CÓDIGO DE BARRAS ====
     const qrDataJSON = JSON.stringify({
       id: data.id,
       fecha: data.fecha,
@@ -580,15 +593,14 @@ async function verFactura(idFactura) {
     const qrContainer = document.createElement('div');
     document.body.appendChild(qrContainer);
     const qr = new QRCode(qrContainer, { text: qrDataJSON, width: 60, height: 60 });
-    await new Promise(r => setTimeout(r, 500)); // espera breve para renderizar
+    await new Promise(r => setTimeout(r, 400));
     const qrImg = qrContainer.querySelector('img');
     const qrData = qrImg ? qrImg.src : qrContainer.querySelector('canvas').toDataURL("image/png");
     document.body.removeChild(qrContainer);
-
-    // Agregar QR a la izquierda
     doc.addImage(qrData, 'PNG', 30, y, 35, 35);
+    doc.setFontSize(9);
+    doc.text("Verificación digital", 47, y + 42, { align: "center" });
 
-    // Código de barras a la derecha
     const canvasBar = document.createElement('canvas');
     JsBarcode(canvasBar, `F${data.id.toString().padStart(6, '0')}`, {
       format: "CODE128",
@@ -598,19 +610,20 @@ async function verFactura(idFactura) {
       fontSize: 10
     });
     const barcodeData = canvasBar.toDataURL('image/png');
-    doc.addImage(barcodeData, 'PNG', 120, y + 10, 60, 15);
-    y += 45;
+    doc.addImage(barcodeData, 'PNG', 130, y + 10, 60, 15);
+    doc.text(`Factura N° ${data.id.toString().padStart(6, '0')}`, 160, y + 30, { align: "center" });
+    y += 50;
 
-    // ==== Notas y pie ====
-    doc.setFont("helvetica", "normal");
-    doc.text("Forma de Pago: Transferencia bancaria / Efectivo", 20, y);
-    y += 5;
-    doc.text("Notas: Gracias por elegir Frozen ©. Verifique los productos al recibirlos.", 20, y);
-    y += 10;
-
+    // ==== PIE ====
+    doc.setDrawColor(180);
+    doc.line(20, pageHeight - 25, 190, pageHeight - 25);
+    doc.setFontSize(9);
+    doc.setTextColor(80);
+    doc.text("Forma de Pago: Transferencia bancaria / Efectivo", 20, pageHeight - 20);
+    doc.text("Gracias por elegir Frozen ©. Verifique los productos al recibirlos.", 20, pageHeight - 15);
     doc.setFontSize(8);
-    doc.setTextColor(100);
-    doc.text("Factura generada digitalmente por Frozen ©. Validez legal sujeta a la normativa fiscal vigente.", 105, pageHeight - 10, null, null, "center");
+    doc.setTextColor(120);
+    doc.text("Documento generado digitalmente. No requiere firma ni sello.", 105, pageHeight - 10, { align: "center" });
 
     // ==== Mostrar PDF ====
     const pdfDataUri = doc.output('datauristring');
@@ -625,7 +638,7 @@ async function verFactura(idFactura) {
 }
 
 
-// ==== Cargar imagen ====
+// ==== Función auxiliar para cargar imágenes ====
 function loadImageAsBase64(url) {
   return new Promise((resolve) => {
     const img = new Image();
