@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Supervisor - Local</title>
   <link rel="stylesheet" href="css/ventas.css">
+
+
 </head>
 
 <body>
@@ -24,7 +26,7 @@
     <main class="main-content">
       <h1>Panel de Supervisor</h1>
 
-  <!-- ===================== SECCIÓN PROVEEDORES ===================== -->
+      <!-- ===================== SECCIÓN PROVEEDORES ===================== -->
       <div id="proveedor" class="seccion" style="display:none;">
         <h2>Gestión de Proveedores</h2>
         <button class="btn-submit" onclick="mostrarFormularioProveedor()">➕ Nuevo Proveedor</button>
@@ -102,7 +104,7 @@
                   required
                   style="flex:1; padding:8px 10px; border:1px solid #ccc; border-radius:6px; font-size:14px; outline:none;"
                   onfocus="this.style.borderColor='#007bff';" onblur="this.style.borderColor='#ccc';">
-                  
+
                 <!--Validar Dirección-->
                 </button>
               </div>
@@ -184,14 +186,15 @@
           <button type="button" onclick="cancelarOP()" class="btn-eliminar">Cancelar</button>
         </form>
       </div>
-      <!-- Mensaje de éxito -->
-      <div id="mensajeExito" class="mensaje"
+      <!--Mensaje de éxito--> 
+      <div id="mensajeExitoOP" class="mensaje"
         style="display:none; text-align:center; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; margin-top:20px;">
-        <p id="textoExito" style="font-size:18px; font-weight:bold; color:#155724;"></p>
+        <p id="textoExitoOP" style="font-size:18px; font-weight:bold; color:#155724;"></p>
         <button id="btnCrearOPNuevo" class="btn-submit">Crear otra OP</button>
         <button id="btnVerListaOP" class="btn-submit">Ver lista de OP</button>
         <button id="btnVolverMenu" class="btn-submit">Volver al menú</button>
       </div>
+
       <!-- SEGUIMIENTO OP -->
       <div id="seguimientoOP" class="seccion" style="display:none;">
         <h2>Seguimiento de Órdenes de Producción</h2>
@@ -216,16 +219,16 @@
   <!-- Modal Ver Orden -->
   <div class="modal" id="modalOrden"
     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color: rgba(0,0,0,0.7); justify-content:center; align-items:center;">
-      <div class="modal-content"
-        style="background-color:#1e1e1e; padding:20px; border-radius:10px; width:90%; max-width:500px; position:relative;">
-        <span class="close-modal" onclick="cerrarModal()"
+    <div class="modal-content"
+      style="background-color:#1e1e1e; padding:20px; border-radius:10px; width:90%; max-width:500px; position:relative;">
+      <span class="close-modal" onclick="cerrarModal()"
         style="position:absolute; top:10px; right:15px; font-size:24px; cursor:pointer; color:#fff;">&times;</span>
-        <h2>Detalle de Orden</h2>
+      <h2>Detalle de Orden</h2>
       <div id="detalleOrden"></div>
+    </div>
   </div>
-</div>
-<!-- Notificación de stock -->
-<div id="notificacionStock" style="
+  <!-- Notificación de stock -->
+  <div id="notificacionStock" style="
     position: fixed;
     top: 20px;
     right: 20px;
@@ -244,10 +247,10 @@
     z-index: 9999;
 ">
     🔔
-</div>
+  </div>
 
-<!-- Tooltip/modal dentro de la notificación -->
-<div id="tooltipStock" style="
+  <!-- Tooltip/modal dentro de la notificación -->
+  <div id="tooltipStock" style="
     position: fixed;
     top: 90px;
     right: 20px;
@@ -276,7 +279,7 @@
         font-weight: bold;
         transition: background-color 0.3s;
     ">Ir al pedido de materias primas</button>
-</div>
+  </div>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -284,6 +287,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="js/supervisor.js"></script>
+  !
   <script src="js/altaProveedor.js"></script>
   <script src="js/normalizarDireccion.js"></script>
 </body>

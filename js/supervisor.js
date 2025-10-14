@@ -8,6 +8,15 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 function mostrarSeccion(id) {
   document.querySelectorAll('.seccion').forEach(s => s.style.display = 'none');
   document.getElementById(id).style.display = 'block';
+
+  const mensajeExito = document.getElementById('mensajeExitoOP');
+  if (mensajeExito) mensajeExito.style.display = 'none';
+  
+  // ✅ Ocultar el mensaje de éxito de OP si estaba visible
+  const textoExito = document.getElementById('textoExitoOP'); // asegúrate que el ID es correcto
+  if (textoExito) textoExito.style.display = 'none';
+
+
   if (id === "ordenProduccion") prepararNuevaOP();
   if (id === "seguimientoOP") cargarOP();
 }
@@ -82,7 +91,7 @@ function prepararNuevaOP() {
   mostrarDetalleMateriales([]);
   idProductoSeleccionado = null;
   nombreProductoSelec = null;
-  
+
   generarNumeroOP().then(numeroOP => {
     console.log("Número OP generado:", numeroOP);
     document.getElementById('opNumero').value = numeroOP;
@@ -185,12 +194,13 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
       return;
     }
   }
+
+  mostrarMensajeExito(idOrden);
   
-mostrarMensajeExito(idOrden);
-/*
-  cancelarOP();
-  mostrarSeccion('seguimientoOP');
-  cargarOP();*/
+  /*
+    cancelarOP();
+    mostrarSeccion('seguimientoOP');
+    cargarOP();*/
 });
 
 async function obtnerIdProducto(nombreProducto, limpiar) {
@@ -574,7 +584,7 @@ function actualizarSelectsOV() {
     const $select = $(select);
     const currentValue = $select.val();
 
-    $select.find('option').each(function() {
+    $select.find('option').each(function () {
       const val = $(this).val();
       if (val && val !== currentValue) {
         $(this).prop('disabled', seleccionadas.includes(val));
@@ -617,12 +627,12 @@ function llenarOV(selectElement) {
   const selectedOption = selectElement.selectedOptions[0];
   cantidadInput.value = selectedOption?.dataset?.cantidad || 0;
   productoInput.value = selectedOption?.dataset?.producto || '';
-    //actualizarTodosLosSelectsOV();
+  //actualizarTodosLosSelectsOV();
 }
 
 
 function eliminarOV(btn) {
-  const ovItem = btn.closest('.ov-item'); 
+  const ovItem = btn.closest('.ov-item');
   if (!ovItem) return;
 
   const lista = document.getElementById('listaOVs');
@@ -640,8 +650,8 @@ function eliminarOV(btn) {
   }
 
   ovItem.remove();
-  actualizarSelectsOV(); 
-//actualizarTodosLosSelectsOV();
+  actualizarSelectsOV();
+  //actualizarTodosLosSelectsOV();
 }
 
 async function obtenerOVsDisponibles(idProducto) {
@@ -802,7 +812,8 @@ async function mostrarMensajeExito(idOrden) {
       console.error("Error al obtener datos de OP:", error);
       return;
     }
-
+    console.log("ESTA ACCCCCAAA");
+    console.log(data.ver_orden);
     const productosHtml = data.ver_orden
       .map(p => `<p>${p.nombre} - Cantidad de Lote/s: ${p.cantidad} - Cantidad de Cajas Estimadas: ${p.cantidad * cantidadPorLote}</p>`)
       .join('');
@@ -900,8 +911,8 @@ async function mostrarMensajeExito(idOrden) {
       ovsHtml = '<p>No hay OV involucradas en esta OP.</p>';
     }
 
-    const mensaje = document.getElementById('mensajeExito');
-    const texto = document.getElementById('textoExito');
+    const mensaje = document.getElementById('mensajeExitoOP');
+    const texto = document.getElementById('textoExitoOP');
 
     texto.innerHTML = `
       <h3>✅ Orden de Producción Creada</h3>
@@ -995,6 +1006,14 @@ async function generarNumeroOP() {
 
 // Cargar/Ver OP desde Supabase
 async function cargarOP() {
+
+    const mensajeExito = document.getElementById('mensajeExitoOP');
+  if (mensajeExito) mensajeExito.style.display = 'none';
+  
+  // ✅ Ocultar el mensaje de éxito de OP si estaba visible
+  const textoExito = document.getElementById('textoExitoOP'); // asegúrate que el ID es correcto
+  if (textoExito) textoExito.style.display = 'none';
+
   const { data, error } = await supabaseClient.from('orden_produccion').select('*').order('id_orden_produccion', { ascending: true });
   if (error) return console.error("Error al cargar OP:", error);
 
@@ -1235,5 +1254,5 @@ async function verificarStockMaterias() {
 (async () => {
   await cargarProductosDisponibles();
   prepararNuevaOP();
-  verificarStockMaterias(); 
+  verificarStockMaterias();
 })();
