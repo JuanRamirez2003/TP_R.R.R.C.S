@@ -441,22 +441,3 @@ tr:hover {
   color: #e0e0e0 !important;
   border-radius: 6px !important;
 }
-.btn-ver {
-  background-color: #17a2b8; /* azul claro */
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 5px; /* espacio entre ícono y texto */
-}
-
-.btn-ver:hover {
-  background-color: #138496; /* azul más oscuro al pasar mouse */
-  transform: translateY(-2px); /* efecto sutil de elevación */
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-}
