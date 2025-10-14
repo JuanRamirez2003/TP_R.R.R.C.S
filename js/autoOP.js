@@ -105,7 +105,7 @@ async function obtenerOVsDisponibles() {
 }
 
 function agruparOVsPorProducto(listaOVs) {
-    ovPorProducto.clear(); 
+    ovPorProducto.clear();
     listaOVs.forEach(ov => {
         const producto = ov.producto;
         if (!ovPorProducto.has(producto)) {
@@ -117,6 +117,9 @@ function agruparOVsPorProducto(listaOVs) {
 
 async function crearOrdenesProduccion() {
     console.log("⚙️ Creando OP por producto...");
+
+    const opCreadas = []; // inicializar al inicio de la función
+
 
     detallesExcedidosPorProducto = new Map();
     materialesFaltantesPorProducto = new Map();
@@ -182,17 +185,23 @@ async function crearOrdenesProduccion() {
                 });
 
                 console.log(`⚠️ No hay suficiente stock para crear la OP de "${producto}". Revisa los materiales.`);
-                break; 
+                break;
             }
 
             const numeroOP = await generarNumeroOP();
             const fecha = new Date().toISOString();
             const idReceta = materialesNecesarios[0].id_receta;
+
+            // Generar objeto para guardar en ver_orden
+            const verOrdenOP = [{
+                nombre: detallesOP[0].producto,
+                cantidad: minLotesProduccion
+            }];
             const { data: opData, error: opError } = await supabaseClient
                 .from('orden_produccion')
                 .insert([{
                     numero_op: numeroOP,
-                    ver_orden: detallesOP,
+                    ver_orden: verOrdenOP,
                     id_producto: detallesOP[0].id_producto,
                     cant_lote: cantidadLotesOP,
                     id_receta: idReceta,
@@ -229,6 +238,12 @@ async function crearOrdenesProduccion() {
                     break;
                 }
             }
+            opCreadas.push({
+                numero_op: numeroOP,
+                producto: detallesOP[0].producto,
+                cant_lote: cantidadLotesOP
+            });
+
 
             console.log(`✅ Creando OP para "${producto}" con ${cajasOP} cajas:`, detallesOP.map(d => d.id_detalle));
 
@@ -245,6 +260,8 @@ async function crearOrdenesProduccion() {
     console.log("🎯 Todas las OP creadas correctamente.");
     console.log("📌 Detalles que necesitan OP especial/manual:", detallesExcedidosPorProducto);
     console.log("📦 Materiales faltantes para OP (para generar OC):", materialesFaltantesPorProducto);
+
+    mostrarOPenPantalla(opCreadas, detallesExcedidosPorProducto);
 
 }
 
@@ -404,7 +421,7 @@ async function reservarLotes(idOrden, idMP, cantidadTotal) {
 
 async function guardarOVsEnOPAutomatica(idOP, detallesOV) {
     try {
-        if (!detallesOV || detallesOV.length === 0) return true; 
+        if (!detallesOV || detallesOV.length === 0) return true;
 
         for (const det of detallesOV) {
             const { id_detalle, cantidad } = det;
@@ -484,7 +501,79 @@ async function generarNumeroOP() {
 }
 
 
+function mostrarOPenPantalla(opCreadas, opExcedidas) {
+    // Obtener elementos del modal
+    const modal = document.getElementById('modalOP');
+    const listCreadas = document.getElementById('op-creadas-list');
+    const listExcedidas = document.getElementById('op-excedidas-list');
+
+    if (!modal || !listCreadas || !listExcedidas) {
+        console.error("No se encontró el modal o las listas en el DOM");
+        return;
+    }
+
+    // Limpiar listas
+    listCreadas.innerHTML = '';
+    listExcedidas.innerHTML = '';
+    //let hayOP = false
+    // -----------------------------
+    // OP Creadas
+    // -----------------------------
+    opCreadas.forEach(op => {
+        const li = document.createElement('li');
+        li.textContent = `${op.numero_op} - Producto: ${op.producto} - Cantidad: ${op.cant_lote * 10} cajas`;
+        li.style.color = 'green';
+        listCreadas.appendChild(li);
+        
+    });
+    //hayOP = true; 
+    // -----------------------------
+    // OP Excedidas
+    // -----------------------------
+    if (opExcedidas instanceof Map) {
+        // Si es Map
+        opExcedidas.forEach((detalles, producto) => {
+            detalles.forEach(d => {
+                const li = document.createElement('li');
+                li.textContent = `Producto: ${producto} - OV: ${d.id_orden} - Cantidad: ${d.cantidad} (excedido)`;
+                li.style.color = 'red';
+                listExcedidas.appendChild(li);
+                //hayOP = true;
+            });
+        });
+    } else if (Array.isArray(opExcedidas)) {
+        // Si es Array de pares [producto, detalles]
+        opExcedidas.forEach(([producto, detalles]) => {
+            detalles.forEach(d => {
+                const li = document.createElement('li');
+                li.textContent = `Producto: ${producto} - OV: ${d.id_orden} - Cantidad: ${d.cantidad} (excedido)`;
+                li.style.color = 'red';
+                listExcedidas.appendChild(li);
+               // hayOP = true;   
+            });
+        });
+    } else {
+        console.warn("opExcedidas tiene un formato inesperado", opExcedidas);
+    }
+
+    // -----------------------------
+    // Mostrar modal
+    // -----------------------------
+    modal.style.display = 'flex';
+
+    // Cerrar modal al hacer click en la X
+    const span = modal.querySelector('.close');
+    if (span) span.onclick = () => modal.style.display = 'none';
+
+    // Cerrar modal al hacer click fuera del contenido
+    window.onclick = (event) => {
+        if (event.target === modal) modal.style.display = 'none';
+    };
 
 
 
-window.generarOrdenesProduccionAutomatica = generarOrdenesProduccionAutomatica;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  window.generarOrdenesProduccionAutomatica = generarOrdenesProduccionAutomatica;
+});

@@ -7,14 +7,67 @@
     body { font-family: Arial, sans-serif; margin: 20px; }
     button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
     pre { background: #f8f8f8; padding: 10px; border-radius: 6px; margin-top: 20px; }
+
+
+
+    /* Modal general */
+#modalOP {
+  display: none; /* oculto por defecto */
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(3px);
+
+  display: flex;           /* centrado */
+  justify-content: center; 
+  align-items: center;     
+}
+
+#modalOP .modal-content {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  padding: 25px 30px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 650px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.7);
+  position: relative;
+  animation: fadeInModal 0.3s ease-out;
+  border: 1px solid #333;
+}
+/* Botón cerrar */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: black;
+}
   </style>
 </head>
 <body>
   <h2>🔧 Automatización de Órdenes de Producción</h2>
   <button onclick="generarOrdenesProduccionAutomatica()">Ejecutar</button>
 
+
   <h3>Resultado:</h3>
   <pre id="output">......LO MUESTRA POR CONSOLA DE WEB......></pre>
+
+<div id="modalOP" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+  <div style="background:#fff; margin:50px auto; padding:20px; width:80%; max-width:600px; position:relative;">
+    <span class="close" style="position:absolute; top:10px; right:20px; cursor:pointer;">&times;</span>
+    <h3>OP Creadas:</h3>
+    <ul id="op-creadas-list"></ul>
+    <h3>OP Excedidas:</h3>
+    <ul id="op-excedidas-list"></ul>
+  </div>
+</div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script type="module" src="js/autoOP.js"></script>
 </body>
