@@ -1175,7 +1175,7 @@ async function verOrden(id_orden_produccion) {
 
 function cerrarModal() { document.getElementById('modalOrden').style.display = 'none'; }
 
-// Editar OP
+/* Editar OP
 async function editarOP(id_orden_produccion) {
   const { data, error } = await supabaseClient.from('orden_produccion')
     .select('*').eq('id_orden_produccion', id_orden_produccion).single();
@@ -1202,6 +1202,7 @@ async function eliminarOP(id_orden_produccion) {
   if (error) return console.error("Error al eliminar OP:", error);
   cargarOP();
 }
+  */
 async function verificarStockMaterias() {
   try {
     const { data, error } = await supabaseClient

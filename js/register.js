@@ -184,7 +184,7 @@ registerButton.addEventListener("click", async () => {
         capturedDescriptor = null;
         captureButton.disabled = true;
 
-        setTimeout(() => window.location.href = "admin.html", 2000);
+        setTimeout(() => window.location.href = "rrhh.html", 2000);
 
     } catch (err) {
         console.error("Error registrando usuario:", err);
