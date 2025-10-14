@@ -13,11 +13,15 @@ function mostrarSeccion(id) {
   if (mensajeExito) mensajeExito.style.display = 'none';
   
   // ✅ Ocultar el mensaje de éxito de OP si estaba visible
-  const textoExito = document.getElementById('textoExitoOP'); // asegúrate que el ID es correcto
+  const textoExito = document.getElementById('textoExitoOP');
   if (textoExito) textoExito.style.display = 'none';
 
+  if (id === "ordenProduccion") {
 
-  if (id === "ordenProduccion") prepararNuevaOP();
+
+    prepararNuevaOP();
+  }
+
   if (id === "seguimientoOP") cargarOP();
 }
 
@@ -52,47 +56,28 @@ let ordenesProduccion = JSON.parse(localStorage.getItem("ordenesProduccion")) ||
 function guardarOPs() { localStorage.setItem("ordenesProduccion", JSON.stringify(ordenesProduccion)); }
 
 
-//Generar numero de orden automatico
-async function generarNumeroOP() {
-  // usar id_orden_produccion para asegurar que traes la última fila creada
-  const { data, error } = await supabaseClient
-    .from('orden_produccion')
-    .select('id_orden_produccion, numero_op')
-    .order('id_orden_produccion', { ascending: false })
-    .limit(1);
 
-  if (error) {
-    console.error("Error al generar número de OP:", error);
-    return "OP-2025-000"; // defecto: empieza en 000
-  }
 
-  if (!data || data.length === 0) {
-    return "OP-2025-000"; // si no hay OP -> primera será 000
-  }
+//prepararNuevaOP();
 
-  const ultimo = data[0].numero_op || "";
-  // extraer el número final con regex (más seguro que split)
-  const m = ultimo.match(/-(\d+)$/);
-  const lastNum = m ? parseInt(m[1], 10) : 0;
-  const nuevoNum = lastNum + 1;
-  const nuevo = `OP-2025-${String(nuevoNum).padStart(3, '0')}`;
-  return nuevo;
-}
+async function prepararNuevaOP() {
+  
 
-prepararNuevaOP();
-
-function prepararNuevaOP() {
   document.getElementById('btnCrearOP').disabled = true;
   $('.select-ov').select2('destroy');
   document.getElementById('listaOVs').innerHTML = '';
   document.getElementById('productosContainer').innerHTML = '';
+  idProductoSeleccionado = null;
+  nombreProductoSelec = null;
+  
+  await cargarProductosDisponibles();
   agregarProducto();
 
   mostrarDetalleMateriales([]);
   idProductoSeleccionado = null;
   nombreProductoSelec = null;
 
-  generarNumeroOP().then(numeroOP => {
+  await generarNumeroOP().then(numeroOP => {
     console.log("Número OP generado:", numeroOP);
     document.getElementById('opNumero').value = numeroOP;
   });
@@ -124,10 +109,13 @@ function eliminarProducto(btn) {
 }
 
 function cancelarOP() {
+  prepararNuevaOP();
+
   document.getElementById('opForm').reset();
   document.getElementById('productosContainer').innerHTML = '';
-  agregarProducto();
   document.getElementById('ordenProduccion').style.display = 'none';
+
+
 }
 
 // Crear OP y guardar en Supabase
@@ -196,7 +184,7 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
   }
 
   mostrarMensajeExito(idOrden);
-  
+
   /*
     cancelarOP();
     mostrarSeccion('seguimientoOP');
@@ -801,6 +789,7 @@ async function actualizarEstadoDetalleOV(idDetalleOV, nuevoEstado) {
 
 // Función para mostrar mensaje de éxito tras crear OP
 async function mostrarMensajeExito(idOrden) {
+
   try {
     const { data, error } = await supabaseClient
       .from('orden_produccion')
@@ -925,7 +914,7 @@ async function mostrarMensajeExito(idOrden) {
       ${lotesHtml}
       ${ovsHtml}
     `;
-
+  
     mensaje.style.display = 'block';
     document.getElementById('ordenProduccion').style.display = 'none';
 
@@ -1007,9 +996,9 @@ async function generarNumeroOP() {
 // Cargar/Ver OP desde Supabase
 async function cargarOP() {
 
-    const mensajeExito = document.getElementById('mensajeExitoOP');
+  const mensajeExito = document.getElementById('mensajeExitoOP');
   if (mensajeExito) mensajeExito.style.display = 'none';
-  
+
   // ✅ Ocultar el mensaje de éxito de OP si estaba visible
   const textoExito = document.getElementById('textoExitoOP'); // asegúrate que el ID es correcto
   if (textoExito) textoExito.style.display = 'none';
