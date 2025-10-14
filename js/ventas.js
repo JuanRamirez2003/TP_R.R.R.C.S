@@ -421,7 +421,6 @@ async function listarFacturas() {
   }
 }
 
-// ===================== VER FACTURA EN PDF =====================
 async function verFactura(idFactura) {
   try {
     const { data, error } = await supabaseClient
@@ -431,8 +430,9 @@ async function verFactura(idFactura) {
         id_orden,
         fecha,
         total,
-        clientes ( nombre ),
+        clientes ( nombre, dni_cuil, direccion ),
         orden_ventas (
+          fecha,
           detalle_ordenes (
             cantidad,
             productos ( nombre, precio_unitario )
@@ -448,38 +448,174 @@ async function verFactura(idFactura) {
       return;
     }
 
-    // Crear jsPDF
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageHeight = doc.internal.pageSize.height;
+    let y = 20;
 
-    doc.setFontSize(18);
-    doc.text("Factura", 105, 20, null, null, "center");
+    // ==== Logo (más grande y centrado) ====
+    const logo = await loadImageAsBase64('logo1.jpg');
+    if (logo) {
+      const img = new Image();
+      img.src = logo;
+      await img.decode();
+      const ratio = img.width / img.height;
+      const width = 60; // más grande
+      const height = width / ratio;
+      const xCenter = (210 - width) / 2;
+      doc.addImage(logo, 'JPEG', xCenter, y, width, height);
+      y += height + 5;
+    }
 
-    doc.setFontSize(12);
-    doc.text(`ID Factura: ${data.id}`, 20, 40);
-    doc.text(`ID Orden: ${data.id_orden}`, 20, 50);
-    doc.text(`Cliente: ${data.clientes?.nombre || '-'}`, 20, 60);
-    doc.text(`Fecha: ${new Date(data.fecha).toLocaleDateString()}`, 20, 70);
-    doc.text(`Total: $${parseFloat(data.total || 0).toFixed(2)}`, 20, 80);
+    // ==== Título ====
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("FACTURA", 105, y, { align: "center" });
+    y += 10;
 
-    // Agregar productos
-    doc.text("Productos:", 20, 95);
-    let y = 105;
-    (data.orden_ventas?.detalle_ordenes || []).forEach(det => {
+    // ==== Datos de la empresa ====
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Frozen © Alimentos Congelados", 105, y, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    y += 5;
+    doc.text("CUIT: 30-12345678-9", 105, y, { align: "center" });
+    y += 5;
+    doc.text("Domicilio Fiscal: Av. Ejemplo 123, Ciudad, Provincia", 105, y, { align: "center" });
+    y += 5;
+    doc.text("Tel: +54 11 1234-5678", 105, y, { align: "center" });
+    y += 10;
+
+    // ==== Datos del cliente ====
+    doc.setFont("helvetica", "bold");
+    doc.text("Datos del Cliente", 20, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.text(`Nombre/Razón Social: ${data.clientes?.nombre || '-'}`, 20, y);
+    y += 5;
+    doc.text(`CUIT/DNI: ${data.clientes?.dni_cuil || '-'}`, 20, y);
+    y += 5;
+    doc.text(`Domicilio Fiscal: ${data.clientes?.direccion || '-'}`, 20, y);
+    y += 10;
+
+    // ==== Identificación de la factura ====
+    doc.setFont("helvetica", "bold");
+    doc.text(`Factura N°: ${data.id.toString().padStart(6,'0')}`, 150, y - 10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Fecha de Emisión: ${new Date(data.fecha).toLocaleDateString()}`, 150, y - 5);
+    doc.text(`Fecha de Operación: ${data.orden_ventas?.fecha ? new Date(data.orden_ventas.fecha).toLocaleDateString() : '-'}`, 150, y);
+
+    // ==== Línea separadora ====
+    doc.setLineWidth(0.4);
+    doc.line(20, y + 3, 190, y + 3);
+    y += 8;
+
+    // ==== Encabezado de tabla ====
+    const rowHeight = 7;
+    function drawTableHeader() {
+      doc.setFont("helvetica", "bold");
+      doc.setFillColor(220, 220, 220);
+      doc.rect(20, y, 170, rowHeight, 'F');
+      doc.text("Descripción", 25, y + 5);
+      doc.text("Cant.", 105, y + 5, { align: "right" });
+      doc.text("Precio Unit.", 145, y + 5, { align: "right" });
+      doc.text("Subtotal", 190, y + 5, { align: "right" });
+      y += rowHeight;
+      doc.setFont("helvetica", "normal");
+    }
+    drawTableHeader();
+
+    // ==== Productos ====
+    let baseImponible = 0;
+    (data.orden_ventas?.detalle_ordenes || []).forEach((det, index) => {
       const nombre = det.productos?.nombre || '-';
       const cantidad = det.cantidad;
       const precio = det.productos?.precio_unitario || 0;
       const subtotal = cantidad * precio;
-      doc.text(`${nombre} - Cant: ${cantidad} - Precio: $${precio.toFixed(2)} - Subtotal: $${subtotal.toFixed(2)}`, 25, y);
-      y += 10;
+      baseImponible += subtotal;
+
+      if (y + rowHeight + 40 > pageHeight) {
+        doc.addPage();
+        y = 20;
+        drawTableHeader();
+      }
+
+      if (index % 2 === 0) {
+        doc.setFillColor(245, 245, 245);
+        doc.rect(20, y - 1, 170, rowHeight, 'F');
+      }
+
+      doc.text(nombre, 25, y + 5);
+      doc.text(cantidad.toString(), 105, y + 5, { align: "right" });
+      doc.text(`$${precio.toFixed(2)}`, 145, y + 5, { align: "right" });
+      doc.text(`$${subtotal.toFixed(2)}`, 190, y + 5, { align: "right" });
+      y += rowHeight;
     });
 
-    // Generar PDF en base64 y mostrar en iframe
+    doc.line(20, y, 190, y);
+    y += 6;
+
+    // ==== Totales ====
+    const iva = baseImponible * 0.21;
+    const total = baseImponible + iva;
+
+    doc.setFont("helvetica", "bold");
+    doc.text(`Base Imponible: $${baseImponible.toFixed(2)}`, 190, y, { align: "right" });
+    y += 6;
+    doc.text(`IVA 21%: $${iva.toFixed(2)}`, 190, y, { align: "right" });
+    y += 6;
+    doc.text(`TOTAL: $${total.toFixed(2)}`, 190, y, { align: "right" });
+    y += 10;
+
+    // ==== QR y Código de Barras (alineados lado a lado) ====
+
+    // Generar código QR (JSON)
+    const qrDataJSON = JSON.stringify({
+      id: data.id,
+      fecha: data.fecha,
+      total: total.toFixed(2),
+      cliente: data.clientes?.nombre || "-"
+    });
+
+    const qrContainer = document.createElement('div');
+    document.body.appendChild(qrContainer);
+    const qr = new QRCode(qrContainer, { text: qrDataJSON, width: 60, height: 60 });
+    await new Promise(r => setTimeout(r, 500)); // espera breve para renderizar
+    const qrImg = qrContainer.querySelector('img');
+    const qrData = qrImg ? qrImg.src : qrContainer.querySelector('canvas').toDataURL("image/png");
+    document.body.removeChild(qrContainer);
+
+    // Agregar QR a la izquierda
+    doc.addImage(qrData, 'PNG', 30, y, 35, 35);
+
+    // Código de barras a la derecha
+    const canvasBar = document.createElement('canvas');
+    JsBarcode(canvasBar, `F${data.id.toString().padStart(6, '0')}`, {
+      format: "CODE128",
+      displayValue: true,
+      width: 1,
+      height: 15,
+      fontSize: 10
+    });
+    const barcodeData = canvasBar.toDataURL('image/png');
+    doc.addImage(barcodeData, 'PNG', 120, y + 10, 60, 15);
+    y += 45;
+
+    // ==== Notas y pie ====
+    doc.setFont("helvetica", "normal");
+    doc.text("Forma de Pago: Transferencia bancaria / Efectivo", 20, y);
+    y += 5;
+    doc.text("Notas: Gracias por elegir Frozen ©. Verifique los productos al recibirlos.", 20, y);
+    y += 10;
+
+    doc.setFontSize(8);
+    doc.setTextColor(100);
+    doc.text("Factura generada digitalmente por Frozen ©. Validez legal sujeta a la normativa fiscal vigente.", 105, pageHeight - 10, null, null, "center");
+
+    // ==== Mostrar PDF ====
     const pdfDataUri = doc.output('datauristring');
     document.getElementById("iframeFactura").src = pdfDataUri;
     document.getElementById("modalFacturaPDF").style.display = "flex";
-
-    // Guardar PDF para descarga
     window._pdfFactura = doc;
 
   } catch (err) {
@@ -488,219 +624,32 @@ async function verFactura(idFactura) {
   }
 }
 
-// ===================== CERRAR MODAL =====================
+
+// ==== Cargar imagen ====
+function loadImageAsBase64(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = function () {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/jpeg"));
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+// ==== Modal y descarga ====
 function cerrarModalFacturaPDF() {
   document.getElementById("modalFacturaPDF").style.display = "none";
   document.getElementById("iframeFactura").src = "";
   window._pdfFactura = null;
 }
-
-// ===================== DESCARGAR PDF =====================
 function descargarFacturaPDF() {
-  if (window._pdfFactura) {
-    window._pdfFactura.save("factura.pdf");
-  } else {
-    alert("PDF no disponible para descarga.");
-  }
+  if (window._pdfFactura) window._pdfFactura.save("factura.pdf");
+  else alert("PDF no disponible para descarga.");
 }
-/*
-async function generarOrdenesProduccion() {
-  try {
-    // 1️⃣ Obtener IDs de órdenes de venta pendientes
-    const ordenesPendientesIds = await getOrdenesPendientesIds();
-    if (ordenesPendientesIds.length === 0) {
-      return alert('No hay órdenes pendientes para procesar.');
-    }
-
-    // 2️⃣ Obtener detalles de órdenes de venta pendientes
-    const { data: ovData, error: ovError } = await supabaseClient
-      .from('detalle_ordenes')
-      .select('id_orden, id_producto, cantidad')
-      .in('id_orden', ordenesPendientesIds);
-    if (ovError) throw ovError;
-
-    // 3️⃣ Agrupar por producto
-    const productosTotales = {};
-    ovData.forEach(d => {
-      if (!productosTotales[d.id_producto]) productosTotales[d.id_producto] = 0;
-      productosTotales[d.id_producto] += Number(d.cantidad);
-    });
-
-    let resumen = '';
-
-    // 4️⃣ Procesar cada producto
-    for (const id_producto of Object.keys(productosTotales)) {
-      let cantidadRestanteProducto = productosTotales[id_producto];
-
-      if (cantidadRestanteProducto < 50) {
-        resumen += `<p>⚠️ Producto ${id_producto} → No alcanza 50 cajas para generar OP (restan ${cantidadRestanteProducto}).</p>`;
-        continue;
-      }
-
-      // Obtener receta del producto
-      const { data: recetaData, error: recetaError } = await supabaseClient
-        .from('producto_materia')
-        .select('*')
-        .eq('id_producto', id_producto);
-      if (recetaError) throw recetaError;
-
-      if (!recetaData || recetaData.length === 0) {
-        resumen += `<p>⚠️ Producto ${id_producto} → No tiene receta definida.</p>`;
-        continue;
-      }
-
-      // Generar OP mientras haya al menos 50 cajas
-      while (cantidadRestanteProducto >= 50) {
-        const cantidadLote = 50; // tamaño fijo del lote
-
-        // ✅ Calcular materiales necesarios (receta expresada por caja)
-        const materialesNecesarios = recetaData.map(r => ({
-          id_mp: r.id_mp,
-          cantidad: Math.ceil(Number(r.cantidad || 0) * cantidadLote)
-        }));
-
-        const detalle_materiales = [];
-        let stockInsuficiente = false;
-        const faltanteMateriales = [];
-
-        // 5️⃣ Verificar stock FEFO
-        for (const mat of materialesNecesarios) {
-          const { data: lotes, error: loteError } = await supabaseClient
-            .from('lote_mp')
-            .select('*')
-            .eq('id_mp', mat.id_mp)
-            .eq('estado', 'Conforme')
-            .order('fecha_ingreso', { ascending: true });
-
-          if (loteError) throw loteError;
-
-          let cantidadRestante = mat.cantidad;
-          const lotesUsados = [];
-
-          for (const lote of lotes) {
-            if (cantidadRestante <= 0) break;
-
-            const disponible = Number(lote.cantidad_disponible || 0);
-            if (disponible <= 0) continue;
-
-            const aReservar = Math.min(disponible, cantidadRestante);
-            lotesUsados.push({ id_lote: lote.id_lote, cantidad: aReservar });
-            cantidadRestante = Math.max(0, cantidadRestante - aReservar);
-          }
-
-          if (cantidadRestante > 0) {
-            stockInsuficiente = true;
-            faltanteMateriales.push({ id_mp: mat.id_mp, faltante: cantidadRestante });
-            break;
-          }
-
-          detalle_materiales.push({ id_mp: mat.id_mp, lotes: lotesUsados });
-        }
-
-        // 6️⃣ Crear OP si hay stock suficiente
-        if (!stockInsuficiente) {
-          const { data: opData, error: opError } = await supabaseClient
-            .from('orden_produccion')
-            .insert([{
-              estado: 'pendiente',
-              fecha_emision: new Date().toISOString(),
-              id_producto: parseInt(id_producto),
-              cant_lote: cantidadLote,
-              detalle_materiales
-            }])
-            .select()
-            .single();
-          if (opError) throw opError;
-
-          // 7️⃣ Actualizar lotes y detalle_lote_op
-          for (const mat of detalle_materiales) {
-            for (const lote of mat.lotes) {
-              const { data: loteActual } = await supabaseClient
-                .from('lote_mp')
-                .select('cantidad_reservada, cantidad_disponible')
-                .eq('id_lote', lote.id_lote)
-                .single();
-
-              const nuevaCantidadReservada =
-                Number(loteActual.cantidad_reservada || 0) + Number(lote.cantidad);
-              const nuevaCantidadDisponible =
-                Number(loteActual.cantidad_disponible || 0) - Number(lote.cantidad);
-
-              await supabaseClient
-                .from('lote_mp')
-                .update({
-                  cantidad_reservada: nuevaCantidadReservada,
-                  cantidad_disponible: nuevaCantidadDisponible
-                })
-                .eq('id_lote', lote.id_lote);
-
-              await supabaseClient
-                .from('detalle_lote_op')
-                .insert([{
-                  id_orden_produccion: opData.id_orden_produccion,
-                  id_lote: lote.id_lote,
-                  cantidad_lote: lote.cantidad
-                }]);
-            }
-          }
-
-          // 8️⃣ Relacionar OP con OV
-          const ovIds = ovData
-            .filter(d => d.id_producto == id_producto)
-            .map(d => d.id_orden);
-
-          for (const id_ov of ovIds) {
-            await supabaseClient
-              .from('op_ov')
-              .insert([{ id_op: opData.id_orden_produccion, id_ov }]);
-          }
-
-          resumen += `<p>✅ Producto ${id_producto} → OP generada para ${cantidadLote} cajas (1 lote).</p>`;
-          cantidadRestanteProducto -= cantidadLote;
-
-        } else {
-          resumen += `<p>⚠️ Producto ${id_producto} → Stock insuficiente para generar OP de 50 cajas.</p>`;
-          faltanteMateriales.forEach(f => {
-            resumen += `<p>   - Material ID ${f.id_mp} → faltan ${f.faltante} unidades.</p>`;
-          });
-          break;
-        }
-      }
-    }
-
-    mostrarModalOP(resumen);
-    await listarOrdenes();
-
-  } catch (err) {
-    console.error('Error generando OP:', JSON.stringify(err, null, 2));
-    alert('Error generando órdenes de producción. Revisar consola.');
-  }
-}
-
-// ================== FUNCIONES AUXILIARES ==================
-
-async function getOrdenesPendientesIds() {
-  const { data, error } = await supabaseClient
-    .from('orden_ventas')
-    .select('id_orden')
-    .eq('estado', 'pendiente');
-  if (error) throw error;
-  return data.map(d => d.id_orden);
-}
-
-function mostrarModalOP(contenidoHTML) {
-  document.getElementById('contenidoOP').innerHTML = contenidoHTML;
-  document.getElementById('modalOP').style.display = 'flex';
-}
-
-function cerrarModalOP() {
-  document.getElementById('modalOP').style.display = 'none';
-  document.getElementById('contenidoOP').innerHTML = '';
-}
-
-document.getElementById('btnGenerarOP').addEventListener('click', async () => {
-  if (confirm('¿Desea generar las órdenes de producción según las órdenes de venta pendientes?')) {
-    await generarOrdenesProduccion();
-  }
-});
-*/
