@@ -573,7 +573,7 @@ async function listarOrdenes() {
     <td>${o.id_orden}</td>
     <td>${o.clientes?.nombre ?? '-'}</td>
     <td>${productosText}</td>
-    <td>${o.fecha_estimada_entrega ? new Date(o.fecha_estimada_entrega).toLocaleDateString() : 'NO ACLARADO'}</td>
+    <td>${o.fecha_estimada_entrega ? new Date(o.fecha_estimada_entrega).toLocaleDateString() : '---'}</td>
     <td>${o.estado}</td>
     <td>${total.toFixed(2)}</td>
   `;
