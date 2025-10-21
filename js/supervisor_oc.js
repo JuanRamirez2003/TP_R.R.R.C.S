@@ -163,7 +163,10 @@ async function cargarTablaPedidos() {
         }
 
         data.forEach(d => {
-            const color = d.estado === 'Pendiente' ? 'orange' : d.estado === 'Aprobado' ? 'green' : d.estado === 'Recibido' ? 'blue' : 'red';
+            const color = d.estado === 'Pendiente' ? '#FFA94D'  // naranja pastel
+            : d.estado === 'Aprobado' ? '#51CF66'  // verde suave
+            : d.estado === 'Recibido' ? '#339AF0'  // azul más agradable
+            : '#FF6B6B';                           // rojo coral suave
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${d.id}</td>

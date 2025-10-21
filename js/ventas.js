@@ -457,30 +457,36 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
     }
 
     // === Crear orden de productos con stock (facturable) ===
-    let ordenFacturable = null;
-    if (productosConStock.length > 0) {
-      const { data: ordenData, error: ordenError } = await supabaseClient
-        .from('orden_ventas')
-        .insert([{
-          id_cliente: parseInt(cliente),
-          fecha: new Date().toISOString(),
-          estado: 'completada'
-        }])
-        .select()
-        .single();
+let ordenFacturable = null;
+if (productosConStock.length > 0) {
+  const { data: ordenData, error: ordenError } = await supabaseClient
+    .from('orden_ventas')
+    .insert([{
+      id_cliente: parseInt(cliente),
+      fecha: new Date().toISOString(),
+      estado: 'completada'
+    }])
+    .select()
+    .single();
 
-      if (ordenError) throw ordenError;
-      ordenFacturable = ordenData;
+  if (ordenError) throw ordenError;
+  ordenFacturable = ordenData;
 
-      for (const p of productosConStock) {
-        await supabaseClient
-          .from('detalle_ordenes')
-          .insert([{ id_orden: ordenData.id_orden, id_producto: p.id_producto, cantidad: p.cantidad }]);
-        await supabaseClient
-          .from('productos')
-          .update({ stock: p.stock_actual - p.cantidad })
-          .eq('id_producto', p.id_producto);
-      }
+  for (const p of productosConStock) {
+    await supabaseClient
+      .from('detalle_ordenes')
+      .insert([{
+        id_orden: ordenData.id_orden,
+        id_producto: p.id_producto,
+        cantidad: p.cantidad,
+        estado_detalle_ov: 'facturado' // <-- se agrega aquí
+      }]);
+    
+    await supabaseClient
+      .from('productos')
+      .update({ stock: p.stock_actual - p.cantidad })
+      .eq('id_producto', p.id_producto);
+  }
 
       // Crear factura
       const totalFactura = productosConStock.reduce((sum, p) => sum + p.cantidad * p.precio_unitario, 0);
@@ -501,6 +507,7 @@ if (productosPendientes.length > 0) {
   const fechaActual = new Date();
   const fechaEntrega = new Date(fechaActual);
   fechaEntrega.setDate(fechaActual.getDate() + 14);
+  const fechaEntregaStr = fechaEntrega.toISOString().split('T')[0]; // Formato 'YYYY-MM-DD'
 
   const { data: ordenPendData, error: ordenPendError } = await supabaseClient
     .from('orden_ventas')
@@ -508,7 +515,7 @@ if (productosPendientes.length > 0) {
       id_cliente: parseInt(cliente),
       fecha: fechaActual.toISOString(),
       estado: 'pendiente',
-      fecha_estimada_entrega: fechaEntrega.toISOString().split('T')[0] // 🕓 usar nombre exacto de columna
+      fecha_estimada_entrega: fechaEntregaStr
     }])
     .select()
     .single();
@@ -516,10 +523,16 @@ if (productosPendientes.length > 0) {
   if (ordenPendError) throw ordenPendError;
   ordenPendiente = ordenPendData;
 
+  // 🔹 Guardar detalles copiando fecha estimada de la orden
   for (const p of productosPendientes) {
     await supabaseClient
       .from('detalle_ordenes')
-      .insert([{ id_orden: ordenPendData.id_orden, id_producto: p.id_producto, cantidad: p.cantidad }]);
+      .insert([{
+        id_orden: ordenPendData.id_orden,
+        id_producto: p.id_producto,
+        cantidad: p.cantidad,
+        fecha_estimada_entrega: fechaEntregaStr // <-- fecha copiada de la orden
+      }]);
   }
 }
     // Mensaje final
@@ -527,7 +540,7 @@ if (productosPendientes.length > 0) {
     if (ordenFacturable)
       mensaje += `Productos facturados: ${productosConStock.map(p => p.nombre).join(', ')}.\n`;
     if (ordenPendiente)
-      mensaje += `Productos pendientes: ${productosPendientes.map(p => p.nombre).join(', ')}.\nEntrega estimada: ${ordenPendiente.fecha_entrega_estimada}`;
+      mensaje += `Productos pendientes: ${productosPendientes.map(p => p.nombre).join(', ')}.`;
 
     alert(mensaje);
 
@@ -560,7 +573,7 @@ async function listarOrdenes() {
     <td>${o.id_orden}</td>
     <td>${o.clientes?.nombre ?? '-'}</td>
     <td>${productosText}</td>
-    <td>${o.fecha_estimada_entrega ? new Date(o.fecha).toLocaleDateString() : 'NO ACLARADO'}</td>
+    <td>${o.fecha_estimada_entrega ? new Date(o.fecha_estimada_entrega).toLocaleDateString() : 'NO ACLARADO'}</td>
     <td>${o.estado}</td>
     <td>${total.toFixed(2)}</td>
   `;
