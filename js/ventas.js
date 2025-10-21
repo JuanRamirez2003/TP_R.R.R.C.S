@@ -234,8 +234,10 @@ async function listarClientes() {
         <td>${cliente.estado}</td>
         <td>${cliente.alta_id_emp}</td>
         <td>
-          <button class="btn-editar" onclick="editarCliente('${cliente.dni_cuil}')">Editar</button>
-          <button class="btn-eliminar" onclick="bajaCliente('${cliente.dni_cuil}')">Eliminar</button>
+          <div class="acciones-clientes">
+           <button class="btn-editar" onclick="editarCliente('${cliente.dni_cuil}')">Editar</button>
+           <button class="btn-eliminar" onclick="bajaCliente('${cliente.dni_cuil}')">Eliminar</button>
+          </div>
         </td>
       `;
       tbody.appendChild(tr);
