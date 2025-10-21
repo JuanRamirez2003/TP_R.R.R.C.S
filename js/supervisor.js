@@ -1039,11 +1039,11 @@ async function cargarOP() {
       <td>${op.numero_op}</td>
       <td><button onclick="verOrden(${op.id_orden_produccion})" class="btn-editar">📄 Ver Orden</button></td>
       <td>${op.estado}</td>
-      <td>${new Date(op.fecha_emision).toLocaleString()}</td>
+      <td>${new Date(op.fecha_emision.h).toLocaleString()}</td>
       <td>
         ${op.estado === 'Pendiente'
         ? `<button onclick="editarOP(${op.id_orden_produccion})" class="btn-editar">✏️ Editar</button>
-             <button onclick="eliminarOP(${op.id_orden_produccion})" class="btn-eliminar">❌ Eliminar</button>`
+             <button onclick="eliminarOP(${op.id_orden_produccion})" class="btn-eliminar">❌Eliminar</button>`
         : 'No disponible'}
       </td>
     `;
