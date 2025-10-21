@@ -61,9 +61,11 @@ async function listarProveedores() {
         <td>${proveedor.estado}</td>
         <td>${proveedor.alta_id_emp || '-'}</td>
         <td>
-          <button class="btn-editar" onclick="editarProveedor('${proveedor.dni_cuil}')">Editar</button>
-          <button class="btn-eliminar" onclick="bajaProveedor('${proveedor.dni_cuil}')">Eliminar</button>
-        </td>
+          <div class="acciones-proveedor">
+            <button class="btn-editar" onclick="editarProveedor('${proveedor.dni_cuil}')">✏️Editar</button>
+            <button class="btn-eliminar" onclick="bajaProveedor('${proveedor.dni_cuil}')">❌Eliminar</button>
+          </div>
+      </td>
       `;
       tbody.appendChild(tr);
     });
@@ -151,8 +153,8 @@ function inicializarNormalizacionDireccion() {
   contenedor.style.width = "100%";
   contenedor.style.maxHeight = "180px";
   contenedor.style.overflowY = "auto";
-  contenedor.style.background = "#fff";
-  contenedor.style.border = "1px solid #ccc";
+  contenedor.style.background = "#333";
+  //contenedor.style.border = "1px solid #eee";
   contenedor.style.borderRadius = "6px";
   contenedor.style.padding = "0";
   contenedor.style.margin = "0";
@@ -202,8 +204,8 @@ async function buscarDireccionOSM(query, contenedor, input) {
       li.style.fontSize = "14px";
       li.textContent = item.display_name;
 
-      li.addEventListener("mouseover", () => li.style.background = "#f0f0f0");
-      li.addEventListener("mouseout", () => li.style.background = "#fff");
+      li.addEventListener("mouseover", () => li.style.background = "#007bff");
+      li.addEventListener("mouseout", () => li.style.background = "#333");
 
       li.addEventListener("click", () => {
         input.value = item.display_name;
@@ -236,7 +238,7 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
   const email = document.getElementById("email").value.trim();
   const telefono = document.getElementById("telefono").value.trim();
   const direccion = document.getElementById("direccion").value.trim();
-  const estado = document.getElementById("estado").value;
+  //const estado = document.getElementById("estado").value;
 
   if (!nombre) return mostrarError("El nombre es obligatorio");
   if (!tipo_proveedor) return mostrarError("Debe seleccionar el tipo de proveedor");
@@ -265,7 +267,7 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
       email,
       telefono,
       direccion,
-      estado
+      //estado
     };
 
     if (id_proveedor) {
@@ -306,7 +308,7 @@ async function editarProveedor(dni) {
     document.getElementById('email').value = data.email;
     document.getElementById('telefono').value = data.telefono;
     document.getElementById('preferenciaContacto').value = data.pref_cont;
-    document.getElementById('estado').value = data.estado;
+    //document.getElementById('estado').value = data.estado;
     document.getElementById('id_proveedor').value = data.id_proveedor;
 
     document.getElementById('formProveedor').style.display = 'block';

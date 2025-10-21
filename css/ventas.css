@@ -249,6 +249,13 @@ tr:hover {
     background-color: #a71d2a; /* rojo más oscuro */
 }
 
+.acciones-proveedor {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
     .table-wrapper {
         overflow-x: auto;
         margin-top:10px;
