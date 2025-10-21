@@ -6,7 +6,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Supervisor - Local</title>
   <link rel="stylesheet" href="css/ventas.css">
+<style>
+/* Fondo del modal: ocupa toda la pantalla y centra el contenido */
+.modal {
+  position: fixed;       /* flota sobre todo el contenido */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* fondo semitransparente */
+  display: flex;         /* flex para centrar */
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;         /* siempre encima de otros elementos */
+}
 
+/* Contenido del modal: panel blanco centrado */
+.modal-contenido {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;     /* ancho máximo */
+  width: 90%;           /* ancho adaptable a pantallas chicas */
+  max-height: 80vh;     /* alto máximo de la pantalla */
+  overflow-y: auto;     /* scroll vertical si el contenido es grande */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+/* Botón de cerrar (X) */
+.cerrar {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #333;
+  transition: color 0.2s;
+}
+
+.cerrar:hover {
+  color: #ff0000;
+}
+
+</style>
 
 </head>
 
@@ -227,6 +271,19 @@
       <div id="detalleOrden"></div>
     </div>
   </div>
+
+   <!-- Modal Ver detalle lote -->
+  <div id="modalDetalleLote" class="modal" style="display:none;">
+  <div class="modal-contenido">
+    <span id="cerrarModalDetalleLote" class="cerrar">&times;</span>
+    <h3>Detalle del Lote</h3>
+    <div id="contenidoModalDetalleLote">
+      <!-- Contenido dinámico -->
+    </div>
+  </div>
+</div>
+
+
   <!-- Notificación de stock -->
   <div id="notificacionStock" style="
     position: fixed;

@@ -823,7 +823,7 @@ async function mostrarMensajeExito(idOrden) {
       console.error("Error al obtener datos de OP:", error);
       return;
     }
-    console.log("ESTA ACCCCCAAA");
+    //console.log("ESTA ACCCCCAAA");
     console.log(data.ver_orden);
     const productosHtml = data.ver_orden
       .map(p => `<p>${p.nombre} - Cantidad de Lote/s: ${p.cantidad} - Cantidad de Cajas Estimadas: ${p.cantidad * cantidadPorLote}</p>`)
@@ -849,7 +849,7 @@ async function mostrarMensajeExito(idOrden) {
           .eq('id_mp', lote.id_mp)
           .single();
 
-        lotesHtml += `<tr>
+        lotesHtml += `<tr onclick="verDetalleLote('${lote.id_lote}')" style="cursor:pointer;">
           <td>${mat ? mat.nombre : 'Desconocido'}</td>
           <td>${lote.id_lote}</td>
           <td>${d.cantidad_lote}</td>
@@ -1039,7 +1039,7 @@ async function cargarOP() {
       <td>${op.numero_op}</td>
       <td><button onclick="verOrden(${op.id_orden_produccion})" class="btn-editar">📄 Ver Orden</button></td>
       <td>${op.estado}</td>
-      <td>${new Date(op.fecha_emision.h).toLocaleString()}</td>
+      <td>${new Date(op.fecha_emision).toLocaleString()}</td>
       <td>
         ${op.estado === 'Pendiente'
         ? `<button onclick="editarOP(${op.id_orden_produccion})" class="btn-editar">✏️ Editar</button>
@@ -1086,7 +1086,7 @@ async function verOrden(id_orden_produccion) {
         .eq('id_mp', lote.id_mp)
         .single();
 
-      lotesHtml += `<tr>
+      lotesHtml += `<tr onclick="verDetalleLote('${lote.id_lote}')" style="cursor:pointer;">
         <td>${mat ? mat.nombre : 'Desconocido'}</td>
         <td>${lote.id_lote}</td>
         <td>${d.cantidad_lote}</td>
@@ -1265,6 +1265,76 @@ async function verificarStockMaterias() {
     console.error("Error verificando stock de materias:", err);
   }
 }
+
+//==============VER DE TALLE DE LOTE RESERVADOS ==================
+async function verDetalleLote(idLote) {
+  try {
+    // Traemos el lote específico
+    const { data: lote, error: errorLote } = await supabaseClient
+      .from('lote_mp')
+      .select('*')
+      .eq('id_lote', idLote)
+      .single();
+    if (errorLote || !lote) throw errorLote || 'Lote no encontrado';
+
+    // Traemos el proveedor del lote
+    const { data: proveedor, error: errorProv } = await supabaseClient
+      .from('proveedor')
+      .select('nombre')
+      .eq('id_proveedor', lote.id_proveedor)
+      .single();
+    if (errorProv) throw errorProv;
+
+        // Traemos el nombre del material
+    const { data: material, error: errorMat } = await supabaseClient
+      .from('materiales')
+      .select('nombre')
+      .eq('id_mp', lote.id_mp)
+      .single();
+    if (errorMat) throw errorMat;
+
+    // Mostramos el modal
+    const modal = document.getElementById('modalDetalleLote');
+    const contenido = document.getElementById('contenidoModalDetalleLote');
+
+    contenido.innerHTML = `
+      <p><strong>ID Lote:</strong> ${lote.id_lote}</p>
+      <p><strong>Material:</strong> ${material?.nombre.toUpperCase() || lote.id_mp}</p>
+      <p><strong>Nombre Proveedor:</strong> ${proveedor?.nombre || '-'}</p>
+      <p><strong>Lote:</strong> ${lote.lote}</p>
+      <p><strong>Cantidad Disponible:</strong> ${lote.cantidad_disponible}</p>
+      <p><strong>Cantidad Consumida:</strong> ${lote.cantidad_consumida}</p>
+      <p><strong>Fecha Ingreso:</strong> ${lote.fecha_ingreso ? new Date(lote.fecha_ingreso).toLocaleDateString() : '-'}</p>
+      <p><strong>Fecha Caducidad:</strong> ${lote.fecha_caducidad ? new Date(lote.fecha_caducidad).toLocaleDateString() : '-'}</p>
+      <p><strong>Estado:</strong> ${lote.estado}</p>
+    `;
+
+    modal.style.display = 'flex';
+
+  } catch (err) {
+    console.error("Error mostrando detalle del lote:", err);
+    alert("No se pudo mostrar el detalle del lote.");
+  }
+}
+
+// Obtener elementos
+const modal = document.getElementById('modalDetalleLote');
+const botonCerrar = document.getElementById('cerrarModalDetalleLote');
+
+// Cerrar al hacer clic en la X
+botonCerrar.onclick = () => {
+  modal.style.display = 'none';
+};
+
+// Cerrar si el usuario hace clic fuera del contenido
+window.onclick = (event) => {
+  if (event.target === modal) {
+    modal.style.display = 'none';
+  }
+}
+
+
+
 // Inicialización al cargar la página
 (async () => {
   await cargarProductosDisponibles();
