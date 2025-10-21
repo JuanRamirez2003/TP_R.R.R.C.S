@@ -1266,10 +1266,10 @@ async function verificarStockMaterias() {
   }
 }
 
-//==============VER DE TALLE DE LOTE RESERVADOS ==================
+//==============VER DETALLE DE LOTE RESERVADOS ==================
 async function verDetalleLote(idLote) {
   try {
-    // Traemos el lote específico
+    // Traemos el  específico
     const { data: lote, error: errorLote } = await supabaseClient
       .from('lote_mp')
       .select('*')
@@ -1277,7 +1277,6 @@ async function verDetalleLote(idLote) {
       .single();
     if (errorLote || !lote) throw errorLote || 'Lote no encontrado';
 
-    // Traemos el proveedor del lote
     const { data: proveedor, error: errorProv } = await supabaseClient
       .from('proveedor')
       .select('nombre')
@@ -1285,7 +1284,6 @@ async function verDetalleLote(idLote) {
       .single();
     if (errorProv) throw errorProv;
 
-        // Traemos el nombre del material
     const { data: material, error: errorMat } = await supabaseClient
       .from('materiales')
       .select('nombre')
@@ -1293,7 +1291,6 @@ async function verDetalleLote(idLote) {
       .single();
     if (errorMat) throw errorMat;
 
-    // Mostramos el modal
     const modal = document.getElementById('modalDetalleLote');
     const contenido = document.getElementById('contenidoModalDetalleLote');
 
@@ -1317,16 +1314,13 @@ async function verDetalleLote(idLote) {
   }
 }
 
-// Obtener elementos
 const modal = document.getElementById('modalDetalleLote');
 const botonCerrar = document.getElementById('cerrarModalDetalleLote');
 
-// Cerrar al hacer clic en la X
 botonCerrar.onclick = () => {
   modal.style.display = 'none';
 };
 
-// Cerrar si el usuario hace clic fuera del contenido
 window.onclick = (event) => {
   if (event.target === modal) {
     modal.style.display = 'none';
