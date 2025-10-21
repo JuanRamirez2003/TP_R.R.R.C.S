@@ -459,47 +459,73 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
     if (productosConStock.length > 0) {
       const { data: ordenData, error: ordenError } = await supabaseClient
         .from('orden_ventas')
-        .insert([{ id_cliente: parseInt(cliente), fecha: new Date().toISOString(), estado: 'completada' }])
+        .insert([{
+          id_cliente: parseInt(cliente),
+          fecha: new Date().toISOString(),
+          estado: 'completada'
+        }])
         .select()
         .single();
+
       if (ordenError) throw ordenError;
       ordenFacturable = ordenData;
 
       for (const p of productosConStock) {
-        await supabaseClient.from('detalle_ordenes').insert([{ id_orden: ordenData.id_orden, id_producto: p.id_producto, cantidad: p.cantidad }]);
-        await supabaseClient.from('productos').update({ stock: p.stock_actual - p.cantidad }).eq('id_producto', p.id_producto);
+        await supabaseClient
+          .from('detalle_ordenes')
+          .insert([{ id_orden: ordenData.id_orden, id_producto: p.id_producto, cantidad: p.cantidad }]);
+        await supabaseClient
+          .from('productos')
+          .update({ stock: p.stock_actual - p.cantidad })
+          .eq('id_producto', p.id_producto);
       }
 
       // Crear factura
       const totalFactura = productosConStock.reduce((sum, p) => sum + p.cantidad * p.precio_unitario, 0);
-      await supabaseClient.from('factura').insert([{
-        id_orden: ordenData.id_orden,
-        id_cliente: parseInt(cliente),
-        fecha: new Date().toISOString(),
-        total: totalFactura
-      }]);
+      await supabaseClient
+        .from('factura')
+        .insert([{
+          id_orden: ordenData.id_orden,
+          id_cliente: parseInt(cliente),
+          fecha: new Date().toISOString(),
+          total: totalFactura
+        }]);
     }
 
     // === Crear orden pendiente para productos sin stock ===
-    let ordenPendiente = null;
-    if (productosPendientes.length > 0) {
-      const { data: ordenPendData, error: ordenPendError } = await supabaseClient
-        .from('orden_ventas')
-        .insert([{ id_cliente: parseInt(cliente), fecha: new Date().toISOString(), estado: 'pendiente' }])
-        .select()
-        .single();
-      if (ordenPendError) throw ordenPendError;
-      ordenPendiente = ordenPendData;
+let ordenPendiente = null;
+if (productosPendientes.length > 0) {
+  // 🔹 Calcular fecha de entrega estimada (2 semanas)
+  const fechaActual = new Date();
+  const fechaEntrega = new Date(fechaActual);
+  fechaEntrega.setDate(fechaActual.getDate() + 14);
 
-      for (const p of productosPendientes) {
-        await supabaseClient.from('detalle_ordenes').insert([{ id_orden: ordenPendData.id_orden, id_producto: p.id_producto, cantidad: p.cantidad }]);
-      }
-    }
+  const { data: ordenPendData, error: ordenPendError } = await supabaseClient
+    .from('orden_ventas')
+    .insert([{
+      id_cliente: parseInt(cliente),
+      fecha: fechaActual.toISOString(),
+      estado: 'pendiente',
+      fecha_estimada_entrega: fechaEntrega.toISOString().split('T')[0] // 🕓 usar nombre exacto de columna
+    }])
+    .select()
+    .single();
 
+  if (ordenPendError) throw ordenPendError;
+  ordenPendiente = ordenPendData;
+
+  for (const p of productosPendientes) {
+    await supabaseClient
+      .from('detalle_ordenes')
+      .insert([{ id_orden: ordenPendData.id_orden, id_producto: p.id_producto, cantidad: p.cantidad }]);
+  }
+}
     // Mensaje final
     let mensaje = '';
-    if (ordenFacturable) mensaje += `Productos facturados: ${productosConStock.map(p => p.nombre).join(', ')}.\n`;
-    if (ordenPendiente) mensaje += `Productos pendientes: ${productosPendientes.map(p => p.nombre).join(', ')}.`;
+    if (ordenFacturable)
+      mensaje += `Productos facturados: ${productosConStock.map(p => p.nombre).join(', ')}.\n`;
+    if (ordenPendiente)
+      mensaje += `Productos pendientes: ${productosPendientes.map(p => p.nombre).join(', ')}.\nEntrega estimada: ${ordenPendiente.fecha_entrega_estimada}`;
 
     alert(mensaje);
 
@@ -525,19 +551,19 @@ async function listarOrdenes() {
     tbody.innerHTML = '';
 
     data.forEach(o => {
-      const productosText = o.detalle_ordenes.map(d => `${d.productos.nombre} x${d.cantidad}`).join(', ');
-      const total = o.detalle_ordenes.reduce((sum, d) => sum + (d.cantidad * d.productos.precio_unitario), 0);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${o.id_orden}</td>
-        <td>${o.clientes.nombre}</td>
-        <td>${productosText}</td>
-        <td>${new Date(o.fecha).toLocaleDateString()}</td>
-        <td>${o.estado}</td>
-        <td>${total.toFixed(2)}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+  const productosText = o.detalle_ordenes.map(d => `${d.productos.nombre} x${d.cantidad}`).join(', ');
+  const total = o.detalle_ordenes.reduce((sum, d) => sum + (d.cantidad * d.productos.precio_unitario), 0);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${o.id_orden}</td>
+    <td>${o.clientes?.nombre ?? '-'}</td>
+    <td>${productosText}</td>
+    <td>${o.fecha_estimada_entrega ? new Date(o.fecha).toLocaleDateString() : 'NO ACLARADO'}</td>
+    <td>${o.estado}</td>
+    <td>${total.toFixed(2)}</td>
+  `;
+  tbody.appendChild(tr);
+});
   } catch (err) {
     console.error('Error listando órdenes:', err);
   }
