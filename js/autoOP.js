@@ -55,7 +55,7 @@ async function obtenerOVsDisponibles() {
     try {
         const { data: ordenes, error: errorOrdenes } = await supabaseClient
             .from('orden_ventas')
-            .select('id_orden, estado, id_cliente')
+            .select('id_orden, estado, id_cliente, fecha_estimada_entrega')
             .eq('estado', 'pendiente');
 
         if (errorOrdenes) throw errorOrdenes;
@@ -63,7 +63,7 @@ async function obtenerOVsDisponibles() {
 
         const { data: detalles, error: errorDetalles } = await supabaseClient
             .from('detalle_ordenes')
-            .select('id_detalle, id_orden, id_producto, cantidad, estado_detalle_ov')
+            .select('id_detalle, id_orden, id_producto, cantidad, estado_detalle_ov,fecha_estimada_entrega')
             .eq('estado_detalle_ov', 'pendiente');
 
         if (errorDetalles) throw errorDetalles;
@@ -83,14 +83,14 @@ async function obtenerOVsDisponibles() {
                     .single();
 
                 if (errorProd) console.warn("⚠️ Error trayendo producto:", errorProd);
-
                 return {
                     id_detalle: d.id_detalle,
                     id_orden: d.id_orden,
                     id_producto: d.id_producto,
                     cantidad: d.cantidad,
                     producto: productoData?.nombre || "Producto desconocido",
-                    id_cliente: orden?.id_cliente || null
+                    id_cliente: orden?.id_cliente || null,
+                    fecha_est: d.fecha_estimada_entrega
                 };
             })
         );
@@ -113,6 +113,19 @@ function agruparOVsPorProducto(listaOVs) {
         }
         ovPorProducto.get(producto).push(ov);
     });
+
+    // Ordenar arrays internos
+    for (const [producto, detalles] of ovPorProducto.entries()) {
+        detalles.sort((a, b) => {
+            const fechaA = a.fecha_est ? new Date(a.fecha_est.trim()) : new Date(9999, 11, 31);
+            const fechaB = b.fecha_est ? new Date(b.fecha_est.trim()) : new Date(9999, 11, 31);
+            return fechaA - fechaB;
+        });
+    }
+
+
+    console.log("📅 Productos agrupados y ordenados por fecha:", ovPorProducto);
+
 }
 
 async function crearOrdenesProduccion() {
@@ -156,14 +169,32 @@ async function crearOrdenesProduccion() {
                     cajasOP += det.cantidad;
                 }
             }
-
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
             const minCajasOP = minLotesProduccion * cantCajasLote;
             if (cajasOP < minCajasOP * (1 - tolerancia)) {
                 console.warn(
-                    `⚠️ No se crea OP para "${producto}" — sólo ${cajasOP} cajas, mínimo con tolerancia ${minCajasOP * (1 - tolerancia)}.`
+                    `⚠️ "${producto}" no llega al mínimo (${cajasOP}/${minCajasOP}). Se intentará combinar con otros detalles más nuevos.`
                 );
-                break;
+
+                // 🔁 Tomamos detalles más nuevos para intentar llegar al mínimo
+                let restantes = detallesPendientes.filter(d => !detallesOP.includes(d));
+                for (let extra of restantes) {
+                    if (cajasOP + extra.cantidad <= minCajasOP) {
+                        detallesOP.push(extra);
+                        cajasOP += extra.cantidad;
+                    }
+                    if (cajasOP >= minCajasOP * (1 - tolerancia)) break;
+                }
+
+                // Si aún no llega, no se crea la OP y se deja pendiente
+                if (cajasOP < minCajasOP * (1 - tolerancia)) {
+                    console.warn(`⚠️ No hay suficientes detalles para llegar al mínimo. Se deja pendiente "${producto}".`);
+                    break;
+                }
             }
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
             const cantidadLotesOP = Math.ceil(cajasOP / cantCajasLote);
             const materialesNecesarios = await detalleMateriales(detallesOP[0].id_producto, cantidadLotesOP);
             console.log(`Materiales necesarios para OP de "${producto}" (${cantidadLotesOP} lotes):`, materialesNecesarios);
@@ -187,7 +218,7 @@ async function crearOrdenesProduccion() {
                 console.log(`⚠️ No hay suficiente stock para crear la OP de "${producto}". Revisa los materiales.`);
                 break;
             }
-
+            
             const numeroOP = await generarNumeroOP();
             const fecha = new Date().toISOString();
             const idReceta = materialesNecesarios[0].id_receta;
@@ -524,7 +555,7 @@ function mostrarOPenPantalla(opCreadas, opExcedidas) {
         li.textContent = `${op.numero_op} - Producto: ${op.producto} - Cantidad: ${op.cant_lote * 10} cajas`;
         li.style.color = 'green';
         listCreadas.appendChild(li);
-        
+
     });
     //hayOP = true; 
     // -----------------------------
@@ -549,7 +580,7 @@ function mostrarOPenPantalla(opCreadas, opExcedidas) {
                 li.textContent = `Producto: ${producto} - OV: ${d.id_orden} - Cantidad: ${d.cantidad} (excedido)`;
                 li.style.color = 'red';
                 listExcedidas.appendChild(li);
-               // hayOP = true;   
+                // hayOP = true;   
             });
         });
     } else {
@@ -575,5 +606,5 @@ function mostrarOPenPantalla(opCreadas, opExcedidas) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  window.generarOrdenesProduccionAutomatica = generarOrdenesProduccionAutomatica;
+    window.generarOrdenesProduccionAutomatica = generarOrdenesProduccionAutomatica;
 });
