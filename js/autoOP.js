@@ -218,7 +218,7 @@ async function crearOrdenesProduccion() {
                 console.log(`⚠️ No hay suficiente stock para crear la OP de "${producto}". Revisa los materiales.`);
                 break;
             }
-            
+
             const numeroOP = await generarNumeroOP();
             const fecha = new Date().toISOString();
             const idReceta = materialesNecesarios[0].id_receta;
@@ -238,7 +238,8 @@ async function crearOrdenesProduccion() {
                     id_receta: idReceta,
                     detalle_materiales: materialesNecesarios,
                     fecha_emision: fecha,
-                    estado: 'Pendiente'
+                    estado: 'Pendiente',
+                    fecha_estimada_entrega:obtenerFechaEntregaMasCercana(detallesOP)
                 }])
                 .select();
 
@@ -604,6 +605,20 @@ function mostrarOPenPantalla(opCreadas, opExcedidas) {
 
 
 }
+
+function obtenerFechaEntregaMasCercana(detallesOP) {
+  if (!Array.isArray(detallesOP) || detallesOP.length === 0) return null;
+
+  const fechaMasCercana = detallesOP
+    .map(d => new Date(d.fecha_est))
+    .filter(f => !isNaN(f)) // descarta fechas inválidas
+    .sort((a, b) => a - b)[0]; // ordena y toma la menor
+    //console.log("OOPP y FECHA",fechaMasCercana);
+  return fechaMasCercana
+    ? fechaMasCercana.toISOString().split('T')[0]
+    : null;
+}
+
 
 document.addEventListener("DOMContentLoaded", () => {
     window.generarOrdenesProduccionAutomatica = generarOrdenesProduccionAutomatica;
