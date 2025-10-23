@@ -239,7 +239,8 @@ async function crearOrdenesProduccion() {
                     detalle_materiales: materialesNecesarios,
                     fecha_emision: fecha,
                     estado: 'Pendiente',
-                    fecha_estimada_entrega:obtenerFechaEntregaMasCercana(detallesOP)
+                    fecha_estimada_entrega:obtenerFechaEntregaMasCercana(detallesOP),
+                    prioridad: calcularPrioridad(new Date(obtenerFechaEntregaMasCercana(detallesOP)))
                 }])
                 .select();
 
@@ -619,6 +620,19 @@ function obtenerFechaEntregaMasCercana(detallesOP) {
     : null;
 }
 
+function calcularPrioridad(fechaEntrega) {
+  const hoy = new Date();
+  
+  const diasRestantes = Math.ceil((fechaEntrega - hoy) / (1000 * 60 * 60 * 24));
+
+  let prioridad;
+  if (diasRestantes <= 0) prioridad = 'urgente';     // ya vencida
+  else if (diasRestantes <= 2) prioridad = 'alta';
+  else if (diasRestantes <= 5) prioridad = 'normal';
+  else prioridad = 'baja';
+
+  return prioridad;
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     window.generarOrdenesProduccionAutomatica = generarOrdenesProduccionAutomatica;

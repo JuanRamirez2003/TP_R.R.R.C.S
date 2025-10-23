@@ -156,6 +156,8 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
   const numeroOP = document.getElementById('opNumero').value;
   const fecha = new Date().toISOString();
 
+  const prioridad = document.getElementById('prioridadOP').value;
+
   const idProducto = await obtnerIdProducto(productos[0].nombre, false);
   if (!idProducto) {
     alert("No se pudo obtener el ID del producto");
@@ -183,7 +185,9 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
     id_receta: idReceta,
     detalle_materiales: detalleReceta,
     fecha_emision: fecha,
-    estado: 'Pendiente'
+    estado: 'Pendiente',
+    fecha_estimada_entrega: calcularFechaPorPrioridad(prioridad),
+    prioridad: prioridad
   }])
     .select();
   if (error) return console.error("Error al guardar OP:", error);
@@ -813,6 +817,8 @@ async function actualizarEstadoDetalleOV(idDetalleOV, nuevoEstado) {
 async function mostrarMensajeExito(idOrden) {
 
   try {
+
+
     const { data, error } = await supabaseClient
       .from('orden_produccion')
       .select('*')
@@ -826,8 +832,8 @@ async function mostrarMensajeExito(idOrden) {
     //console.log("ESTA ACCCCCAAA");
     console.log(data.ver_orden);
     const productosHtml = data.ver_orden
-      .map(p => `<p>${p.nombre} - Cantidad de Lote/s: ${p.cantidad} - Cantidad de Cajas Estimadas: ${p.cantidad * cantidadPorLote}</p>`)
-      .join('');
+    .map(p => `<p>${p.nombre.toUpperCase()}</p>  <p>Cantidad de Lote/s: ${p.cantidad}</p> <p>Cantidad de Cajas Estimadas: ${p.cantidad * cantidadPorLote}</p>`)
+    .join('');
 
     const { data: detalleLotes, error: errorLotes } = await supabaseClient
       .from('detalle_lote_op')
@@ -930,7 +936,9 @@ async function mostrarMensajeExito(idOrden) {
       <p><strong>Número OP:</strong> ${data.numero_op}</p>
       <p><strong>Fecha Emisión:</strong> ${new Date(data.fecha_emision).toLocaleString()}</p>
       <p><strong>Estado:</strong> ${data.estado}</p>
-      <h4>Producto:</h4>
+      <p><strong>Fecha Estimada de Entrega:</strong> ${data.fecha_estimada_entrega}</p>
+      <p><strong>Prioridad:</strong> ${data.prioridad.toUpperCase()}</p>
+      <p><strong>Producto:</strong></p>
       ${productosHtml}
       <h4>Lotes de Materiales reservados:</h4>
       ${lotesHtml}
@@ -1061,7 +1069,7 @@ async function verOrden(id_orden_produccion) {
   if (error) return console.error("Error al ver OP:", error);
 
   const productosHtml = data.ver_orden
-    .map(p => `<p>${p.nombre} - Cantidad: ${p.cantidad}</p>`)
+    .map(p => `<p>${p.nombre.toUpperCase()}</p>  <p>Cantidad de Lote/s: ${p.cantidad}</p> <p>Cantidad de Cajas Estimadas: ${p.cantidad * cantidadPorLote}</p>`)
     .join('');
 
   const { data: detalleLotes, error: errorLotes } = await supabaseClient
@@ -1163,7 +1171,9 @@ async function verOrden(id_orden_produccion) {
     <p><strong>Número OP:</strong> ${data.numero_op}</p>
     <p><strong>Fecha Emisión:</strong> ${new Date(data.fecha_emision).toLocaleString()}</p>
     <p><strong>Estado:</strong> ${data.estado}</p>
-    <h4>Productos:</h4>
+    <p><strong>Fecha Estimada de Entrega:</strong> ${data.fecha_estimada_entrega}</p>
+    <p><strong>Prioridad:</strong> ${data.prioridad.toUpperCase()}</p>
+    <p><strong>Producto:</strong></p>
     ${productosHtml}
     <h4>Lotes reservados:</h4>
     ${lotesHtml}
@@ -1264,6 +1274,33 @@ async function verificarStockMaterias() {
   } catch (err) {
     console.error("Error verificando stock de materias:", err);
   }
+}
+
+
+function calcularFechaPorPrioridad(prioridad) {
+  const hoy = new Date();
+  let diasSumar = 0;
+
+  switch (prioridad?.toLowerCase()) {
+    case 'urgente':
+      diasSumar = 0; // mismo día
+      break;
+    case 'alta':
+      diasSumar = 2; // 2 días
+      break;
+    case 'normal':
+      diasSumar = 5; // 5 días
+      break;
+    case 'baja':
+      diasSumar = 14; // 2 semanas
+      break;
+    default:
+      diasSumar = 7; // valor por defecto
+      break;
+  }
+
+  hoy.setDate(hoy.getDate() + diasSumar);
+  return hoy.toISOString().split('T')[0]; // yyyy-mm-dd
 }
 
 //==============VER DETALLE DE LOTE RESERVADOS ==================
