@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Alertas</title>
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+  <h2>⚠️ Panel de Alertas</h2>
+  <div class="filtros">
+    <input type="date" id="filtro-fecha">
+    <input type="text" id="filtro-producto" placeholder="Producto o Cliente">
+    <select id="filtro-urgencia">
+      <option value="">Todas las urgencias</option>
+      <option value="alta">Alta</option>
+      <option value="media">Media</option>
+      <option value="baja">Baja</option>
+    </select>
+    <button onclick="filtrarAlertas()">Filtrar</button>
+  </div>
+  <div id="contenedor-alertas" class="alertas-grid"></div>
+  <script src="js/panel_alertas.js"></script>
+</body>
+</html>
