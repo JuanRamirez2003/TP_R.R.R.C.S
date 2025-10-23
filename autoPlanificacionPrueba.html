@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Planificación Mock</title>
+<style>
+  table { border-collapse: collapse; width: 100%; margin-top:10px; }
+  th, td { border: 1px solid black; padding: 4px; text-align: center; }
+  button { padding: 2px 5px; }
+  #modalDetalle { display:none; border:1px solid black; padding:10px; background:#eee; position:absolute; top:20px; left:20px; max-width:600px;}
+</style>
+</head>
+<body>
+
+<h2>Planificación Mock</h2>
+<button id="btnPlanificar">Generar Planificación</button>
+
+<table id="tablaPlanificacion">
+  <thead>
+    <tr>
+      <th>OP</th>
+      <th>Línea</th>
+      <th>Día</th>
+      <th>Hora Inicio</th>
+      <th>Hora Fin</th>
+      <th>Prioridad</th>
+      <th>Eficiencia</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<div id="modalDetalle">
+  <div id="contenidoDetalle"></div>
+  <button id="cerrarModal">Cerrar</button>
+</div>
+
+<script>
+  // --- Datos Mock ---
+  const lineas = [
+    { id_linea: 1, nombre: "Línea 1", capacidad_diaria_min: 480 },
+    { id_linea: 2, nombre: "Línea 2", capacidad_diaria_min: 480 },
+    { id_linea: 3, nombre: "Línea 3", capacidad_diaria_min: 480 }
+  ];
+
+  const lineasProd = [
+    { id_linea: 1, id_producto: 1, duracion: 30, eficiencia: 1 },
+    { id_linea: 1, id_producto: 2, duracion: 45, eficiencia: 0.9 },
+    { id_linea: 2, id_producto: 1, duracion: 25, eficiencia: 1 },
+    { id_linea: 2, id_producto: 2, duracion: 50, eficiencia: 0.95 },
+    { id_linea: 3, id_producto: 3, duracion: 20, eficiencia: 1 },
+    { id_linea: 3, id_producto: 1, duracion: 35, eficiencia: 0.8 }
+  ];
+
+ const ordenes = [];
+const nombresProd = ["Milanesa", "Pizza", "Empanada"];
+const prioridades = ["urgente","alta","normal","baja"];
+
+for(let i=1;i<=30;i++){
+  ordenes.push({
+    id_orden_produccion: i,
+    prioridad: prioridades[i % 4],
+    id_producto: (i % 3) + 1,
+    ver_orden: [{ nombre: nombresProd[i % 3], cantidad: (i % 3) + 1 }],
+    estado: "Pendiente"
+  });
+}
+
+  // --- Funciones de planificación ---
+  function minutosToHora(min) {
+    const totalMin = 8*60 + min;
+    const h = String(Math.floor(totalMin/60)).padStart(2,'0');
+    const m = String(totalMin%60).padStart(2,'0');
+    return `${h}:${m}:00`;
+  }
+
+  function planificarSemana() {
+    const hoy = new Date();
+    const hoyStr = hoy.toISOString().split("T")[0];
+
+    // Carga diaria por línea
+    const carga = {};
+    for(const l of lineas){
+      carga[l.id_linea]={};
+      for(let i=0;i<7;i++){
+        const fecha = new Date();
+        fecha.setDate(hoy.getDate()+i);
+        carga[l.id_linea][fecha.toISOString().split("T")[0]]=0;
+      }
+    }
+
+    // Ordenar por prioridad
+    const prioridadOrden = { urgente:1, alta:2, normal:3, baja:4 };
+    ordenes.sort((a,b)=> (prioridadOrden[a.prioridad]||5)-(prioridadOrden[b.prioridad]||5));
+
+    const planificaciones = [];
+
+    for(const op of ordenes){
+      let cantidadLotes = op.ver_orden.reduce((total,item)=>total+(item.cantidad||0),0);
+
+      const posibles = lineasProd.filter(lp=>lp.id_producto===op.id_producto);
+      posibles.sort((a,b)=>a.duracion-b.duracion);
+
+      let asignado=false;
+      for(let i=0;i<7 && !asignado;i++){
+        const fecha = new Date();
+        fecha.setDate(hoy.getDate()+i);
+        const fechaKey = fecha.toISOString().split("T")[0];
+
+        for(const cand of posibles){
+          const minutosUsados = carga[cand.id_linea][fechaKey];
+          const capacidad = lineas.find(l=>l.id_linea===cand.id_linea)?.capacidad_diaria_min ?? 480;
+          const duracionTotal = cand.duracion * cantidadLotes;
+
+          if(minutosUsados+duracionTotal<=capacidad){
+            planificaciones.push({
+              id_op: op.id_orden_produccion,
+              id_linea: cand.id_linea,
+              dia: fechaKey,
+              hora_inicio: minutosToHora(minutosUsados),
+              hora_fin: minutosToHora(minutosUsados+duracionTotal),
+              prioridad: op.prioridad,
+              eficiencia_estimada: Math.round((cand.eficiencia||1)*100)
+            });
+            carga[cand.id_linea][fechaKey]+=duracionTotal;
+            asignado=true;
+            break;
+          }
+        }
+      }
+      if(!asignado) console.warn(`OP ${op.id_orden_produccion} no se pudo asignar en 7 días`);
+    }
+
+    mostrarPlanificacion(planificaciones);
+  }
+
+  function mostrarPlanificacion(planificaciones){
+    const tbody=document.querySelector("#tablaPlanificacion tbody");
+    tbody.innerHTML="";
+    planificaciones.forEach(p=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td><button class="btn-op" data-op='${JSON.stringify(p)}'>${p.id_op}</button></td>
+        <td><button class="btn-linea" data-linea='${JSON.stringify(p)}'>${p.id_linea}</button></td>
+        <td>${p.dia}</td>
+        <td>${p.hora_inicio}</td>
+        <td>${p.hora_fin}</td>
+        <td>${p.prioridad}</td>
+        <td>${p.eficiencia_estimada}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.querySelectorAll(".btn-op").forEach(btn=>{
+      btn.addEventListener("click",e=>{
+        const op=JSON.parse(e.target.dataset.op);
+        mostrarDetalleOP(op.id_op);
+      });
+    });
+
+    document.querySelectorAll(".btn-linea").forEach(btn=>{
+      btn.addEventListener("click",e=>{
+        const linea=JSON.parse(e.target.dataset.linea);
+        mostrarDetalleLinea(linea.id_linea);
+      });
+    });
+  }
+
+  function mostrarDetalleOP(id_op){
+    const op = ordenes.find(o=>o.id_orden_produccion===id_op);
+    let contenido=`<h3>Detalle OP ${id_op}</h3>`;
+    contenido+=`<p>Prioridad: ${op.prioridad}</p>`;
+    contenido+=`<p>Estado: ${op.estado}</p>`;
+    contenido+=`<p>Productos/Lotes:</p><pre>${JSON.stringify(op.ver_orden,null,2)}</pre>`;
+    document.getElementById("contenidoDetalle").innerHTML=contenido;
+    document.getElementById("modalDetalle").style.display="block";
+  }
+
+  function mostrarDetalleLinea(id_linea){
+    const lineasProducto = lineasProd.filter(lp=>lp.id_linea===id_linea);
+    let contenido=`<h3>Detalle Línea ${id_linea}</h3>`;
+    contenido+="<table border='1'><tr><th>Producto</th><th>Duración (min)</th><th>Eficiencia</th></tr>";
+    lineasProducto.forEach(lp=>{
+      contenido+=`<tr><td>${lp.id_producto}</td><td>${lp.duracion}</td><td>${lp.eficiencia||1}</td></tr>`;
+    });
+    contenido+="</table>";
+    document.getElementById("contenidoDetalle").innerHTML=contenido;
+    document.getElementById("modalDetalle").style.display="block";
+  }
+
+  document.getElementById("cerrarModal").addEventListener("click",()=>{
+    document.getElementById("modalDetalle").style.display="none";
+  });
+
+  document.getElementById("btnPlanificar").addEventListener("click",planificarSemana);
+</script>
+</body>
+</html>

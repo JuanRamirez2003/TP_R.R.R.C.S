@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Planificación Semanal</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f0f0f0; }
+    button { padding: 10px 20px; cursor: pointer; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Planificación Semanal de Producción</h1>
+  <button id="btnPlanificar">Generar Planificación</button>
+
+  <table id="tablaPlanificacion">
+  <thead>
+    <tr>
+      <th>OP</th>
+      <th>Línea</th>
+      <th>Día</th>
+      <th>Hora inicio</th>
+      <th>Hora fin</th>
+      <th>Prioridad</th>
+      <th>Eficiencia</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<!-- Modal para mostrar detalles -->
+<div id="modalDetalle" style="display:none; position:fixed; top:10%; left:10%; width:80%; background:white; border:1px solid #ccc; padding:20px; z-index:1000;">
+  <button id="cerrarModal">Cerrar</button>
+  <div id="contenidoDetalle"></div>
+</div>
+
+  <!-- Llamada al archivo externo JS -->
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script type="module" src="js/autoPlanificacion.js"></script>
+</body>
+</html>
