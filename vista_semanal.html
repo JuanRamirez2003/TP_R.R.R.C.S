@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Vista Semanal de Producción</title>
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+  <h2>Planificación semana de producción</h2>
+  <div class="filtros">
+    <select id="filtro-linea">
+      <option value="">Todas las líneas</option>
+      <option value="Línea 1">Línea 1</option>
+      <option value="Línea 2">Línea 2</option>
+	  <option value="Línea 1">Línea 3</option>
+      <option value="Línea 2">Línea 4</option>
+	  <option value="Línea 1">Línea 5</option>
+    </select>
+    <button class="btn-submit" onclick="semanaAnterior()">← Semana anterior</button>
+    <button class="btn-submit" onclick="semanaSiguiente()">Semana siguiente →</button>
+	 <button id="replanificar" onclick="replanificar()">Replanificar</button>
+  </div>
+   <div id="agenda-semanal" class="agenda-grid"></div>
+  <script src="js/vista_semanal.js"></script>
+</body>
+</html>
