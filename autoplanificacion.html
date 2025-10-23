@@ -2,42 +2,65 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Planificación Semanal</title>
+  <title>Planificación Semanal de Producción</title>
+  <link rel="stylesheet" href="css/ventas.css">
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background-color: #f0f0f0; }
-    button { padding: 10px 20px; cursor: pointer; margin-top: 10px; }
+    /* ===== Estilos adicionales que no están en ventas.css ===== */
+    body { font-family: Arial, sans-serif; background-color: #000; color: #fff; }
+
+    .agenda-grid { display: flex; gap: 10px; margin-top: 20px; }
+    .agenda-dia { border: 1px solid #444; padding: 10px; flex: 1; min-width: 120px; background-color: #111; border-radius: 8px; }
+    .bloque-produccion { padding: 5px; margin: 5px 0; border-radius: 4px; color: white; cursor: pointer; text-align: center; font-weight: bold; }
+    .urgente { background-color: #ff0000; }
+    .alta { background-color: #ff8000; }
+    .normal { background-color: #00cc66; }
+    .baja { background-color: #339966; }
+
+    .filtros { margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
+    #btnPlanificar, #btnVolver {
+      background-color: #55a630;
+      color: #000;
+      font-weight: bold;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      transition: 0.3s;
+    }
+    #btnPlanificar:hover, #btnVolver:hover { background-color: #4a8c2a; color: #fff; }
+
+    #modalDetalle { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 9999; }
+    #contenidoDetalle { background: #1e1e1e; color: #fff; padding: 20px; width: 80%; max-width: 600px; border-radius: 8px; position: relative; }
+    #cerrarModal { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 18px; color: #fff; }
+    #contenidoDetalle table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    #contenidoDetalle th, #contenidoDetalle td { border: 1px solid #444; padding: 5px; text-align: left; }
+    #contenidoDetalle th { background-color: #222; }
   </style>
 </head>
 <body>
-  <h1>Planificación Semanal de Producción</h1>
-  <button id="btnPlanificar">Generar Planificación</button>
 
-  <table id="tablaPlanificacion">
-  <thead>
-    <tr>
-      <th>OP</th>
-      <th>Línea</th>
-      <th>Día</th>
-      <th>Hora inicio</th>
-      <th>Hora fin</th>
-      <th>Prioridad</th>
-      <th>Eficiencia</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+  <div class="main-content">
+    <h2>Planificación Semanal de Producción</h2>
 
-<!-- Modal para mostrar detalles -->
-<div id="modalDetalle" style="display:none; position:fixed; top:10%; left:10%; width:80%; background:white; border:1px solid #ccc; padding:20px; z-index:1000;">
-  <button id="cerrarModal">Cerrar</button>
-  <div id="contenidoDetalle"></div>
-</div>
+    <div class="filtros">
+      <select id="filtro-linea">
+        <option value="">Todas las líneas</option>
+      </select>
+      <button id="btnPlanificar">Generar planificación</button>
+      <button id="btnVolver">Volver</button>
+    </div>
 
-  <!-- Llamada al archivo externo JS -->
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script type="module" src="js/autoPlanificacion.js"></script>
+    <div id="agenda-semanal" class="agenda-grid"></div>
+
+    <div id="modalDetalle">
+      <div id="contenidoDetalle">
+        <span id="cerrarModal">✖</span>
+        <div id="detalleContenido"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/autoPlanificacion.js"></script>
 </body>
 </html>
