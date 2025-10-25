@@ -3,36 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <title>Parametrización de Producción</title>
-  <link rel="stylesheet" href="parametrizacion.css">
+  <link rel="stylesheet" href="css/parametrizacion.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="param-panel">
     <h2><i class="fas fa-sliders-h"></i> Configuración de Producción</h2>
+
     <form id="form-parametros" class="param-form">
       <div class="form-group">
-        <label for="linea"><i class="fas fa-industry"></i> Línea de Producción</label>
-        <input type="text" id="linea" name="linea" required>
+        <label for="id_linea"><i class="fas fa-industry"></i> Línea</label>
+        <input type="number" id="id_linea" name="id_linea" required>
       </div>
+
       <div class="form-group">
-        <label for="producto"><i class="fas fa-box"></i> Producto</label>
-        <input type="text" id="producto" name="producto" required>
+        <label for="id_producto"><i class="fas fa-box"></i> Producto</label>
+        <input type="number" id="id_producto" name="id_producto" placeholder="ID de producto" required>
       </div>
+
       <div class="form-group">
-        <label for="velocidad"><i class="fas fa-tachometer-alt"></i> Velocidad (unidades/hora)</label>
-        <input type="number" id="velocidad" name="velocidad" required>
+        <label for="duracion"><i class="fas fa-hourglass-half"></i> Duración (minutos)</label>
+        <input type="number" id="duracion" name="duracion" required>
       </div>
+
       <div class="form-group">
-        <label for="jornada"><i class="fas fa-clock"></i> Horas de jornada laboral</label>
-        <input type="number" id="jornada" name="jornada" required>
+        <label for="horas_jornada"><i class="fas fa-clock"></i> Horas de jornada</label>
+        <input type="number" id="horas_jornada" name="horas_jornada" required>
       </div>
+
       <div class="form-group">
-        <label for="estado"><i class="fas fa-toggle-on"></i> Estado de la línea</label>
+        <label for="eficiencia"><i class="fas fa-percentage"></i> Eficiencia (%)</label>
+        <input type="number" id="eficiencia" name="eficiencia" required>
+      </div>
+
+      <!-- Capacidad diaria se calcula, no se edita -->
+      <div class="form-group">
+        <label><i class="fas fa-bolt"></i> Capacidad diaria (calculada)</label>
+        <input type="text" id="capacidad_diaria" name="capacidad_diaria" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="cantidad"><i class="fas fa-layer-group"></i> Cantidad</label>
+        <input type="number" id="cantidad" name="cantidad" required>
+      </div>
+
+      <div class="form-group">
+        <label for="estado"><i class="fas fa-toggle-on"></i> Estado</label>
         <select id="estado" name="estado" required>
           <option value="Activa">Activa</option>
           <option value="Suspendida">Suspendida</option>
         </select>
       </div>
+
       <button type="submit" class="btn-guardar"><i class="fas fa-save"></i> Guardar parámetros</button>
     </form>
 
@@ -42,14 +65,20 @@
         <tr>
           <th>Línea</th>
           <th>Producto</th>
-          <th>Velocidad</th>
-          <th>Jornada</th>
+          <th>Duración</th>
+          <th>Horas Jornada</th>
+          <th>Eficiencia</th>
+          <th>Capacidad Diaria</th>
+          <th>Cantidad</th>
           <th>Estado</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
   </div>
-  <script src="panel_parametrizacion.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/panel_parametrizacion.js"></script>
 </body>
 </html>
