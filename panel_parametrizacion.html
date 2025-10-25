@@ -19,7 +19,7 @@
 
       <div class="form-group">
         <label for="id_producto"><i class="fas fa-box"></i> Producto</label>
-        <input type="number" id="id_producto" name="id_producto" placeholder="ID de producto" required>
+        <input type="number" id="id_producto" name="id_producto" required>
       </div>
 
       <div class="form-group">
@@ -44,11 +44,6 @@
       </div>
 
       <div class="form-group">
-        <label for="cantidad"><i class="fas fa-layer-group"></i> Cantidad</label>
-        <input type="number" id="cantidad" name="cantidad" required>
-      </div>
-
-      <div class="form-group">
         <label for="estado"><i class="fas fa-toggle-on"></i> Estado</label>
         <select id="estado" name="estado" required>
           <option value="Activa">Activa</option>
@@ -56,7 +51,9 @@
         </select>
       </div>
 
-      <button type="submit" class="btn-guardar"><i class="fas fa-save"></i> Guardar parámetros</button>
+      <button type="submit" class="btn-guardar">
+        <i class="fas fa-save"></i> Guardar parámetros
+      </button>
     </form>
 
     <h3>Parámetros actuales</h3>
@@ -69,7 +66,6 @@
           <th>Horas Jornada</th>
           <th>Eficiencia</th>
           <th>Capacidad Diaria</th>
-          <th>Cantidad</th>
           <th>Estado</th>
           <th>Acciones</th>
         </tr>
@@ -78,7 +74,6 @@
     </table>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/panel_parametrizacion.js"></script>
 </body>
 </html>

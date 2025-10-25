@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await cargarLineasProduccion();
 });
 
-// Cargar lista de productos (asegúrate del nombre real de la tabla: producto / productos)
+// Cargar lista de productos
 async function cargarProductos() {
   const { data, error } = await supabase.from("productos").select("id_producto, nombre");
   if (error) console.error("Error cargando productos:", error);
@@ -43,7 +43,6 @@ async function cargarLineasProduccion() {
       <td>${l.horas_jornada ?? ""}</td>
       <td>${l.eficiencia ?? 0}%</td>
       <td>${l.capacidad_diaria ?? 0}</td>
-      <td>${l.cantidad ?? ""}</td>
       <td>${l.estado ?? ""}</td>
       <td><button class="btn-editar"><i class="fas fa-edit"></i></button></td>
     `;
@@ -63,7 +62,6 @@ function editarFila(datos) {
   form.horas_jornada.value = datos.horas_jornada ?? "";
   form.eficiencia.value = datos.eficiencia ?? "";
   form.capacidad_diaria.value = datos.capacidad_diaria ?? "";
-  form.cantidad.value = datos.cantidad ?? "";
   form.estado.value = datos.estado ?? "Activa";
 
   filaEditando = datos.id;
@@ -80,7 +78,7 @@ function calcularCapacidad() {
   const horas = parseFloat(document.getElementById("horas_jornada").value) || 0;
   const eficiencia = parseFloat(document.getElementById("eficiencia").value) || 0;
 
-  // Ejemplo de cálculo simple: (horas * 60 / duración) * eficiencia%
+  // Fórmula: (horas * 60 / duración) * eficiencia%
   const capacidad = ((horas * 60) / (duracion || 1)) * (eficiencia / 100);
   document.getElementById("capacidad_diaria").value = capacidad.toFixed(2);
 }
@@ -98,7 +96,6 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
     horas_jornada: Number(datos.horas_jornada),
     eficiencia: Number(datos.eficiencia),
     capacidad_diaria: Number(datos.capacidad_diaria),
-    cantidad: Number(datos.cantidad),
     estado: datos.estado,
   };
 
