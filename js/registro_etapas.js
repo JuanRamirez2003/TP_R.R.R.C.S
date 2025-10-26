@@ -77,20 +77,13 @@ function actualizarSelectsOP(){
     });
 }
 
+// --------------------- Toggle línea ---------------------
 async function toggleLinea(n) {
-    const cinta = document.getElementById(`cinta${n}`);
-    const btn = document.getElementById(`btn-linea-${n}`);
-    const estadoCont = document.getElementById(`estadoCont-${n}`);
-    const estadoText = document.getElementById(`estado-linea-${n}`);
     const opSelect = document.getElementById(`opSelectLinea-${n}`);
-    const opInfo = document.getElementById(`opInfo-${n}`);
-    const registroTable = document.querySelector("#registroTable tbody");
-
-    if (estados[n]) return alert("Esta línea ya está en funcionamiento.");
-
     const opId = opSelect.value;
     if (!opId) return alert("Seleccione una OP.");
     if (opEnEjecucion.has(opId)) return alert("Esta OP ya está en ejecución.");
+
     opEnEjecucion.add(opId);
     actualizarSelectsOP();
 
@@ -101,15 +94,6 @@ async function toggleLinea(n) {
     let duracionLinea = 60; // default
 
     try {
-        // Cargar todas las líneas de producción si no están en memoria
-        if (!window.lineasProdCache) {
-            const { data: lineasProd, error } = await supabaseClient
-                .from('linea_produccion')
-                .select('*');
-            if (error) throw error;
-            window.lineasProdCache = lineasProd;
-        }
-
         // Obtener id_producto de la OP
         const { data: opData, error: opError } = await supabaseClient
             .from('orden_produccion')
@@ -118,21 +102,21 @@ async function toggleLinea(n) {
             .single();
         if (opError) throw opError;
 
-        // Obtener id_linea real desde dataset
+        // Obtener duración real de la línea
         const idLineaReal = Number(document.querySelector(`.linea-produccion[data-linea="${n}"]`).dataset.idLinea);
-
-        // Buscar línea correspondiente al producto
-        const posibles = window.lineasProdCache.filter(v => v.id_producto === opData.id_producto && Number(v.id_linea) === idLineaReal);
-
-        if (posibles.length) duracionLinea = Number(posibles[0].duracion);
+        const { data: lineaProd } = await supabaseClient
+            .from('linea_produccion')
+            .select('duracion')
+            .eq('id_producto', opData.id_producto)
+            .eq('id_linea', idLineaReal)
+            .single();
+        if (lineaProd?.duracion) duracionLinea = Number(lineaProd.duracion);
 
         console.log("Duración encontrada:", duracionLinea, "minutos");
 
-    } catch (err) {
-        console.error("Error obteniendo duración:", err);
-    }
+    } catch (err) { console.error("Error obteniendo duración:", err); }
 
-    const tiempoTotal = duracionLinea * cant * 60; // segundos
+    const tiempoTotal = duracionLinea * cant * 60; // segundos según cantidad de lotes
 
     // Marcar OP como en elaboración
     try {
@@ -140,113 +124,211 @@ async function toggleLinea(n) {
             .from('orden_produccion')
             .update({ estado: 'en elaboracion' })
             .eq('id_orden_produccion', opId);
-    } catch (err) {
-        console.error("Error actualizando estado:", err);
-    }
+    } catch (err) { console.error("Error actualizando estado:", err); }
 
-    const velocidad = 4; // px/frame
-    iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, estadoText, opInfo, registroTable, velocidad);
+    const cinta = document.getElementById(`cinta${n}`);
+    const btn = document.getElementById(`btn-linea-${n}`);
+    const estadoCont = document.getElementById(`estadoCont-${n}`);
+    const estadoText = document.getElementById(`estado-linea-${n}`);
+    const opInfo = document.getElementById(`opInfo-${n}`);
+    const registroTable = document.querySelector("#registroTable tbody");
+
+    iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, estadoText, opInfo, registroTable, 4, null, 0, cant);
 }
-// ---------------- Función iniciar línea ----------------
-function iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, estadoText, opInfo, registroTable, velocidad, tiempoRestante=null, etapaIndex=0){
-    estados[n]=true;
-    cinta.classList.remove('stop');
-    btn.textContent='En marcha...'; btn.disabled=true;
-    estadoText.textContent='En marcha';
-    estadoCont.classList.remove('estado-detenida'); estadoCont.classList.add('estado-en-marcha');
-    if(tiempoRestante===null) tiempoRestante=tiempoTotal;
 
-    let x=0;
-    function moverCinta(){ 
-        x -= velocidad; 
-        cinta.querySelector('.cinta-items').style.transform=`translateX(${x}px)`; 
-        animaciones[n]=requestAnimationFrame(moverCinta);
+// --------------------- Iniciar línea ---------------------
+function iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, estadoText, opInfo, registroTable, velocidad=4, tiempoRestante=null, etapaIndex=0, cant=1) {
+    estados[n] = true;
+    cinta.classList.remove('stop');
+    btn.textContent = 'En marcha...';
+    btn.disabled = true;
+    estadoText.textContent = 'En marcha';
+    estadoCont.classList.remove('estado-detenida'); 
+    estadoCont.classList.add('estado-en-marcha');
+
+    if (tiempoRestante === null) tiempoRestante = tiempoTotal;
+
+    // Animación de cinta
+    let x = 0;
+    function moverCinta() {
+        x -= velocidad;
+        cinta.querySelector('.cinta-items').style.transform = `translateX(${x}px)`;
+        animaciones[n] = requestAnimationFrame(moverCinta);
     }
     moverCinta();
 
-    // --- Botón Finalizar ---
-    // Si existe un stopBtn previo, lo eliminamos
-    let prevStopBtn = document.getElementById(`stop-linea-${n}`);
-    if(prevStopBtn) prevStopBtn.remove();
+    // Botón Finalizar dinámico
+    let stopBtn = document.getElementById(`stop-linea-${n}`);
+    if(!stopBtn){
+        stopBtn = document.createElement('button');
+        stopBtn.id = `stop-linea-${n}`;
+        stopBtn.textContent = 'Finalizar';
+        stopBtn.style.marginLeft = '5px';
+        stopBtn.addEventListener('click', ()=>finalizarLinea(n, opId, opTexto, cant));
+        btn.parentNode.appendChild(stopBtn);
+    }
 
-    // Creamos uno nuevo
-    const stopBtn = document.createElement('button');
-    stopBtn.id = `stop-linea-${n}`;
-    stopBtn.textContent = 'Finalizar';
-    stopBtn.style.marginLeft = '5px';
-    stopBtn.addEventListener('click', () => finalizarLinea(opId)); // pasamos opId actual
-    btn.parentNode.appendChild(stopBtn);
-
+    // Registro en tabla
     const fila = document.createElement('tr');
-    fila.innerHTML = `<td></td><td>${opTexto}</td><td>${etapas[etapaIndex]}</td><td style="background-color:lightyellow">En progreso</td><td>Operario ${n}</td><td>${new Date().toLocaleTimeString()}</td><td></td><td></td><td></td>`;
+    fila.innerHTML = `<td></td><td>${opTexto}</td><td>${etapas[etapaIndex]}</td>
+                      <td style="background-color:lightyellow">En progreso</td>
+                      <td>Operario ${n}</td><td>${new Date().toLocaleTimeString()}</td>
+                      <td></td><td></td><td></td>`;
     registroTable.appendChild(fila);
-    const tdEtapa=fila.children[2], tdEstado=fila.children[3], tdFin=fila.children[6];
+    const tdEtapa = fila.children[2], tdEstado = fila.children[3];
     const etapaTiempo = tiempoTotal / etapas.length;
 
-    function actualizarContador(){
-        tiempoRestante-=1;
-        const etapaActual = Math.min(Math.floor((tiempoTotal-tiempoRestante)/etapaTiempo), etapas.length-1);
-        if(etapaActual!==etapaIndex){ 
-            etapaIndex=etapaActual; 
-            tdEtapa.textContent=etapas[etapaIndex]; 
-            tdEstado.style.backgroundColor="lightblue"; 
+    // Contador
+    function actualizarContador() {
+        tiempoRestante -= 1;
+        const etapaActual = Math.min(Math.floor((tiempoTotal - tiempoRestante) / etapaTiempo), etapas.length - 1);
+        if (etapaActual !== etapaIndex) {
+            etapaIndex = etapaActual;
+            tdEtapa.textContent = etapas[etapaIndex];
+            tdEstado.style.backgroundColor = "lightblue";
         }
-        opInfo.textContent=`Procesando ${opTexto}. Etapa: ${etapas[etapaIndex]}. Tiempo restante: ${Math.ceil(tiempoRestante/60)} min`;
+        opInfo.textContent = `Procesando ${opTexto}. Etapa: ${etapas[etapaIndex]}. Tiempo restante: ${Math.ceil(tiempoRestante/60)} min`;
         guardarEstadoLinea(n, opId, tiempoRestante, etapaIndex);
 
-        if(tiempoRestante>0) timers[n]=setTimeout(actualizarContador,1000);
-        else finalizarLinea(opId);
+        if (tiempoRestante > 0) timers[n] = setTimeout(actualizarContador, 1000);
+        else finalizarLinea(n, opId, opTexto, cant); // Finaliza según cantidad de lotes
     }
-
-    async function finalizarLinea(opIdFinalizar){
-    cancelAnimationFrame(animaciones[n]);
-    clearTimeout(timers[n]);
-    estados[n]=false; // línea ya no está en marcha
-    cinta.classList.add('stop');
-
-    // Resetear botón de inicio
-    btn.disabled = false;
-    btn.textContent = 'Iniciar';
-
-    estadoText.textContent='Finalizada';
-    estadoCont.classList.remove('estado-en-marcha');
-    estadoCont.classList.add('estado-finalizada');
-    tdEstado.textContent="Finalizada";
-    tdEstado.style.backgroundColor="lightgreen";
-    tdFin.textContent=new Date().toLocaleTimeString();
-    opInfo.textContent=`✅ OP ${opTexto} completada.`;
-    eliminarEstadoLinea(n);
-
-    try {
-        await supabaseClient.from('orden_produccion')
-            .update({ estado:'finalizada' })
-            .eq('id_orden_produccion', opIdFinalizar);
-    } catch(err){ console.error(err); }
-
-    // Quitar OP del select
-    const opSelect = document.getElementById(`opSelectLinea-${n}`);
-    const optionToRemove = opSelect.querySelector(`option[value="${opIdFinalizar}"]`);
-    if(optionToRemove) optionToRemove.remove();
-
-    // Habilitar select si quedan OP
-    if(opSelect.options.length > 1){
-        opSelect.disabled = false;
-        opSelect.selectedIndex = 0;
-    } else {
-        opSelect.innerHTML = '<option disabled>No hay OP disponibles</option>'; 
-        opSelect.disabled = true;
-    }
-
-    // Quitar botón Finalizar
-    const stopBtn = document.getElementById(`stop-linea-${n}`);
-    if(stopBtn) stopBtn.remove();
-
-    mostrarOPFinalizada(opIdFinalizar, opTexto, n);
-    actualizarSelectsOP();
-}
-
     actualizarContador();
 }
+
+// --------------------- Finalizar línea ---------------------
+async function finalizarLinea(n, opId, opTexto, cant = 1) {
+    const cinta = document.getElementById(`cinta${n}`);
+    const btn = document.getElementById(`btn-linea-${n}`);
+    const estadoCont = document.getElementById(`estadoCont-${n}`);
+    const estadoText = document.getElementById(`estado-linea-${n}`);
+    const opInfo = document.getElementById(`opInfo-${n}`);
+    const registroTable = document.querySelector("#registroTable tbody");
+
+    try {
+        cancelAnimationFrame(animaciones[n]);
+        clearTimeout(timers[n]);
+        estados[n] = false;
+
+        cinta.classList.add('stop');
+        estadoText.textContent = 'Finalizada';
+        estadoCont.classList.remove('estado-en-marcha');
+        estadoCont.classList.add('estado-finalizada');
+        opInfo.textContent = `✅ OP ${opTexto} completada.`;
+
+        eliminarEstadoLinea(n);
+
+        // Actualizar OP como finalizada y obtener id_producto
+        const { data: opData, error: opError } = await supabaseClient
+            .from('orden_produccion')
+            .update({ estado: 'finalizada' })
+            .select('id_producto')
+            .eq('id_orden_produccion', opId)
+            .single();
+        if (opError) throw opError;
+
+        // Revisar OV asociadas
+        const { data: opsOV } = await supabaseClient
+            .from('op_ov')
+            .select('id_op, id_detalle_ov')
+            .eq('id_op', opId);
+
+        if (!opsOV || opsOV.length === 0) {
+            // No tiene OV: actualizar stock según cant
+            if (opData?.id_producto) {
+                const { data: producto } = await supabaseClient
+                    .from('productos')
+                    .select('stock')
+                    .eq('id_producto', opData.id_producto)
+                    .single();
+                if (producto) {
+                    const cantidadASumar = cant * 10; // Multiplicar la cantidad de lotes por 10
+                    await supabaseClient
+                        .from('productos')
+                        .update({ stock: producto.stock + cantidadASumar })
+                        .eq('id_producto', opData.id_producto);
+                    console.log(`Stock actualizado para producto ${opData.id_producto} +${cant}`);
+                }
+            }
+        } else {
+            // Manejo de OV y facturación
+            for (const op of opsOV) {
+                if (!op.id_detalle_ov) continue;
+                const { data: detalle } = await supabaseClient
+                    .from('detalle_ordenes')
+                    .select('id_orden')
+                    .eq('id_detalle', op.id_detalle_ov)
+                    .single();
+                if (!detalle) continue;
+
+                const idOrden = detalle.id_orden;
+
+                const { data: detalles } = await supabaseClient
+                    .from('detalle_ordenes')
+                    .select('id_detalle')
+                    .eq('id_orden', idOrden);
+
+                const { data: otrasOP } = await supabaseClient
+                    .from('op_ov')
+                    .select('id_op')
+                    .in('id_detalle_ov', detalles.map(d => d.id_detalle));
+
+                let pendientes = 0;
+                for (const o of otrasOP) {
+                    const { data: opCheck } = await supabaseClient
+                        .from('orden_produccion')
+                        .select('estado')
+                        .eq('id_orden_produccion', o.id_op)
+                        .single();
+                    if (opCheck.estado !== 'finalizada') pendientes++;
+                }
+
+                if (pendientes === 0) {
+                    await supabaseClient
+                        .from('orden_ventas')
+                        .update({ estado: 'completada' })
+                        .eq('id_orden', idOrden);
+
+                    const { data: ovData } = await supabaseClient
+                        .from('orden_ventas')
+                        .select('id_cliente')
+                        .eq('id_orden', idOrden)
+                        .single();
+
+                    await supabaseClient
+                        .from('factura')
+                        .insert([{ id_orden: idOrden, id_cliente: ovData.id_cliente, fecha: new Date() }]);
+                }
+            }
+        }
+
+        // Actualizar interfaz y select
+        mostrarOPFinalizada(opId, opTexto, n);
+
+        const opSelect = document.getElementById(`opSelectLinea-${n}`);
+        const optionToRemove = opSelect.querySelector(`option[value="${opId}"]`);
+        if(optionToRemove) optionToRemove.remove();
+        if(opSelect.options.length <= 1){
+            opSelect.innerHTML = '<option disabled>No hay OP disponibles</option>';
+            opSelect.disabled = true;
+        } else opSelect.disabled = false;
+
+        btn.disabled = false;
+        btn.textContent = 'Iniciar';
+        const stopBtn = document.getElementById(`stop-linea-${n}`);
+        if(stopBtn) stopBtn.remove();
+        opEnEjecucion.delete(opId);
+        actualizarSelectsOP();
+
+    } catch (err) {
+        console.error("Error finalizando OP:", err);
+    }
+}
+
+
+
+
+
 // ---------------- Recuperar estado al recargar ----------------
 function recuperarEstadoLinea(n, opSelect, cinta, btn, estadoCont, estadoText, opInfo){
     const saved=localStorage.getItem(`linea_${n}`);
