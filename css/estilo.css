@@ -107,3 +107,22 @@ h2 {
     border-radius: 4px;
 	font-weight: bold;
 }
+/* Botón Volver */
+.btn-volver {
+  display: inline-block;
+  background-color: #444;
+  color: #fff;
+  font-weight: bold;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid #666;
+  transition: 0.3s;
+  margin-bottom: 15px;
+}
+
+.btn-volver:hover {
+  background-color: #4a8c2a;
+  color: #fff;
+  border-color: #4a8c2a;
+}

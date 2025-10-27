@@ -9,6 +9,10 @@
 </head>
 <body>
   <div class="param-panel">
+    <!-- Botón Volver -->
+    <a href="supervisor.html" class="btn-volver"><i class="fas fa-arrow-left"></i> Volver</a>
+
+
     <h2><i class="fas fa-sliders-h"></i> Configuración de Producción</h2>
 
     <form id="form-parametros" class="param-form">
@@ -19,7 +23,7 @@
 
       <div class="form-group">
         <label for="id_producto"><i class="fas fa-box"></i> Producto</label>
-        <input type="number" id="id_producto" name="id_producto" required>
+        <input type="number" id="id_producto" name="id_producto" placeholder="ID de producto" required>
       </div>
 
       <div class="form-group">
@@ -41,6 +45,11 @@
       <div class="form-group">
         <label><i class="fas fa-bolt"></i> Capacidad diaria (calculada)</label>
         <input type="text" id="capacidad_diaria" name="capacidad_diaria" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="cantidad"><i class="fas fa-layer-group"></i> Cantidad</label>
+        <input type="number" id="cantidad" name="cantidad" required>
       </div>
 
       <div class="form-group">
@@ -66,6 +75,7 @@
           <th>Horas Jornada</th>
           <th>Eficiencia</th>
           <th>Capacidad Diaria</th>
+          <th>Cantidad</th>
           <th>Estado</th>
           <th>Acciones</th>
         </tr>
@@ -73,6 +83,15 @@
       <tbody></tbody>
     </table>
   </div>
+
+  <script>
+    // Acción del botón Volver
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("btn-volver").addEventListener("click", () => {
+        window.location.href = "supervisor.html";
+      });
+    });
+  </script>
 
   <script src="js/panel_parametrizacion.js"></script>
 </body>
