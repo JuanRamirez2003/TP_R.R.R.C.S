@@ -1335,14 +1335,15 @@ async function verDetalleLote(idLote) {
       <p><strong>ID Lote:</strong> ${lote.id_lote}</p>
       <p><strong>Material:</strong> ${material?.nombre.toUpperCase() || lote.id_mp}</p>
       <p><strong>Nombre Proveedor:</strong> ${proveedor?.nombre || '-'}</p>
-      <p><strong>Lote:</strong> ${lote.lote}</p>
+      
       <p><strong>Cantidad Disponible:</strong> ${lote.cantidad_disponible}</p>
-      <p><strong>Cantidad Consumida:</strong> ${lote.cantidad_consumida}</p>
+      
       <p><strong>Fecha Ingreso:</strong> ${lote.fecha_ingreso ? new Date(lote.fecha_ingreso).toLocaleDateString() : '-'}</p>
       <p><strong>Fecha Caducidad:</strong> ${lote.fecha_caducidad ? new Date(lote.fecha_caducidad).toLocaleDateString() : '-'}</p>
       <p><strong>Estado:</strong> ${lote.estado}</p>
     `;
-
+  //<p><strong>Lote:</strong> ${lote.lote}</p>
+  //<p><strong>Cantidad Consumida:</strong> ${lote.cantidad_consumida}</p>
     modal.style.display = 'flex';
 
   } catch (err) {

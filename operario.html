@@ -14,7 +14,7 @@
             border-collapse: collapse;
         }
         th, td {
-            border:1px solid #ccc;
+            border:1px solid #ccc;/*none*/
             padding:5px 10px;
             text-align:center;
         }
@@ -159,10 +159,9 @@
             <!-- Sección de ingreso de materiales -->
             <div id="IngresoMateriales" class="seccion" style="display:none;">
                 <h2>Ingreso de Materiales</h2>
-                <p>Seleccione el material y registre la entrada del lote:</p>
                 <form id="MaterialesForm">
                   <div class="form-group">
-                        <label for="Tipo_Material">Tipo_Material:</label>
+                        <label for="Tipo_Material">Tipo de Material:</label>
                         <select id="Tipo_Material" name="tipo_Material" required onchange="habilitarMaterial()">
                             <option value="">Seleccione...</option>
                             <option value="Insumo">Insumo</option>
