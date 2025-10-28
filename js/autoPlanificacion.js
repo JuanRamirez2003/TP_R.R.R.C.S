@@ -14,13 +14,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   await cargarLineas();
 
   document.getElementById("filtro-linea").addEventListener("change", renderAgendaDesdeSupabase);
+  document.getElementById("filtro-prioridad").addEventListener("change", renderAgendaDesdeSupabase);
   document.getElementById("btnPlanificar").addEventListener("click", planificarSemana);
-  document.getElementById("btnVolver").addEventListener("click", () => {
-    window.location.href = "operario.html";
-  });
-  document.getElementById("cerrarModal").addEventListener("click", () => {
-    document.getElementById("modalDetalle").style.display = "none";
-  });
+  document.getElementById("btnVolver").addEventListener("click", () => { window.location.href = "operario.html"; });
+  document.getElementById("cerrarModal").addEventListener("click", () => { document.getElementById("modalDetalle").style.display = "none"; });
 
   renderAgendaDesdeSupabase(); // render inicial
 });
@@ -54,6 +51,7 @@ async function cargarLineas() {
 async function renderAgendaDesdeSupabase() {
   const agenda = document.getElementById("agenda-semanal");
   const filtroLinea = document.getElementById("filtro-linea").value;
+  const filtroPrioridad = document.getElementById("filtro-prioridad").value;
   const hoyStr = new Date().toISOString().split("T")[0];
 
   const { data: planificaciones, error } = await supabaseClient
@@ -62,8 +60,9 @@ async function renderAgendaDesdeSupabase() {
     .gte("dia", hoyStr);
 
   if (error) return alert("Error al cargar planificación: " + error.message);
-
   agenda.innerHTML = "";
+
+  const prioridadOrden = { urgente: 1, alta: 2, normal: 3, baja: 4 };
 
   fechasMostrar.forEach(fecha => {
     const columna = document.createElement("div");
@@ -73,7 +72,12 @@ async function renderAgendaDesdeSupabase() {
     columna.innerHTML = `<strong>${diaNombre} ${fechaStr}</strong><br>`;
 
     planificaciones
-      .filter(p => p.dia === fecha.toISOString().split("T")[0] && (filtroLinea === "" || p.id_linea == filtroLinea))
+      .filter(p => 
+        p.dia === fecha.toISOString().split("T")[0] &&
+        (filtroLinea === "" || p.id_linea == filtroLinea) &&
+        (filtroPrioridad === "" || p.prioridad?.toLowerCase() === filtroPrioridad)
+      )
+      .sort((a,b)=> (prioridadOrden[a.prioridad?.toLowerCase()]||5) - (prioridadOrden[b.prioridad?.toLowerCase()]||5))
       .forEach(p => {
         const bloque = document.createElement("div");
         const clasePrioridad = p.prioridad?.toLowerCase() || "normal";
@@ -96,12 +100,8 @@ async function renderAgendaDesdeSupabase() {
 async function planificarSemana() {
   const hoyStr = new Date().toISOString().split("T")[0];
 
-  // Eliminar planificación existente
   await supabaseClient.from("planificacion_semanal").delete().gte("dia", hoyStr);
-
-  // Obtener órdenes pendientes
-  const { data: ordenes, error: opError } = await supabaseClient
-    .from("orden_produccion").select("*").eq("estado", "Pendiente");
+  const { data: ordenes, error: opError } = await supabaseClient.from("orden_produccion").select("*").eq("estado", "Pendiente");
   if (opError) return alert("Error al cargar órdenes: " + opError.message);
   if (!ordenes?.length) return alert("No hay órdenes pendientes");
 
@@ -114,10 +114,7 @@ async function planificarSemana() {
   const carga = {};
   for (const l of lineas) {
     carga[l.id_linea] = {};
-    fechasMostrar.forEach(f => {
-      const fechaKey = f.toISOString().split("T")[0];
-      carga[l.id_linea][fechaKey] = 0;
-    });
+    fechasMostrar.forEach(f => { const fechaKey = f.toISOString().split("T")[0]; carga[l.id_linea][fechaKey] = 0; });
   }
 
   const prioridadOrden = { urgente: 1, alta: 2, normal: 3, baja: 4 };
@@ -134,7 +131,6 @@ async function planificarSemana() {
     let asignado = false;
     for (let i=0; i<fechasMostrar.length && !asignado; i++) {
       const fechaKey = fechasMostrar[i].toISOString().split("T")[0];
-
       for (const cand of posibles) {
         const minutosUsados = carga[cand.id_linea][fechaKey];
         const capacidad = lineas.find(l=>l.id_linea===cand.id_linea)?.capacidad_diaria_min ?? 480;
