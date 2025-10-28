@@ -48,7 +48,7 @@ body {
 
 .param-form input,
 .param-form select {
-  
+   /*width: 80%; */
   padding: 0.7rem;
   border: 1px solid #333;
   border-radius: 8px;
@@ -67,6 +67,7 @@ body {
 
 
 .btn-guardar {
+   /*width: 80%; */
   background-color: #00d084;
   color: #121212;
   padding: 0.9rem;
@@ -123,6 +124,7 @@ tr:hover {
   transition: background-color 0.2s;
 }
 
+
 @media (max-width: 900px) {
   .param-panel {
     grid-template-columns: 1fr;
@@ -133,7 +135,9 @@ tr:hover {
   }
 
   .parametros-actuales {
-    max-height: none;
+    flex: 1 1 600px;   /* base más grande */
+    min-width: 400px;  /* opcional mantener mínimo */
+    max-width: 800px;  /* limitar para pantallas muy grandes */
   }
 }
 
@@ -236,16 +240,16 @@ tr:hover {
   display: flex;
   justify-content: center; 
   align-items: flex-start;
-  gap: 20px;
+  gap: 3rem;;
   transition: all 0.3s ease;
   flex-wrap: nowrap; 
 }
 
 /* Formulario flexible */
 .param-form {
-  flex: 1 1 400px; 
-  min-width: 350px;
-  max-width: 600px; 
+  flex: 1 1 100px;   /* un poco más angosto */
+  min-width: 300px;
+  max-width: 500px;
 }
 
 /* Panel lateral flexible */
@@ -338,4 +342,30 @@ tr:hover {
 .btn-editar:hover {
   background-color: #00b86b;
   transform: scale(1.05);
+}
+.parametros-actuales table {
+  width: 100%;
+}
+
+
+/*FILTRO */
+.filtros-tabla {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filtros-tabla label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  color: #b0b0b0;
+}
+
+.filtros-tabla select {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
 }

@@ -120,26 +120,137 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
 });
 
 
-
-
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
 document.addEventListener('DOMContentLoaded', () => {
-  const btnToggle = document.getElementById('btn-toggle-parametros');
-  const panel = document.getElementById('panelParametros');
-  const contenedor = document.getElementById('contenedor');
-  let visible = false;
+  try {
+    const btnToggle = document.getElementById('btn-toggle-parametros');
+    const panel = document.querySelector('.parametros-actuales');
 
-  btnToggle.addEventListener('click', () => {
-    visible = !visible;
+    if (!btnToggle || !panel) {
+      console.warn("⚠️ No se encontró el botón o el panel de parámetros actuales en el DOM.");
+      return;
+    }
 
-    // Mostrar/ocultar panel
-    panel.classList.toggle('visible', visible);
+    let visible = false;
 
-    // Ajustar layout
-    contenedor.classList.toggle('panel-activo', visible);
-
-    // Cambiar texto del botón
-    btnToggle.innerHTML = visible
-      ? '<i class="fas fa-eye-slash"></i> Ocultar parámetros actuales'
-      : '<i class="fas fa-table"></i> Ver parámetros actuales';
-  });
+    btnToggle.addEventListener('click', () => {
+      try {
+        visible = !visible;
+        panel.classList.toggle('visible', visible);
+        btnToggle.innerHTML = visible
+          ? '<i class="fas fa-eye-slash"></i> Ocultar parámetros actuales'
+          : '<i class="fas fa-table"></i> Ver parámetros actuales';
+      } catch (error) {
+        console.error("⚠️ Error al alternar la visibilidad del panel:", error);
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error al inicializar el botón de alternar parámetros:", error);
+  }
 });
+
+
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    await cargarProductos();
+    await cargarLineasProduccion();
+
+    // Filtros
+    await llenarFiltros();
+    document.getElementById("filtro-linea").addEventListener("change", filtrarTabla);
+    document.getElementById("filtro-producto").addEventListener("change", filtrarTabla);
+
+    // Botón toggle
+    const btnToggle = document.getElementById('btn-toggle-parametros');
+    const panel = document.getElementById('panelParametros');
+    let visible = false;
+    btnToggle.addEventListener('click', () => {
+      visible = !visible;
+      panel.classList.toggle('visible', visible);
+      btnToggle.innerHTML = visible
+        ? '<i class="fas fa-eye-slash"></i> Ocultar parámetros actuales'
+        : '<i class="fas fa-table"></i> Ver parámetros actuales';
+    });
+
+    // Botón volver
+    document.getElementById("btn-volver").addEventListener("click", () => {
+      window.location.href = "supervisor.html";
+    });
+
+    // Inputs capacidad diaria
+    ["duracion", "horas_jornada", "eficiencia"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", calcularCapacidad);
+    });
+  } catch (error) {
+    console.error("❌ Error al inicializar la página:", error);
+  }
+});
+
+async function llenarFiltros() {
+  const selectLinea = document.getElementById("filtro-linea");
+  const selectProducto = document.getElementById("filtro-producto");
+
+  // Limpiar opciones
+  selectLinea.innerHTML = '<option value="">Todas</option>';
+  selectProducto.innerHTML = '<option value="">Todos</option>';
+
+  try {
+    // Lineas
+    const { data: lineas, error: errorLineas } = await supabase
+      .from("linea_productos")
+      .select("id_linea");
+
+    if (errorLineas) throw errorLineas;
+
+    lineas?.forEach(l => {
+      const opt = document.createElement("option");
+      opt.value = l.id_linea;
+      opt.textContent = l.id_linea;
+      selectLinea.appendChild(opt);
+    });
+  } catch (error) {
+    console.error("⚠️ Error al cargar líneas de producción:", error);
+  }
+
+  try {
+    const { data: productos, error: errorProductos } = await supabase
+      .from("productos")
+      .select("id_producto, nombre");
+
+    if (errorProductos) throw errorProductos;
+
+    productos?.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id_producto;
+      opt.textContent = p.nombre;
+      selectProducto.appendChild(opt);
+    });
+  } catch (error) {
+    console.error("⚠️ Error al cargar productos:", error);
+  }
+}
+
+function filtrarTabla() {
+  try {
+    const linea = document.getElementById("filtro-linea").value;
+    const selectProducto = document.getElementById("filtro-producto");
+    const producto = selectProducto.options[selectProducto.selectedIndex].text;
+
+    const filas = document.querySelectorAll("#tabla-parametros tbody tr");
+
+    filas.forEach(fila => {
+      const lineaFila = fila.cells[0].textContent.trim();
+      const productoFila = fila.cells[1].textContent.trim();
+
+      const mostrar =
+        (!linea || linea === lineaFila) &&
+        (!producto || producto === "Todos" || producto === productoFila);
+
+      fila.style.display = mostrar ? "" : "none";
+    });
+  } catch (error) {
+    console.error("⚠️ Error al filtrar la tabla:", error);
+  }
+}
