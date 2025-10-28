@@ -44,7 +44,7 @@ async function cargarLineasProduccion() {
       <td>${l.eficiencia ?? 0}%</td>
       <td>${l.capacidad_diaria ?? 0}</td>
       <td>${l.estado ?? ""}</td>
-      <td><button class="btn-editar"><i class="fas fa-edit"></i></button></td>
+      <td><button class="btn-editar"><i class="fas fa-edit"></i>Editar</button></td>
     `;
 
     fila.querySelector(".btn-editar").addEventListener("click", () => editarFila(l));
@@ -117,4 +117,29 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
   filaEditando = null;
   form.querySelector(".btn-guardar").innerHTML = `<i class="fas fa-save"></i> Guardar parámetros`;
   await cargarLineasProduccion();
+});
+
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btnToggle = document.getElementById('btn-toggle-parametros');
+  const panel = document.getElementById('panelParametros');
+  const contenedor = document.getElementById('contenedor');
+  let visible = false;
+
+  btnToggle.addEventListener('click', () => {
+    visible = !visible;
+
+    // Mostrar/ocultar panel
+    panel.classList.toggle('visible', visible);
+
+    // Ajustar layout
+    contenedor.classList.toggle('panel-activo', visible);
+
+    // Cambiar texto del botón
+    btnToggle.innerHTML = visible
+      ? '<i class="fas fa-eye-slash"></i> Ocultar parámetros actuales'
+      : '<i class="fas fa-table"></i> Ver parámetros actuales';
+  });
 });

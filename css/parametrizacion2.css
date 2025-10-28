@@ -1,0 +1,341 @@
+body {
+  font-family: 'Inter', Arial, sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+  margin: 0;
+  padding: 0;
+}
+
+
+
+.param-panel {
+  width: 95%;
+  max-width: 1400px;  
+  margin: 2rem auto;
+  background: #1e1e1e;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  border: 1px solid #2c2c2c;
+}
+
+
+.param-panel h2 {
+  grid-column: span 2;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #eee;
+  font-weight: 600;
+}
+
+
+.param-form {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #b0b0b0;
+}
+
+
+.param-form input,
+.param-form select {
+  
+  padding: 0.7rem;
+  border: 1px solid #333;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  transition: border-color 0.3s, background-color 0.3s;
+}
+
+.param-form input:focus,
+.param-form select:focus {
+  border-color: #00d084;
+  outline: none;
+  background-color: #303030;
+}
+
+
+.btn-guardar {
+  background-color: #00d084;
+  color: #121212;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn-guardar:hover {
+  background-color: #00b86b;
+  transform: scale(1.02);
+}
+
+
+.parametros-actuales {
+  background: #1a1a1a;
+  border-radius: 12px;
+  border: 1px solid #2c2c2c;
+  padding: 1rem;
+  overflow: auto;
+  max-height: 500px;
+}
+
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1e1e1e;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 0.8rem;
+  text-align: center;  
+}
+
+th {
+  background-color: #252525;
+  color: #eee;
+  font-weight: 600;
+  border-bottom: 2px solid #333;
+}
+
+td {
+  border-bottom: 1px solid #2c2c2c;
+}
+
+tr:hover {
+  background-color: #2a2a2a;
+  transition: background-color 0.2s;
+}
+
+@media (max-width: 900px) {
+  .param-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .param-panel h2 {
+    grid-column: 1;
+  }
+
+  .parametros-actuales {
+    max-height: none;
+  }
+}
+
+
+
+.param-contenido {
+  display: grid;
+  grid-template-columns: 0.8fr 1.4fr; 
+  gap: 2rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+
+
+.parametros-actuales {
+  background: #1a1a1a;
+  border: 1px solid #2c2c2c;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 0 8px rgba(0,0,0,0.4);
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+
+.parametros-actuales h3 {
+  margin-top: 0;
+  color: #00d084;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+
+@media (max-width: 900px) {
+  .param-contenido {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+/* === Botón para mostrar/ocultar panel === */
+.btn-toggle {
+  background-color: #2a2a2a;
+  color: #00d084;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.btn-toggle:hover {
+  background-color: #333;
+  transform: scale(1.02);
+}
+
+
+
+#btn-toggle-parametros {
+  display: block;
+  margin-left: auto;
+  margin-bottom: 1rem;
+}
+
+
+.parametros-actuales {
+  display: flex; 
+  background: #1a1a1a;
+  border: 1px solid #2c2c2c;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 0 8px rgba(0,0,0,0.4);
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+
+.parametros-actuales.visible {
+  display: block;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+
+
+.param-contenido {
+  display: flex;
+  justify-content: center; 
+  align-items: flex-start;
+  gap: 20px;
+  transition: all 0.3s ease;
+  flex-wrap: nowrap; 
+}
+
+/* Formulario flexible */
+.param-form {
+  flex: 1 1 400px; 
+  min-width: 350px;
+  max-width: 600px; 
+}
+
+/* Panel lateral flexible */
+.parametros-actuales {
+  flex: 1 1 400px; 
+  min-width: 400px; 
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  display: none;
+  overflow-x: auto; 
+}
+
+
+.parametros-actuales.visible {
+  display: block;
+}
+
+/* Cuando el panel está activo, mover formulario a la izquierda */
+.param-contenido.panel-activo {
+  justify-content: flex-start;
+}
+
+/* Responsive: se apilan en pantallas pequeñas */
+@media (max-width: 900px) {
+  .param-contenido {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .param-form, .parametros-actuales {
+    width: 90%;
+    min-width: auto;
+  }
+}
+
+
+
+.btn-volver {
+  display: inline-flex;           
+  align-items: center;
+  gap: 8px;
+  background-color: #2a2a2a;
+  color: #00d084;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;         
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn-volver:hover {
+  background-color: #333;
+  transform: scale(1.02);
+}
+
+.panel-botones {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;            
+  margin-bottom: 1rem;
+}
+
+
+/* Botón editar en tabla */
+.btn-editar {
+  background-color: #00d084; 
+  color: #121212;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn-editar i {
+  font-size: 0.9rem;
+}
+
+.btn-editar:hover {
+  background-color: #00b86b;
+  transform: scale(1.05);
+}
