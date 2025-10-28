@@ -82,7 +82,10 @@ async function renderAgendaDesdeSupabase() {
         const bloque = document.createElement("div");
         const clasePrioridad = p.prioridad?.toLowerCase() || "normal";
         bloque.className = "bloque-produccion " + clasePrioridad;
-        bloque.innerHTML = `<strong>Línea ${p.id_linea}</strong><br>OP ${p.id_op}<br>${p.hora_inicio} - ${p.hora_fin}`;
+
+        // Mostramos numero_op en lugar de id_op
+        bloque.innerHTML = `<strong>Línea ${p.id_linea}</strong><br>OP ${p.numero_op || p.id_op}<br>${p.hora_inicio} - ${p.hora_fin}`;
+
         bloque.addEventListener("click", () => {
           mostrarDetalleOP(p.id_op);
           mostrarDetalleLinea(p.id_linea);
@@ -100,7 +103,9 @@ async function renderAgendaDesdeSupabase() {
 async function planificarSemana() {
   const hoyStr = new Date().toISOString().split("T")[0];
 
+  // Borramos planificaciones desde hoy en adelante
   await supabaseClient.from("planificacion_semanal").delete().gte("dia", hoyStr);
+
   const { data: ordenes, error: opError } = await supabaseClient.from("orden_produccion").select("*").eq("estado", "Pendiente");
   if (opError) return alert("Error al cargar órdenes: " + opError.message);
   if (!ordenes?.length) return alert("No hay órdenes pendientes");
@@ -114,7 +119,10 @@ async function planificarSemana() {
   const carga = {};
   for (const l of lineas) {
     carga[l.id_linea] = {};
-    fechasMostrar.forEach(f => { const fechaKey = f.toISOString().split("T")[0]; carga[l.id_linea][fechaKey] = 0; });
+    fechasMostrar.forEach(f => { 
+      const fechaKey = f.toISOString().split("T")[0]; 
+      carga[l.id_linea][fechaKey] = 0; 
+    });
   }
 
   const prioridadOrden = { urgente: 1, alta: 2, normal: 3, baja: 4 };
@@ -142,6 +150,7 @@ async function planificarSemana() {
 
           planificaciones.push({
             id_op: op.id_orden_produccion,
+            numero_op: op.numero_op,      // <-- agregado
             id_linea: cand.id_linea,
             dia: fechaKey,
             hora_inicio: minutosToHora(horaInicio),
@@ -175,29 +184,51 @@ function minutosToHora(min) {
 
 // ---------------------- Mostrar detalle OP ----------------------
 async function mostrarDetalleOP(id_op){
-  const { data: op, error } = await supabaseClient.from("orden_produccion").select("*").eq("id_orden_produccion",id_op).single();
+  const { data: op, error } = await supabaseClient
+    .from("orden_produccion")
+    .select("*")
+    .eq("id_orden_produccion", id_op)
+    .single();
   if(error) return alert("Error al cargar OP: "+error.message);
 
-  let contenido = `<h3>Detalle OP ${op.id_orden_produccion}</h3>
-                   <p>Prioridad: ${op.prioridad}</p>
-                   <p>Estado: ${op.estado}</p>
-                   <p>Fecha estimada: ${op.fecha_estimada_entrega||"N/A"}</p>
-                   <p>Productos/Lotes:</p><pre>${JSON.stringify(op.ver_orden,null,2)}</pre>`;
+  // Modal limpio con numero_op
+  let contenido = `<h3>Detalle OP ${op.numero_op || op.id_orden_produccion}</h3>
+                   <p><strong>Prioridad:</strong> ${op.prioridad}</p>
+                   <p><strong>Estado:</strong> ${op.estado}</p>
+                   <p><strong>Fecha estimada:</strong> ${op.fecha_estimada_entrega||"N/A"}</p>
+                   <p><strong>Motivo:</strong> ${op.motivo || "N/A"}</p>
+                   <p><strong>Productos/Lotes:</strong></p>
+                   <pre>${JSON.stringify(op.ver_orden,null,2)}</pre>`;
+
   document.getElementById("detalleContenido").innerHTML = contenido;
   document.getElementById("modalDetalle").style.display = "flex";
 }
 
 // ---------------------- Mostrar detalle línea ----------------------
 async function mostrarDetalleLinea(id_linea){
-  const { data: lineasProd, error } = await supabaseClient.from("linea_produccion").select("*").eq("id_linea",id_linea);
+  const { data: lineasProd, error } = await supabaseClient
+    .from("linea_produccion")
+    .select("*")
+    .eq("id_linea", id_linea);
   if(error) return alert("Error al cargar línea: "+error.message);
 
-  let contenido = "<h3>Detalle Línea</h3><table><tr><th>Producto</th><th>Duración</th><th>Eficiencia</th></tr>";
+  // Tabla de productos de la línea
+  let contenido = `<h3>Detalle Línea ${id_linea}</h3>
+                   <table>
+                     <thead>
+                       <tr><th>Producto</th><th>Duración (min)</th><th>Eficiencia</th></tr>
+                     </thead>
+                     <tbody>`;
   lineasProd.forEach(lp=>{
-    contenido += `<tr><td>${lp.id_producto}</td><td>${lp.duracion}</td><td>${lp.eficiencia||1}</td></tr>`;
+    contenido += `<tr>
+                    <td>${lp.id_producto}</td>
+                    <td>${lp.duracion}</td>
+                    <td>${lp.eficiencia || 1}</td>
+                  </tr>`;
   });
-  contenido += "</table>";
+  contenido += `</tbody></table>`;
 
+  // Append al modal (ya que mostramos ambos detalles juntos)
   document.getElementById("detalleContenido").innerHTML += contenido;
   document.getElementById("modalDetalle").style.display = "flex";
 }
