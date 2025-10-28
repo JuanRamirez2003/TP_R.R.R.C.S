@@ -89,34 +89,67 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
   const form = e.target;
   const datos = Object.fromEntries(new FormData(form));
 
-  const payload = {
-    id_linea: Number(datos.id_linea),
-    id_producto: Number(datos.id_producto),
-    duracion: Number(datos.duracion),
-    horas_jornada: Number(datos.horas_jornada),
-    eficiencia: Number(datos.eficiencia),
-    capacidad_diaria: Number(datos.capacidad_diaria),
-    estado: datos.estado,
-  };
+  try {
+    const idLinea = Number(datos.id_linea);
+    const idProducto = Number(datos.id_producto);
+    const duracion = Number(datos.duracion);
+    const horas = Number(datos.horas_jornada);
+    const eficiencia = Number(datos.eficiencia);
 
-  let error;
-  if (filaEditando) {
-    ({ error } = await supabase.from("linea_produccion").update(payload).eq("id", filaEditando));
-  } else {
-    ({ error } = await supabase.from("linea_produccion").insert([payload]));
+    if (idLinea <= 0 || idProducto <= 0)
+      throw new Error("Los IDs de línea y producto deben ser números positivos.");
+
+    if (duracion <= 0 || horas <= 0 || eficiencia <= 0)
+      throw new Error("Duración, horas y eficiencia deben ser mayores a 0.");
+
+    if (eficiencia > 100)
+      throw new Error("La eficiencia no puede superar el 100%.");
+
+    //Validar que línea y producto existan
+    const [{ data: lineasValidas }, { data: productosValidos }] = await Promise.all([
+      supabase.from("linea_productos").select("id_linea"),
+      supabase.from("productos").select("id_producto")
+    ]);
+
+    const idsLineas = lineasValidas?.map(l => Number(l.id_linea)) ?? [];
+    const idsProductos = productosValidos?.map(p => Number(p.id_producto)) ?? [];
+
+    if (!idsLineas.includes(idLinea))
+      throw new Error(`La línea ${idLinea} no existe en la base de datos.`);
+
+    if (!idsProductos.includes(idProducto))
+      throw new Error(`El producto ${idProducto} no existe en la base de datos.`);
+
+    //Construir payload si todo está bien
+    const payload = {
+      id_linea: idLinea,
+      id_producto: idProducto,
+      duracion,
+      horas_jornada: horas,
+      eficiencia,
+      capacidad_diaria: Number(datos.capacidad_diaria),
+      estado: datos.estado,
+    };
+
+    let error;
+    if (filaEditando) {
+      ({ error } = await supabase.from("linea_produccion").update(payload).eq("id", filaEditando));
+    } else {
+      ({ error } = await supabase.from("linea_produccion").insert([payload]));
+    }
+
+    if (error) throw error;
+
+    alert(filaEditando ? "Datos actualizados correctamente" : "Línea agregada correctamente");
+    form.reset();
+    filaEditando = null;
+    form.querySelector(".btn-guardar").innerHTML = `<i class="fas fa-save"></i> Guardar parámetros`;
+    await cargarLineasProduccion();
+
+  } catch (error) {
+    console.error("❌ Error en validación o guardado:", error);
+    alert(error.message || "Ocurrió un error al guardar los datos.");
   }
-
-  if (error) {
-    console.error("Error al guardar:", error);
-    alert("Error al guardar los datos.");
-    return;
-  }
-
-  alert(filaEditando ? "Datos actualizados correctamente" : "Línea agregada correctamente");
-  form.reset();
-  filaEditando = null;
-  form.querySelector(".btn-guardar").innerHTML = `<i class="fas fa-save"></i> Guardar parámetros`;
-  await cargarLineasProduccion();
 });
 
 
@@ -156,8 +189,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     await cargarProductos();
     await cargarLineasProduccion();
-
-    // Filtros
+   
     await llenarFiltros();
     document.getElementById("filtro-linea").addEventListener("change", filtrarTabla);
     document.getElementById("filtro-producto").addEventListener("change", filtrarTabla);
@@ -254,3 +286,4 @@ function filtrarTabla() {
     console.error("⚠️ Error al filtrar la tabla:", error);
   }
 }
+
