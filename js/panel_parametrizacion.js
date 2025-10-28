@@ -83,6 +83,44 @@ function calcularCapacidad() {
   document.getElementById("capacidad_diaria").value = capacidad.toFixed(2);
 }
 
+/*
+// Guardar cambios
+document.getElementById("form-parametros").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const datos = Object.fromEntries(new FormData(form));
+
+  const payload = {
+    id_linea: Number(datos.id_linea),
+    id_producto: Number(datos.id_producto),
+    duracion: Number(datos.duracion),
+    horas_jornada: Number(datos.horas_jornada),
+    eficiencia: Number(datos.eficiencia),
+    capacidad_diaria: Number(datos.capacidad_diaria),
+    estado: datos.estado,
+  };
+
+  let error;
+  if (filaEditando) {
+    ({ error } = await supabase.from("linea_produccion").update(payload).eq("id", filaEditando));
+  } else {
+    ({ error } = await supabase.from("linea_produccion").insert([payload]));
+  }
+
+  if (error) {
+    console.error("Error al guardar:", error);
+    alert("Error al guardar los datos.");
+    return;
+  }
+
+  alert(filaEditando ? "Datos actualizados correctamente" : "Línea agregada correctamente");
+  form.reset();
+  filaEditando = null;
+  form.querySelector(".btn-guardar").innerHTML = `<i class="fas fa-save"></i> Guardar parámetros`;
+  await cargarLineasProduccion();
+});
+*/
+
 // Guardar cambios
 document.getElementById("form-parametros").addEventListener("submit", async (e) => {
   e.preventDefault();
