@@ -87,8 +87,9 @@ async function renderAgendaDesdeSupabase() {
         bloque.innerHTML = `<strong>Línea ${p.id_linea}</strong><br> ${p.numero_op}<br>${p.hora_inicio} - ${p.hora_fin}`;
         //console.log("ACAAA", p.numero_op);
         bloque.addEventListener("click", () => {
-          mostrarDetalleOP(p.id_op);
-          mostrarDetalleLinea(p.id_linea);
+          //console.log(p);
+          mostrarDetalleOP(p.id_op,p.id_linea);
+          //mostrarDetalleLinea(p.id_linea);
         });
         columna.appendChild(bloque);
       });
@@ -183,7 +184,7 @@ function minutosToHora(min) {
 }
 
 // ---------------------- Mostrar detalle OP ----------------------
-async function mostrarDetalleOP(id_op){
+/*async function mostrarDetalleOP(id_op){
   const { data: op, error } = await supabaseClient
     .from("orden_produccion")
     .select("*")
@@ -203,12 +204,72 @@ async function mostrarDetalleOP(id_op){
                       <div>${item.nombre} - Cantidad de lotes: ${item.cantidad}</div>
                     `).join('')}
                   </ul>
+                      
                   `;
+  
+
+
+
 
   document.getElementById("detalleContenido").innerHTML = contenido;
   document.getElementById("modalDetalle").style.display = "flex";
 }//<p><strong>Motivo:</strong> ${op.motivo || "N/A"}</p>
+*/
 
+
+async function mostrarDetalleOP(id_op,id_linea){
+  const { data: op, error } = await supabaseClient
+    .from("orden_produccion")
+    .select("*")
+    .eq("id_orden_produccion", id_op)
+    .single();
+  if(error) return alert("Error al cargar OP: " + error.message);
+
+  // Detalle OP
+  let contenido = `<h3>Detalle ${op.numero_op}</h3>
+                   <p><strong>Prioridad:</strong> ${op.prioridad}</p>
+                   <p><strong>Estado:</strong> ${op.estado}</p>
+                   <p><strong>Fecha estimada:</strong> ${op.fecha_estimada_entrega || "N/A"}</p>
+                   <p><strong>Productos/Lotes:</strong></p>
+                   ${op.ver_orden.map(item => `
+                     <div>${item.nombre} - Cantidad de lotes: ${item.cantidad}</div>
+                   `).join('')}
+                   `;
+
+  // 🔄 Buscar detalle de línea asociada
+  if(id_linea){
+    const { data: lineasProd, error: errorLinea } = await supabaseClient
+      .from("linea_produccion")
+      .select("*")
+      .eq("id_linea", id_linea);
+
+    if(errorLinea){
+      contenido += `<p><strong>Error al cargar línea:</strong> ${errorLinea.message}</p>`;
+    } else {
+      contenido += `<h3>Detalle Línea ${id_linea}</h3>
+                    <table>
+                      <thead>
+                        <tr><th>Producto</th><th>Duración (min)</th><th>Eficiencia</th></tr>
+                      </thead>
+                      <tbody>
+                        ${lineasProd.map(lp => `
+                          <tr>
+                            <td>${lp.id_producto}</td>
+                            <td>${lp.duracion}</td>
+                            <td>${lp.eficiencia || 1}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>`;
+    }
+  }
+
+  // Mostrar en modal
+  document.getElementById("detalleContenido").innerHTML = contenido;
+  document.getElementById("modalDetalle").style.display = "flex";
+}
+
+/*
 // ---------------------- Mostrar detalle línea ----------------------
 async function mostrarDetalleLinea(id_linea){
   const { data: lineasProd, error } = await supabaseClient
@@ -237,3 +298,4 @@ async function mostrarDetalleLinea(id_linea){
   document.getElementById("detalleContenido").innerHTML += contenido;
   document.getElementById("modalDetalle").style.display = "flex";
 }
+*/
