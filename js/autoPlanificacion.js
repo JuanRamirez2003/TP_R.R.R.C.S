@@ -240,7 +240,7 @@ async function mostrarDetalleOP(id_op,id_linea){
   if(id_linea){
     const { data: lineasProd, error: errorLinea } = await supabaseClient
       .from("linea_produccion")
-      .select("*")
+      .select("duracion, eficiencia, producto:productos(nombre)")
       .eq("id_linea", id_linea);
 
     if(errorLinea){
@@ -252,13 +252,14 @@ async function mostrarDetalleOP(id_op,id_linea){
                         <tr><th>Producto</th><th>Duración (min)</th><th>Eficiencia</th></tr>
                       </thead>
                       <tbody>
-                        ${lineasProd.map(lp => `
-                          <tr>
-                            <td>${lp.id_producto}</td>
-                            <td>${lp.duracion}</td>
-                            <td>${lp.eficiencia || 1}</td>
-                          </tr>
-                        `).join('')}
+                       ${lineasProd.map(lp => `
+                        <tr>
+                          <td>${lp.producto.nombre}</td>
+                          <td>${lp.duracion}</td>
+                          <td>${lp.eficiencia || 1}</td>
+                        </tr>
+                      `).join('')}
+
                       </tbody>
                     </table>`;
     }
