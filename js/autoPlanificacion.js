@@ -84,8 +84,8 @@ async function renderAgendaDesdeSupabase() {
         bloque.className = "bloque-produccion " + clasePrioridad;
 
         // Mostramos numero_op en lugar de id_op
-        bloque.innerHTML = `<strong>Línea ${p.id_linea}</strong><br>OP ${p.id_op}<br>${p.hora_inicio} - ${p.hora_fin}`;
-
+        bloque.innerHTML = `<strong>Línea ${p.id_linea}</strong><br> ${p.numero_op}<br>${p.hora_inicio} - ${p.hora_fin}`;
+        //console.log("ACAAA", p.numero_op);
         bloque.addEventListener("click", () => {
           mostrarDetalleOP(p.id_op);
           mostrarDetalleLinea(p.id_linea);
@@ -192,17 +192,22 @@ async function mostrarDetalleOP(id_op){
   if(error) return alert("Error al cargar OP: "+error.message);
 
   // Modal limpio con numero_op
-  let contenido = `<h3>Detalle OP ${op.numero_op || op.id_orden_produccion}</h3>
+  let contenido = `<h3>Detalle OP ${op.numero_op }</h3>
                    <p><strong>Prioridad:</strong> ${op.prioridad}</p>
                    <p><strong>Estado:</strong> ${op.estado}</p>
                    <p><strong>Fecha estimada:</strong> ${op.fecha_estimada_entrega||"N/A"}</p>
-                   <p><strong>Motivo:</strong> ${op.motivo || "N/A"}</p>
+                   
                    <p><strong>Productos/Lotes:</strong></p>
-                   <pre>${JSON.stringify(op.ver_orden,null,2)}</pre>`;
+                  <ul>
+                    ${op.ver_orden.map(item => `
+                      <div>${item.nombre} - Cantidad de lotes: ${item.cantidad}</div>
+                    `).join('')}
+                  </ul>
+                  `;
 
   document.getElementById("detalleContenido").innerHTML = contenido;
   document.getElementById("modalDetalle").style.display = "flex";
-}
+}//<p><strong>Motivo:</strong> ${op.motivo || "N/A"}</p>
 
 // ---------------------- Mostrar detalle línea ----------------------
 async function mostrarDetalleLinea(id_linea){
