@@ -84,7 +84,7 @@ async function renderAgendaDesdeSupabase() {
         bloque.className = "bloque-produccion " + clasePrioridad;
 
         // Mostramos numero_op en lugar de id_op
-        bloque.innerHTML = `<strong>Línea ${p.id_linea}</strong><br>OP ${p.numero_op || p.id_op}<br>${p.hora_inicio} - ${p.hora_fin}`;
+        bloque.innerHTML = `<strong>Línea ${p.id_linea}</strong><br>OP ${p.id_op}<br>${p.hora_inicio} - ${p.hora_fin}`;
 
         bloque.addEventListener("click", () => {
           mostrarDetalleOP(p.id_op);
