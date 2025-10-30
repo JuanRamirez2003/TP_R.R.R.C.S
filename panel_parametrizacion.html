@@ -7,75 +7,97 @@
   <link rel="stylesheet" href="css/parametrizacion2.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    #form-wrapper {
+      display: none;
+      margin-top: 1rem;
+    }
+
+    .parametros-actuales {
+      display: block;
+    }
+  </style>
 </head>
 
 <body>
 
   <div class="param-panel">
-    
+
     <h2><i class="fas fa-sliders-h"></i> Configuración de Producción</h2>
     <!-- Botón Volver -->
     <div class="panel-botones">
-      <a href="supervisor.html"  id="btn-volver" class="btn-volver" >
-        <i class="fas fa-arrow-left" ></i> Volver
+      <a href="supervisor.html" id="btn-volver" class="btn-volver">
+        <i class="fas fa-arrow-left"></i> Volver
       </a>
 
-      <button id="btn-toggle-parametros" class="btn-toggle">
+      <!--<button id="btn-toggle-parametros" class="btn-toggle">
         <i class="fas fa-table"></i> Ver parámetros actuales
-      </button>
+      </button>-->
     </div>
 
 
     <!-- Contenedor con dos columnas -->
     <div class="param-contenido" id="contenedor">
       <!-- Formulario -->
-      <form id="form-parametros" class="param-form">
-        <div class="form-group">
-          <label for="id_linea"><i class="fas fa-industry"></i> Línea</label>
-          <input type="number" id="id_linea" name="id_linea" min="1"  required>
-        </div>
+      <div id="form-wrapper" style="display:none;">
+        <form id="form-parametros" class="param-form">
+          <div class="form-group">
+            <label for="id_linea"><i class="fas fa-industry"></i> Línea</label>
+            <input type="number" id="id_linea" name="id_linea" min="1" required readonly>
+          </div>
 
-        <div class="form-group">
-          <label for="id_producto"><i class="fas fa-box"></i> Producto</label>
-          <input type="number" id="id_producto" name="id_producto" placeholder="ID de producto"  min="1" required>
-        </div>
+          <div class="form-group">
+            <label for="producto_nombre"><i class="fas fa-box"></i> Producto</label>
+            <!-- Este input solo muestra el nombre -->
+            <input type="text" id="producto_nombre" name="producto_nombre" readonly>
+            <!-- Este campo oculto envía el id real -->
+            <input type="hidden" id="id_producto" name="id_producto">
+          </div>
 
-        <div class="form-group">
-          <label for="duracion"><i class="fas fa-hourglass-half"></i> Duración (minutos)</label>
-          <input type="number" id="duracion" name="duracion" min="1" required>
-        </div>
+          <div class="form-group">
+            <label for="duracion"><i class="fas fa-hourglass-half"></i> Duración (minutos)</label>
+            <input type="number" id="duracion" name="duracion" min="1" required>
+          </div>
 
-        <div class="form-group">
-          <label for="horas_jornada"><i class="fas fa-clock"></i> Horas de jornada</label>
-          <input type="number" id="horas_jornada" name="horas_jornada" min="1" required>
-        </div>
+          <div class="form-group">
+            <label for="horas_jornada"><i class="fas fa-clock"></i> Horas de jornada</label>
+            <input type="number" id="horas_jornada" name="horas_jornada" min="1" required>
+          </div>
 
-        <div class="form-group">
-          <label for="eficiencia"><i class="fas fa-percentage"></i> Eficiencia (%)</label>
-          <input type="number" id="eficiencia" name="eficiencia" min="1" max="100" step="0.1" required>
-        </div>
+          <div class="form-group">
+            <label for="eficiencia"><i class="fas fa-percentage"></i> Eficiencia (%)</label>
+            <input type="number" id="eficiencia" name="eficiencia" min="1" max="100" step="0.1" required>
+          </div>
 
-        <div class="form-group">
-          <label><i class="fas fa-bolt"></i> Capacidad diaria (calculada)</label>
-          <input type="text" id="capacidad_diaria" name="capacidad_diaria" readonly>
-        </div>
+          <div class="form-group">
+            <label><i class="fas fa-bolt"></i> Capacidad diaria (calculada)</label>
+            <input type="text" id="capacidad_diaria" name="capacidad_diaria" readonly>
+          </div>
 
-        <div class="form-group">
-          <label for="estado"><i class="fas fa-toggle-on"></i> Estado</label>
-          <select id="estado" name="estado" required>
-            <option value="Activa">Activa</option>
-            <option value="Suspendida">Suspendida</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="estado"><i class="fas fa-toggle-on"></i> Estado</label>
+            <select id="estado" name="estado" required>
+              <option value="Activa">Activa</option>
+              <option value="Suspendida">Suspendida</option>
+            </select>
+          </div>
 
-        <button type="submit" class="btn-guardar">
-          <i class="fas fa-save"></i> Guardar parámetros
-        </button>
+          <button type="submit" class="btn-guardar">
+            <i class="fas fa-save"></i> Guardar parámetros
+          </button>
+          <!-- Nuevo botón para ocultar -->
+          <button type="button" id="btn-cancelar" class="btn-cancelar">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+      </div>
+
+
       </form>
 
       <!-- Tabla (lado derecho) -->
       <div class="parametros-actuales">
-        <h3>Parámetros actuales</h3>
+        <h2>Parámetros actuales de lineas</h2>
         <div class="filtros-tabla">
           <label>
             <div>
@@ -91,6 +113,17 @@
               Producto:
               <select id="filtro-producto">
                 <option value="">Todos</option>
+              </select>
+            </div>
+          </label>
+
+          <label>
+            <div>
+              Ordenar por eficiencia:
+              <select id="filtro-eficiencia">
+                <option value="">Ninguno</option>
+                <option value="asc">Menor a mayor</option>
+                <option value="desc">Mayor a menor</option>
               </select>
             </div>
           </label>

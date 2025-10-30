@@ -83,6 +83,10 @@
   #registroTable tr:hover {
     background-color: #e6f7ff;
   }
+
+  #registroTable th {
+  color: black;
+}
     </style>
 </head>
 <body>
@@ -290,9 +294,9 @@
   <div class="table-wrapper">
     <h3>Órdenes Finalizadas</h3>
     <table id="registroTable">
-      <thead>
+      <thead >
         <tr>
-          <th>#</th>
+          <!--<th>#</th>-->
           <th>OP</th>
           <th>Etapa</th>
           <th>Estado</th>
@@ -305,6 +309,21 @@
       </thead>
       <tbody></tbody>
     </table>
+  </div>
+</div>
+
+<!-- 🔹 Modal para ver detalle de Lote -->
+<div id="modalDetalleLote" 
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999;">
+  <div style="background:#2a2a2a; padding:20px; border-radius:10px; width:400px; max-height:80%; overflow:auto;">
+    <h3 style="text-align:center;">Detalle del Lote</h3>
+    <div id="contenidoModalDetalleLote"></div>
+    <br>
+    <button onclick="document.getElementById('modalDetalleLote').style.display='none'"
+            style="background:#55a630; border:none; color:white; padding:6px 12px; border-radius:6px; cursor:pointer;">
+      Cerrar
+    </button>
   </div>
 </div>
 <script>

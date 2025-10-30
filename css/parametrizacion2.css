@@ -68,7 +68,7 @@ body {
 
 .btn-guardar {
    /*width: 80%; */
-  background-color: #00d084;
+  background-color: #55a630;
   color: #121212;
   padding: 0.9rem;
   border: none;
@@ -80,7 +80,7 @@ body {
 }
 
 .btn-guardar:hover {
-  background-color: #00b86b;
+  background-color: #4a8c2a;
   transform: scale(1.02);
 }
 
@@ -165,7 +165,7 @@ tr:hover {
 
 .parametros-actuales h3 {
   margin-top: 0;
-  color: #00d084;
+  color: #ffffff;
   text-align: center;
   margin-bottom: 1rem;
 }
@@ -238,6 +238,7 @@ tr:hover {
 
 .param-contenido {
   display: flex;
+  flex-direction: row-reverse; 
   justify-content: center; 
   align-items: flex-start;
   gap: 3rem;;
@@ -271,7 +272,7 @@ tr:hover {
 
 /* Cuando el panel está activo, mover formulario a la izquierda */
 .param-contenido.panel-activo {
-  justify-content: flex-start;
+ justify-content: flex-end;
 }
 
 /* Responsive: se apilan en pantallas pequeñas */
@@ -294,8 +295,8 @@ tr:hover {
   display: inline-flex;           
   align-items: center;
   gap: 8px;
-  background-color: #2a2a2a;
-  color: #00d084;
+  background-color: #55a630;
+  color: #ffffff;
   border: 1px solid #333;
   border-radius: 8px;
   padding: 0.7rem 1rem;
@@ -307,7 +308,7 @@ tr:hover {
 }
 
 .btn-volver:hover {
-  background-color: #333;
+  background-color: #4a8c2a;
   transform: scale(1.02);
 }
 
@@ -321,7 +322,7 @@ tr:hover {
 
 /* Botón editar en tabla */
 .btn-editar {
-  background-color: #00d084; 
+  background-color: #007bff; 
   color: #121212;
   border: none;
   border-radius: 8px;
@@ -340,7 +341,7 @@ tr:hover {
 }
 
 .btn-editar:hover {
-  background-color: #00b86b;
+  background-color: #0056b3;
   transform: scale(1.05);
 }
 .parametros-actuales table {
@@ -368,4 +369,20 @@ tr:hover {
   border: 1px solid #333;
   border-radius: 6px;
   padding: 0.4rem 0.6rem;
+}
+
+.btn-cancelar {
+  background-color: #c9302c;
+  color: #121212;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn-cancelar:hover {
+  background-color: #d9534f;
 }

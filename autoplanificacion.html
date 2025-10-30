@@ -11,8 +11,13 @@
     .bloque-produccion { padding: 5px; margin: 5px 0; border-radius: 4px; color: white; cursor: pointer; text-align: center; font-weight: bold; }
     .urgente { background-color: #ff0000; }
     .alta { background-color: #ff8000; }
+<<<<<<< HEAD
     .normal { background-color: #00cc66; }
     .baja { background-color: #0789d4; }
+=======
+    .normal { background-color: #fdfd1b;}
+    .baja { background-color: #00cc66;  }
+>>>>>>> c510ab5258ca0b53d5fbbec6b4c6cb4cb15d18ff
 
     .filtros { margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .filtros label { font-weight: bold; }
@@ -46,6 +51,10 @@
     #contenidoDetalle table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     #contenidoDetalle th, #contenidoDetalle td { border: 1px solid #444; padding: 5px; text-align: left; }
     #contenidoDetalle th { background-color: #222; }
+
+
+
+    
   </style>
 </head>
 <body>
@@ -73,14 +82,63 @@
     </div>
 
     <div id="agenda-semanal" class="agenda-grid"></div>
-
-    <div id="modalDetalle">
-      <div id="contenidoDetalle">
-        <span id="cerrarModal">✖</span>
-        <div id="detalleContenido"></div>
-      </div>
-    </div>
+    
+<div style="
+       display:none;
+       position:fixed;
+       top:0;
+       left:0;
+       width:100%;
+       height:100%;
+       background:rgba(0,0,0,0.5);
+       z-index:9999;
+       overflow-y:auto;      /* permite scroll vertical */
+       padding:20px 0;
+     " 
+ id="modalDetalle" >
+  <div style="
+       background:#1e1e1e;
+       color:#fff;
+       padding:20px 20px 40px 20px;
+       border-radius:10px;
+       width:90%;
+       max-width:800px;
+       max-height:90vh;
+       overflow-y:auto;
+       box-shadow:0 4px 20px rgba(0,0,0,0.3);
+       position:relative;
+  " id="contenidoDetalle">
+    <span id="cerrarModal" style="
+          position:absolute;
+          top:10px;
+          right:10px;
+          cursor:pointer;
+          font-size:20px;
+          color:#fff;
+          z-index:10;
+          background:rgba(0,0,0,0.3);
+          padding:2px 6px;
+          border-radius:50%;
+    ">✖</span>
+    <div id="detalleContenido"></div>
   </div>
+</div>
+
+<!-- 🔹 Modal para ver detalle de Lote -->
+<div id="modalDetalleLote" 
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999;">
+  <div style="background:#2a2a2a; padding:20px; border-radius:10px; width:400px; max-height:80%; overflow:auto;">
+    <h3 style="text-align:center;">Detalle del Lote</h3>
+    <div id="contenidoModalDetalleLote"></div>
+    <br>
+    <button onclick="document.getElementById('modalDetalleLote').style.display='none'"
+            style="background:#55a630; border:none; color:white; padding:6px 12px; border-radius:6px; cursor:pointer;">
+      Cerrar
+    </button>
+  </div>
+</div>
+
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/autoPlanificacion.js"></script>

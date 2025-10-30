@@ -7,7 +7,7 @@ const productos = {
     5: "▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪"
 };
 
-const estados = {1:false,2:false,3:false,4:false,5:false};
+const estados = { 1: false, 2: false, 3: false, 4: false, 5: false };
 const timers = {};
 const animaciones = {};
 const etapas = ["Preparación", "Cocción", "Empaquetado"];
@@ -34,7 +34,7 @@ modalClose.style.cssText = `
     position: absolute; top: 8px; right: 12px;
     cursor: pointer; font-size: 1.2em; color: #333;
 `;
-modalClose.addEventListener('click', ()=>{ modal.style.display='none'; });
+modalClose.addEventListener('click', () => { modal.style.display = 'none'; });
 const modalBody = document.createElement('div');
 modalContent.appendChild(modalClose);
 modalContent.appendChild(modalBody);
@@ -48,7 +48,7 @@ function guardarEstadoLinea(n, opId, tiempoRestante, etapaIndex) {
 
 function eliminarEstadoLinea(n) {
     const saved = localStorage.getItem(`linea_${n}`);
-    if(saved){
+    if (saved) {
         const data = JSON.parse(saved);
         opEnEjecucion.delete(data.opId);
     }
@@ -59,7 +59,7 @@ function eliminarEstadoLinea(n) {
 // ---------------- Mostrar OP finalizadas ----------------
 function mostrarOPFinalizada(id, texto, linea) {
     const tbody = document.querySelector("#registroTable tbody");
-    if(!tbody) return;
+    if (!tbody) return;
     const fila = document.createElement('tr');
     fila.innerHTML = `<td>${id}</td><td>${texto}</td><td>${linea}</td><td>Finalizada</td><td>Operario ${linea}</td><td>${new Date().toLocaleTimeString()}</td><td>-</td><td>-</td><td>-</td>`;
     tbody.appendChild(fila);
@@ -68,11 +68,11 @@ function mostrarOPFinalizada(id, texto, linea) {
 }
 
 // ---------------- Bloquear OP en ejecución ----------------
-function actualizarSelectsOP(){
-    document.querySelectorAll('select[id^="opSelectLinea"]').forEach(sel=>{
-        [...sel.options].forEach(opt=>{
-            if(opt.value && opEnEjecucion.has(opt.value)) opt.disabled=true;
-            else opt.disabled=false;
+function actualizarSelectsOP() {
+    document.querySelectorAll('select[id^="opSelectLinea"]').forEach(sel => {
+        [...sel.options].forEach(opt => {
+            if (opt.value && opEnEjecucion.has(opt.value)) opt.disabled = true;
+            else opt.disabled = false;
         });
     });
 }
@@ -137,13 +137,13 @@ async function toggleLinea(n) {
 }
 
 // --------------------- Iniciar línea ---------------------
-function iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, estadoText, opInfo, registroTable, velocidad=4, tiempoRestante=null, etapaIndex=0, cant=1) {
+function iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, estadoText, opInfo, registroTable, velocidad = 4, tiempoRestante = null, etapaIndex = 0, cant = 1) {
     estados[n] = true;
     cinta.classList.remove('stop');
     btn.textContent = 'En marcha...';
     btn.disabled = true;
     estadoText.textContent = 'En marcha';
-    estadoCont.classList.remove('estado-detenida'); 
+    estadoCont.classList.remove('estado-detenida');
     estadoCont.classList.add('estado-en-marcha');
 
     if (tiempoRestante === null) tiempoRestante = tiempoTotal;
@@ -159,12 +159,12 @@ function iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, est
 
     // Botón Finalizar dinámico
     let stopBtn = document.getElementById(`stop-linea-${n}`);
-    if(!stopBtn){
+    if (!stopBtn) {
         stopBtn = document.createElement('button');
         stopBtn.id = `stop-linea-${n}`;
         stopBtn.textContent = 'Finalizar';
         stopBtn.style.marginLeft = '5px';
-        stopBtn.addEventListener('click', ()=>finalizarLinea(n, opId, opTexto, cant));
+        stopBtn.addEventListener('click', () => finalizarLinea(n, opId, opTexto, cant));
         btn.parentNode.appendChild(stopBtn);
     }
 
@@ -187,7 +187,7 @@ function iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, est
             tdEtapa.textContent = etapas[etapaIndex];
             tdEstado.style.backgroundColor = "lightblue";
         }
-        opInfo.textContent = `Procesando ${opTexto}. Etapa: ${etapas[etapaIndex]}. Tiempo restante: ${Math.ceil(tiempoRestante/60)} min`;
+        opInfo.textContent = `Procesando ${opTexto}. Etapa: ${etapas[etapaIndex]}. Tiempo restante: ${Math.ceil(tiempoRestante / 60)} min`;
         guardarEstadoLinea(n, opId, tiempoRestante, etapaIndex);
 
         if (tiempoRestante > 0) timers[n] = setTimeout(actualizarContador, 1000);
@@ -307,8 +307,8 @@ async function finalizarLinea(n, opId, opTexto, cant = 1) {
 
         const opSelect = document.getElementById(`opSelectLinea-${n}`);
         const optionToRemove = opSelect.querySelector(`option[value="${opId}"]`);
-        if(optionToRemove) optionToRemove.remove();
-        if(opSelect.options.length <= 1){
+        if (optionToRemove) optionToRemove.remove();
+        if (opSelect.options.length <= 1) {
             opSelect.innerHTML = '<option disabled>No hay OP disponibles</option>';
             opSelect.disabled = true;
         } else opSelect.disabled = false;
@@ -316,7 +316,7 @@ async function finalizarLinea(n, opId, opTexto, cant = 1) {
         btn.disabled = false;
         btn.textContent = 'Iniciar';
         const stopBtn = document.getElementById(`stop-linea-${n}`);
-        if(stopBtn) stopBtn.remove();
+        if (stopBtn) stopBtn.remove();
         opEnEjecucion.delete(opId);
         actualizarSelectsOP();
 
@@ -330,19 +330,19 @@ async function finalizarLinea(n, opId, opTexto, cant = 1) {
 
 
 // ---------------- Recuperar estado al recargar ----------------
-function recuperarEstadoLinea(n, opSelect, cinta, btn, estadoCont, estadoText, opInfo){
-    const saved=localStorage.getItem(`linea_${n}`);
-    if(!saved) return;
-    const data=JSON.parse(saved);
-    const tiempoTranscurrido=Math.floor((Date.now()-data.timestamp)/1000);
-    const tiempoRestante=data.tiempoRestante-tiempoTranscurrido;
-    if(tiempoRestante<=0){ eliminarEstadoLinea(n); return; }
-    const opId=data.opId;
-    const option=opSelect.querySelector(`option[value="${opId}"]`);
-    if(option) option.selected=true;
+function recuperarEstadoLinea(n, opSelect, cinta, btn, estadoCont, estadoText, opInfo) {
+    const saved = localStorage.getItem(`linea_${n}`);
+    if (!saved) return;
+    const data = JSON.parse(saved);
+    const tiempoTranscurrido = Math.floor((Date.now() - data.timestamp) / 1000);
+    const tiempoRestante = data.tiempoRestante - tiempoTranscurrido;
+    if (tiempoRestante <= 0) { eliminarEstadoLinea(n); return; }
+    const opId = data.opId;
+    const option = opSelect.querySelector(`option[value="${opId}"]`);
+    if (option) option.selected = true;
     opEnEjecucion.add(opId);
     actualizarSelectsOP();
-    iniciarLinea(n, opId, option?option.textContent:'OP', tiempoRestante, document.getElementById(`cinta${n}`), document.getElementById(`btn-linea-${n}`), document.getElementById(`estadoCont-${n}`), document.getElementById(`estado-linea-${n}`), document.getElementById(`opInfo-${n}`), document.querySelector("#registroTable tbody"), 4, tiempoRestante, data.etapaIndex);
+    iniciarLinea(n, opId, option ? option.textContent : 'OP', tiempoRestante, document.getElementById(`cinta${n}`), document.getElementById(`btn-linea-${n}`), document.getElementById(`estadoCont-${n}`), document.getElementById(`estado-linea-${n}`), document.getElementById(`opInfo-${n}`), document.querySelector("#registroTable tbody"), 4, tiempoRestante, data.etapaIndex);
 }
 
 // ---------------- Cargar líneas y planificación ----------------
@@ -350,17 +350,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const contenedor = document.getElementById('lineasContainer');
     if (!contenedor) return;
 
-    const nombres = {1:'Línea 1',2:'Línea 2',3:'Línea 3',4:'Línea 4',5:'Línea 5'};
+    const nombres = { 1: 'Línea 1', 2: 'Línea 2', 3: 'Línea 3', 4: 'Línea 4', 5: 'Línea 5' };
     const hoy = new Date().toISOString().split('T')[0];
 
     // Traer planificación y OPs pendientes
-    const [{data: planificacion}, {data: ordenes}] = await Promise.all([
+    const [{ data: planificacion }, { data: ordenes }] = await Promise.all([
         supabaseClient.from('planificacion_semanal')
-            .select(`id,id_op,id_linea,dia,orden:orden_produccion(id_orden_produccion, numero_op, cant_lote, id_producto, estado)`)
+            .select(`id,id_op,id_linea,dia,orden:orden_produccion(id_orden_produccion, numero_op, cant_lote, id_producto, estado, prioridad, ver_orden)`)//AGREGE PRIORIDAD
             .eq('dia', hoy),
         supabaseClient.from('orden_produccion')
-            .select('id_orden_produccion, numero_op, id_producto, cant_lote, estado')
-            .eq('estado','Pendiente')
+            .select('id_orden_produccion, numero_op, id_producto, cant_lote, estado  ')
+            .eq('estado', 'Pendiente')
     ]);
 
     // Traer todas las líneas de producción de la DB
@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         linea.dataset.linea = i;
 
         // Asignar id_linea real desde la DB
-        const idLineaReal = lineasDB[i-1]?.id_linea || i;
+        const idLineaReal = lineasDB[i - 1]?.id_linea || i;
         linea.dataset.idLinea = idLineaReal;
 
         // Header
@@ -380,67 +380,102 @@ document.addEventListener('DOMContentLoaded', async () => {
         const titulo = document.createElement('h4'); titulo.textContent = nombres[i];
         const estadoCont = document.createElement('div'); estadoCont.className = 'estado-linea estado-detenida'; estadoCont.id = `estadoCont-${i}`;
         const led = document.createElement('span'); led.className = 'estado-led';
-        const estadoText = document.createElement('span'); estadoText.id = `estado-linea-${i}`; estadoText.textContent='Detenida';
+        const estadoText = document.createElement('span'); estadoText.id = `estado-linea-${i}`; estadoText.textContent = 'Detenida';
         estadoCont.appendChild(led); estadoCont.appendChild(estadoText);
         header.appendChild(titulo); header.appendChild(estadoCont);
 
         // Planificación del día
-        const planDiv = document.createElement('div'); planDiv.className='planificacion-diaria';
-        planDiv.innerHTML='<b>Planificación del día:</b> ';
+        const planDiv = document.createElement('div'); planDiv.className = 'planificacion-diaria';
+        planDiv.innerHTML = '<b style="color:black;">Planificación del día:</b>';
         const planHoyLinea = planificacion.filter(p => p.id_linea === idLineaReal && p.orden);
         planHoyLinea.forEach(p => {
             const op = p.orden;
             const card = document.createElement('span');
-            card.style.cssText = `display:inline-block;margin:2px;padding:4px 8px;border-radius:4px;background:#fffa8b;font-size:0.9em;font-weight:bold;cursor:pointer;transition: background 0.2s;`;
+            // card.style.cssText = `display:inline-block;margin:2px;padding:4px 8px;border-radius:4px;background:#2a2a2a;font-size:0.9em;font-weight:bold;cursor:pointer;transition: background 0.2s;`;
+
+            // Asignar color de fondo según prioridad
+           // console.log("OP prioridad:", op);
+            let bgColor = '#2a2a2a'; // color por defecto
+            switch (op.prioridad) {
+                case 'urgente':
+                    bgColor = '#ff0000';
+                    break;
+                case 'alta':
+                    bgColor = '#ff8000';
+                    break;
+                case 'normal':
+                    bgColor = '#fdfd1b';
+                    break;
+                case 'baja':
+                    bgColor = '#00cc66';
+                    break;
+            }
+
+            card.style.cssText = `
+                display:inline-block;
+                margin:2px;
+                padding:4px 8px;
+                border-radius:4px;
+                background:${bgColor};
+                font-size:0.9em;
+                font-weight:bold;
+                cursor:pointer;
+                transition: background 0.2s;
+            `;
+
             card.textContent = `OP ${op.numero_op} (${op.cant_lote} lotes)`;
-            card.addEventListener('click', async () => {
-                let duracion = 0;
-                try {
-                    const { data: lineaData } = await supabaseClient
-                        .from('linea_produccion')
-                        .select('duracion')
-                        .eq('id_linea', idLineaReal)
-                        .eq('id_producto', op.id_producto)
-                        .single();
-                    if(lineaData?.duracion) duracion = lineaData.duracion;
-                } catch(err){ console.error(err); }
-                modalBody.innerHTML = `
-                    <h3>Detalle de OP ${op.numero_op}</h3>
-                    <p><b>Línea:</b> ${i}</p>
-                    <p><b>Producto:</b> ${op.id_producto}</p>
-                    <p><b>Cantidad de lotes:</b> ${op.cant_lote}</p>
-                    <p><b>Duración estimada por lote:</b> ${duracion} minutos</p>
-                    <p><b>Tiempo total estimado:</b> ${duracion * op.cant_lote} minutos</p>
-                    <p><b>Estado:</b> ${op.estado || 'Pendiente'}</p>
-                    <p><b>ID OP:</b> ${op.id_orden_produccion}</p>
-                `;
-                modal.style.display='flex';
-            });
+            card.style.color = 'white';
+            card.addEventListener('click', async () => { 
+                verDetalleOP(op, idLineaReal, i); }); //AGREGE LA FUNCION DE VER DETALLE
+            /*let duracion = 0;
+            try {
+                const { data: lineaData } = await supabaseClient
+                    .from('linea_produccion')
+                    .select('duracion')
+                    .eq('id_linea', idLineaReal)
+                    .eq('id_producto', op.id_producto)
+                    .single();
+                if (lineaData?.duracion) duracion = lineaData.duracion;
+            } catch (err) { console.error(err); }
+            modalBody.innerHTML = `
+                <h3>Detalle de ${op.numero_op}</h3>
+                <p><b>Línea:</b> ${i}</p>
+                <p><b>Producto:</b> ${op.ver_orden.map(item => `
+                                        ${item.nombre}
+                                        `).join('')}
+                <p><b>Cantidad de lotes:</b> ${op.cant_lote}</p>
+                <p><b>Duración estimada por lote:</b> ${duracion} minutos</p>
+                <p><b>Tiempo total estimado:</b> ${duracion * op.cant_lote} minutos</p>
+                <p><b>Estado:</b> ${op.estado || 'Pendiente'}</p>
+                <!--<p><b>ID OP:</b> ${op.id_orden_produccion}</p>-->
+            `;
+            modal.style.display = 'flex';
+        });*/
             planDiv.appendChild(card);
         });
 
         // Select de OPs
         const opSelect = document.createElement('select'); opSelect.id = `opSelectLinea-${i}`;
-        const optVacio = document.createElement('option'); optVacio.value=''; optVacio.textContent='Seleccione una OP';
+        const optVacio = document.createElement('option'); optVacio.value = ''; optVacio.textContent = 'Seleccione una OP';
         opSelect.appendChild(optVacio);
         ordenes.forEach(op => {
             const option = document.createElement('option');
             option.value = op.id_orden_produccion;
             option.textContent = `OP ${op.numero_op} (Cant: ${op.cant_lote})`;
             option.dataset.cantidad = op.cant_lote;
-            if(opEnEjecucion.has(op.id_orden_produccion)) option.disabled=true;
+            if (opEnEjecucion.has(op.id_orden_produccion)) option.disabled = true;
             opSelect.appendChild(option);
         });
 
         // Info OP, cinta y botón
-        const opInfo = document.createElement('div'); opInfo.id=`opInfo-${i}`; opInfo.style.margin='5px 0';
-        const cinta = document.createElement('div'); cinta.className='cinta-wrapper stop'; cinta.id=`cinta${i}`;
-        const items = document.createElement('div'); items.className='cinta-items'; 
-        items.textContent = productos[i]+" "+productos[i];
+        const opInfo = document.createElement('div'); opInfo.id = `opInfo-${i}`; opInfo.style.margin = '5px 0';
+        const cinta = document.createElement('div'); cinta.className = 'cinta-wrapper stop'; cinta.id = `cinta${i}`;
+        const items = document.createElement('div'); items.className = 'cinta-items';
+        items.textContent = productos[i] + " " + productos[i];
         cinta.appendChild(items);
-        const actions = document.createElement('div'); actions.className='linea-actions';
-        const btn = document.createElement('button'); btn.type='button'; btn.id=`btn-linea-${i}`; btn.textContent='Iniciar';
-        btn.addEventListener('click', ()=>toggleLinea(i));
+        const actions = document.createElement('div'); actions.className = 'linea-actions';
+        const btn = document.createElement('button'); btn.type = 'button'; btn.id = `btn-linea-${i}`; btn.textContent = 'Iniciar';
+        btn.addEventListener('click', () => toggleLinea(i));
         actions.appendChild(btn);
 
         linea.appendChild(header);
@@ -456,4 +491,137 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+
+async function verDetalleOP(op, idLineaReal, i) {
+    let duracion = 0;
+    try {
+        const { data: lineaData } = await supabaseClient
+            .from('linea_produccion')
+            .select('duracion')
+            .eq('id_linea', idLineaReal)
+            .eq('id_producto', op.id_producto)
+            .single();
+        if (lineaData?.duracion) duracion = lineaData.duracion;
+    } catch (err) { console.error(err); }
+    modalBody.innerHTML = `
+                    <h3>Detalle de ${op.numero_op}</h3>
+                    <p><b>Línea:</b> ${i}</p>
+                    <p><b>Producto:</b> ${op.ver_orden.map(item => `
+                                            ${item.nombre}
+                                            `).join('')}
+                    <p><b>Cantidad de lotes:</b> ${op.cant_lote}</p>
+                    <p><b>Duración estimada por lote:</b> ${duracion} minutos</p>
+                    <p><b>Tiempo total estimado:</b> ${duracion * op.cant_lote} minutos</p>
+                    <p><b>Estado:</b> ${op.estado || 'Pendiente'}</p>
+                    <!--<p><b>ID OP:</b> ${op.id_orden_produccion}</p>-->
+
+                    
+                    <h3 style="text-align:center;">Lotes / Materiales reservados:</h3>
+                    <h4 style="text-align:center; font-weight: normal;">Ver detalle de Lote (clic en una fila para más info)</h4>
+
+
+                    
+                   <div id="detalleMateriales" style="margin-top:10px;">Cargando...</div>
+                `;
+    modal.style.display = 'flex';
+  const contMateriales = document.getElementById("detalleMateriales");
+
+    const { data: detalleLotes, error: errorLotes } = await supabaseClient
+        .from('detalle_lote_op')
+        .select('*')
+        .eq('id_orden_produccion', op.id_orden_produccion);
+
+    if (errorLotes) {
+        contMateriales.innerHTML = `<p>Error al cargar materiales: ${errorLotes.message}</p>`;
+    } else if (detalleLotes.length > 0) {
+        let lotesHtml = '';
+        for (const d of detalleLotes) {
+            const { data: lote } = await supabaseClient
+                .from('lote_mp')
+                .select('id_lote, id_mp, fecha_caducidad')
+                .eq('id_lote', d.id_lote)
+                .single();
+
+            const { data: mat } = await supabaseClient
+                .from('materiales')
+                .select('nombre')
+                .eq('id_mp', lote.id_mp)
+                .single();
+
+            lotesHtml += `
+        <tr onclick="verDetalleLote('${lote.id_lote}')" style="cursor:pointer;">
+          <td>${mat ? mat.nombre : 'Desconocido'}</td>
+          <td>${lote.id_lote}</td>
+          <td>${d.cantidad_lote}</td>
+          <td>${lote.fecha_caducidad ? new Date(lote.fecha_caducidad).toLocaleDateString() : '-'}</td>
+        </tr>`;
+        }
+
+        contMateriales.innerHTML = `
+      <table border="1" style="width:100%; margin-top:10px;">
+        <thead><tr><th>Material</th><th>Lote</th><th>Cant. reservada</th><th>Fecha caducidad</th></tr></thead>
+        <tbody>${lotesHtml}</tbody>
+      </table>`;
+    } else {
+        contMateriales.innerHTML = '<p>No hay lotes reservados para esta OP.</p>';
+    }
+      document.addEventListener("click", (e) => {
+    const fila = e.target.closest("tr[data-id-lote]");
+    if (fila) {
+      const idLote = fila.getAttribute("data-id-lote");
+      verDetalleLote(idLote);
+    }
+  });
+  
+}
+//==============VER DETALLE DE LOTE RESERVADOS ==================
+async function verDetalleLote(idLote) {
+    //console.log("🧩 Ver detalle del lote:", idLote);
+    try {
+        // Traemos el  específico
+        const { data: lote, error: errorLote } = await supabaseClient
+            .from('lote_mp')
+            .select('*')
+            .eq('id_lote', idLote)
+            .single();
+        //console.log("📦 Lote obtenido:", lote, "❌ Error:", errorLote);
+        if (errorLote || !lote) throw errorLote || 'Lote no encontrado';
+
+        const { data: proveedor, error: errorProv } = await supabaseClient
+            .from('proveedor')
+            .select('nombre')
+            .eq('id_proveedor', lote.id_proveedor)
+            .single();
+        if (errorProv) throw errorProv;
+
+        const { data: material, error: errorMat } = await supabaseClient
+            .from('materiales')
+            .select('nombre')
+            .eq('id_mp', lote.id_mp)
+            .single();
+        if (errorMat) throw errorMat;
+
+        const modal = document.getElementById('modalDetalleLote');
+        const contenido = document.getElementById('contenidoModalDetalleLote');
+
+        contenido.innerHTML = `
+      <p><strong>ID Lote:</strong> ${lote.id_lote}</p>
+      <p><strong>Material:</strong> ${material?.nombre.toUpperCase() || lote.id_mp}</p>
+      <p><strong>Nombre Proveedor:</strong> ${proveedor?.nombre || '-'}</p>
+      
+      <p><strong>Cantidad Disponible:</strong> ${lote.cantidad_disponible}</p>
+      
+      <p><strong>Fecha Ingreso:</strong> ${lote.fecha_ingreso ? new Date(lote.fecha_ingreso).toLocaleDateString() : '-'}</p>
+      <p><strong>Fecha Caducidad:</strong> ${lote.fecha_caducidad ? new Date(lote.fecha_caducidad).toLocaleDateString() : '-'}</p>
+      <p><strong>Estado:</strong> ${lote.estado}</p>
+    `;
+        //<p><strong>Lote:</strong> ${lote.lote}</p>
+        //<p><strong>Cantidad Consumida:</strong> ${lote.cantidad_consumida}</p>
+        modal.style.display = 'flex';
+
+    } catch (err) {
+        console.error("Error mostrando detalle del lote:", err);
+        alert("No se pudo mostrar el detalle del lote.");
+    }
+}
 window.toggleLinea = toggleLinea;

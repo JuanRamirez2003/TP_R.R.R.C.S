@@ -8,10 +8,10 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let productos = [];
 let filaEditando = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
+/*document.addEventListener("DOMContentLoaded", async () => {
   await cargarProductos();
   await cargarLineasProduccion();
-});
+});*/
 
 // Cargar lista de productos
 async function cargarProductos() {
@@ -54,10 +54,16 @@ async function cargarLineasProduccion() {
 
 // Editar una fila
 function editarFila(datos) {
+  console.log("Editando fila:", datos);
+  
   const form = document.getElementById("form-parametros");
 
   form.id_linea.value = datos.id_linea ?? "";
-  form.id_producto.value = datos.id_producto ?? "";
+    // Buscar el nombre del producto
+  const prod = productos.find(p => Number(p.id_producto) === Number(datos.id_producto));
+  form.producto_nombre.value = prod ? prod.nombre : "—";
+  form.id_producto.value = datos.id_producto;
+
   form.duracion.value = datos.duracion ?? "";
   form.horas_jornada.value = datos.horas_jornada ?? "";
   form.eficiencia.value = datos.eficiencia ?? "";
@@ -66,6 +72,17 @@ function editarFila(datos) {
 
   filaEditando = datos.id;
   form.querySelector(".btn-guardar").innerHTML = `<i class="fas fa-check"></i> Guardar cambios`;
+
+    //formWrapper.style.display = "block";
+
+  // Mostrar solo el formulario
+  document.getElementById("form-wrapper").style.display = "block";
+
+  // desplazarte hacia el formulario
+  form.scrollIntoView({ behavior: "smooth" });
+
+  document.getElementById("btn-cancelar").style.display = "block";
+   
 }
 
 // Recalcular capacidad diaria automáticamente
@@ -182,6 +199,7 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
     form.reset();
     filaEditando = null;
     form.querySelector(".btn-guardar").innerHTML = `<i class="fas fa-save"></i> Guardar parámetros`;
+    document.getElementById("form-wrapper").style.display = "none";
     await cargarLineasProduccion();
 
   } catch (error) {
@@ -192,19 +210,19 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
 
 
 //[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
-document.addEventListener('DOMContentLoaded', () => {
+ /*document.addEventListener('DOMContentLoaded', () => {
   try {
-    const btnToggle = document.getElementById('btn-toggle-parametros');
+    //const btnToggle = document.getElementById('btn-toggle-parametros');
     const panel = document.querySelector('.parametros-actuales');
 
-    if (!btnToggle || !panel) {
+   if (!btnToggle || !panel) {
       console.warn("⚠️ No se encontró el botón o el panel de parámetros actuales en el DOM.");
       return;
     }
 
-    let visible = false;
+    let visible = false;*/
 
-    btnToggle.addEventListener('click', () => {
+   /* btnToggle.addEventListener('click', () => {
       try {
         visible = !visible;
         panel.classList.toggle('visible', visible);
@@ -219,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error("❌ Error al inicializar el botón de alternar parámetros:", error);
   }
 });
-
+*/
 
 
 
@@ -236,13 +254,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const btnToggle = document.getElementById('btn-toggle-parametros');
     const panel = document.getElementById('panelParametros');
     let visible = false;
-    btnToggle.addEventListener('click', () => {
+    /*btnToggle.addEventListener('click', () => {
       visible = !visible;
       panel.classList.toggle('visible', visible);
       btnToggle.innerHTML = visible
         ? '<i class="fas fa-eye-slash"></i> Ocultar parámetros actuales'
         : '<i class="fas fa-table"></i> Ver parámetros actuales';
-    });
+    });*/
 
     // Botón volver
     document.getElementById("btn-volver").addEventListener("click", () => {
@@ -319,9 +337,56 @@ function filtrarTabla() {
         (!producto || producto === "Todos" || producto === productoFila);
 
       fila.style.display = mostrar ? "" : "none";
+      ordenarPorEficiencia();
     });
   } catch (error) {
     console.error("⚠️ Error al filtrar la tabla:", error);
   }
 }
 
+document.getElementById("filtro-eficiencia").addEventListener("change", ordenarPorEficiencia);
+
+function ordenarPorEficiencia() {
+  const orden = document.getElementById("filtro-eficiencia").value;
+  const tbody = document.querySelector("#tabla-parametros tbody");
+  const filas = Array.from(tbody.querySelectorAll("tr"));
+
+  if (!orden) return; // si es "ninguno", no hacemos nada
+
+  filas.sort((a, b) => {
+    const valA = parseFloat(a.cells[4].textContent) || 0; // columna Eficiencia
+    const valB = parseFloat(b.cells[4].textContent) || 0;
+
+    return orden === "asc" ? valA - valB : valB - valA;
+  });
+
+  // Reordenar la tabla
+  filas.forEach(fila => tbody.appendChild(fila));
+}
+
+//Botón "Cancelar" para ocultar el formulario sin guardar
+document.getElementById("btn-cancelar").addEventListener("click", () => {
+  const form = document.getElementById("form-parametros");
+  form.reset(); // Limpia los campos
+  filaEditando = null;
+  form.querySelector(".btn-guardar").innerHTML = `<i class="fas fa-save"></i> Guardar parámetros`;
+  document.getElementById("form-wrapper").style.display = "none"; // Oculta el cuadro
+});
+
+
+
+/*async function cargarProductos() {
+  const { data, error } = await supabase.from("productos").select("id_producto, nombre");
+  if (error) return console.error("Error cargando productos:", error);
+
+  productos = data ?? [];
+
+  const select = document.getElementById("id_producto");
+  select.innerHTML = ""; // Limpiar antes
+  productos.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id_producto; // El ID que se guardará
+    opt.textContent = p.nombre; // Nombre que ve el usuario
+    select.appendChild(opt);
+  });
+}*/
