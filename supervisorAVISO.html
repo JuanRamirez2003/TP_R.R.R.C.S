@@ -265,6 +265,41 @@
   </div>
 
   <!-- Scripts -->
+  <script>
+  // Cuando el usuario hace clic en la campana de vencidas
+  document.getElementById("notificacionVencidas").addEventListener("click", () => {
+    window.location.href = "panel_alertas.html";
+  });
+
+  // 🟡 Opcional: animación al pasar el mouse
+  const notiVencidas = document.getElementById("notificacionVencidas");
+
+  notiVencidas.addEventListener("mouseenter", () => {
+    notiVencidas.style.transform = "scale(1.1)";
+  });
+
+  notiVencidas.addEventListener("mouseleave", () => {
+    notiVencidas.style.transform = "scale(1)";
+  });
+
+  // 🟠 Si tenés tooltipVencidas, podés mantenerlo visible mientras se pasa el mouse
+  const tooltipVencidas = document.getElementById("tooltipVencidas");
+
+  notiVencidas.addEventListener("mouseenter", () => {
+    tooltipVencidas.style.display = "block";
+  });
+  notiVencidas.addEventListener("mouseleave", () => {
+    setTimeout(() => {
+      tooltipVencidas.style.display = "none";
+    }, 300);
+  });
+  tooltipVencidas.addEventListener("mouseenter", () => {
+    tooltipVencidas.style.display = "block";
+  });
+  tooltipVencidas.addEventListener("mouseleave", () => {
+    tooltipVencidas.style.display = "none";
+  });
+</script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>

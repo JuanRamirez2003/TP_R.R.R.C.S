@@ -92,11 +92,18 @@ function renderAlertas(alertas) {
     if (alerta.urgencia === "alta") emoji = "🔴";
 
     tarjeta.innerHTML = `
-      <strong>${emoji} OP ${alerta.numero_op}</strong> - ${alerta.fecha}<br>
-      Producto: ${alerta.producto}<br>
-      Motivo: ${alerta.motivo}<br>
-      <b>${alerta.estadoFecha}</b>
+      <div class="alerta-header">
+        <strong>${emoji} OP ${alerta.numero_op}</strong>
+        <span class="estado">${alerta.urgencia.toUpperCase()}</span>
+      </div>
+      <div class="alerta-info">
+        <p><b>Producto:</b> ${alerta.producto}</p>
+        <p><b>Motivo:</b> ${alerta.motivo}</p>
+        <p><b>Fecha estimada:</b> ${new Date(alerta.fecha).toLocaleDateString()}</p>
+        <p><b>Estado:</b> ${alerta.estadoFecha}</p>
+      </div>
     `;
+
     contenedor.appendChild(tarjeta);
   });
 
