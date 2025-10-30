@@ -404,7 +404,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     bgColor = '#ff8000';
                     break;
                 case 'normal':
-                    bgColor = '#fdfd1b';
+                    bgColor = '#ebeb08';
                     break;
                 case 'baja':
                     bgColor = '#00cc66';
