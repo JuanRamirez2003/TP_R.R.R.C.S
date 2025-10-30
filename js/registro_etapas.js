@@ -394,8 +394,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             // card.style.cssText = `display:inline-block;margin:2px;padding:4px 8px;border-radius:4px;background:#2a2a2a;font-size:0.9em;font-weight:bold;cursor:pointer;transition: background 0.2s;`;
 
             // Asignar color de fondo según prioridad
-           console.log("OP prioridad:", op);
-           let bgColor = '#2a2a2a'; // color por defecto
+           // console.log("OP prioridad:", op);
+            let bgColor = '#2a2a2a'; // color por defecto
             switch (op.prioridad) {
                 case 'urgente':
                     bgColor = '#ff0000';
@@ -425,31 +425,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             card.textContent = `OP ${op.numero_op} (${op.cant_lote} lotes)`;
             card.style.color = 'white';
-            card.addEventListener('click', async () => {
-                let duracion = 0;
-                try {
-                    const { data: lineaData } = await supabaseClient
-                        .from('linea_produccion')
-                        .select('duracion')
-                        .eq('id_linea', idLineaReal)
-                        .eq('id_producto', op.id_producto)
-                        .single();
-                    if (lineaData?.duracion) duracion = lineaData.duracion;
-                } catch (err) { console.error(err); }
-                modalBody.innerHTML = `
-                    <h3>Detalle de ${op.numero_op}</h3>
-                    <p><b>Línea:</b> ${i}</p>
-                    <p><b>Producto:</b> ${op.ver_orden.map(item => `
-                                            ${item.nombre}
-                                            `).join('')}
-                    <p><b>Cantidad de lotes:</b> ${op.cant_lote}</p>
-                    <p><b>Duración estimada por lote:</b> ${duracion} minutos</p>
-                    <p><b>Tiempo total estimado:</b> ${duracion * op.cant_lote} minutos</p>
-                    <p><b>Estado:</b> ${op.estado || 'Pendiente'}</p>
-                    <!--<p><b>ID OP:</b> ${op.id_orden_produccion}</p>-->
-                `;
-                modal.style.display = 'flex';
-            });
+            card.addEventListener('click', async () => { 
+                verDetalleOP(op, idLineaReal, i); }); //AGREGE LA FUNCION DE VER DETALLE
+            /*let duracion = 0;
+            try {
+                const { data: lineaData } = await supabaseClient
+                    .from('linea_produccion')
+                    .select('duracion')
+                    .eq('id_linea', idLineaReal)
+                    .eq('id_producto', op.id_producto)
+                    .single();
+                if (lineaData?.duracion) duracion = lineaData.duracion;
+            } catch (err) { console.error(err); }
+            modalBody.innerHTML = `
+                <h3>Detalle de ${op.numero_op}</h3>
+                <p><b>Línea:</b> ${i}</p>
+                <p><b>Producto:</b> ${op.ver_orden.map(item => `
+                                        ${item.nombre}
+                                        `).join('')}
+                <p><b>Cantidad de lotes:</b> ${op.cant_lote}</p>
+                <p><b>Duración estimada por lote:</b> ${duracion} minutos</p>
+                <p><b>Tiempo total estimado:</b> ${duracion * op.cant_lote} minutos</p>
+                <p><b>Estado:</b> ${op.estado || 'Pendiente'}</p>
+                <!--<p><b>ID OP:</b> ${op.id_orden_produccion}</p>-->
+            `;
+            modal.style.display = 'flex';
+        });*/
             planDiv.appendChild(card);
         });
 
@@ -490,4 +491,137 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+
+async function verDetalleOP(op, idLineaReal, i) {
+    let duracion = 0;
+    try {
+        const { data: lineaData } = await supabaseClient
+            .from('linea_produccion')
+            .select('duracion')
+            .eq('id_linea', idLineaReal)
+            .eq('id_producto', op.id_producto)
+            .single();
+        if (lineaData?.duracion) duracion = lineaData.duracion;
+    } catch (err) { console.error(err); }
+    modalBody.innerHTML = `
+                    <h3>Detalle de ${op.numero_op}</h3>
+                    <p><b>Línea:</b> ${i}</p>
+                    <p><b>Producto:</b> ${op.ver_orden.map(item => `
+                                            ${item.nombre}
+                                            `).join('')}
+                    <p><b>Cantidad de lotes:</b> ${op.cant_lote}</p>
+                    <p><b>Duración estimada por lote:</b> ${duracion} minutos</p>
+                    <p><b>Tiempo total estimado:</b> ${duracion * op.cant_lote} minutos</p>
+                    <p><b>Estado:</b> ${op.estado || 'Pendiente'}</p>
+                    <!--<p><b>ID OP:</b> ${op.id_orden_produccion}</p>-->
+
+                    
+                    <h3 style="text-align:center;">Lotes / Materiales reservados:</h3>
+                    <h4 style="text-align:center; font-weight: normal;">Ver detalle de Lote (clic en una fila para más info)</h4>
+
+
+                    
+                   <div id="detalleMateriales" style="margin-top:10px;">Cargando...</div>
+                `;
+    modal.style.display = 'flex';
+  const contMateriales = document.getElementById("detalleMateriales");
+
+    const { data: detalleLotes, error: errorLotes } = await supabaseClient
+        .from('detalle_lote_op')
+        .select('*')
+        .eq('id_orden_produccion', op.id_orden_produccion);
+
+    if (errorLotes) {
+        contMateriales.innerHTML = `<p>Error al cargar materiales: ${errorLotes.message}</p>`;
+    } else if (detalleLotes.length > 0) {
+        let lotesHtml = '';
+        for (const d of detalleLotes) {
+            const { data: lote } = await supabaseClient
+                .from('lote_mp')
+                .select('id_lote, id_mp, fecha_caducidad')
+                .eq('id_lote', d.id_lote)
+                .single();
+
+            const { data: mat } = await supabaseClient
+                .from('materiales')
+                .select('nombre')
+                .eq('id_mp', lote.id_mp)
+                .single();
+
+            lotesHtml += `
+        <tr onclick="verDetalleLote('${lote.id_lote}')" style="cursor:pointer;">
+          <td>${mat ? mat.nombre : 'Desconocido'}</td>
+          <td>${lote.id_lote}</td>
+          <td>${d.cantidad_lote}</td>
+          <td>${lote.fecha_caducidad ? new Date(lote.fecha_caducidad).toLocaleDateString() : '-'}</td>
+        </tr>`;
+        }
+
+        contMateriales.innerHTML = `
+      <table border="1" style="width:100%; margin-top:10px;">
+        <thead><tr><th>Material</th><th>Lote</th><th>Cant. reservada</th><th>Fecha caducidad</th></tr></thead>
+        <tbody>${lotesHtml}</tbody>
+      </table>`;
+    } else {
+        contMateriales.innerHTML = '<p>No hay lotes reservados para esta OP.</p>';
+    }
+      document.addEventListener("click", (e) => {
+    const fila = e.target.closest("tr[data-id-lote]");
+    if (fila) {
+      const idLote = fila.getAttribute("data-id-lote");
+      verDetalleLote(idLote);
+    }
+  });
+  
+}
+//==============VER DETALLE DE LOTE RESERVADOS ==================
+async function verDetalleLote(idLote) {
+    //console.log("🧩 Ver detalle del lote:", idLote);
+    try {
+        // Traemos el  específico
+        const { data: lote, error: errorLote } = await supabaseClient
+            .from('lote_mp')
+            .select('*')
+            .eq('id_lote', idLote)
+            .single();
+        //console.log("📦 Lote obtenido:", lote, "❌ Error:", errorLote);
+        if (errorLote || !lote) throw errorLote || 'Lote no encontrado';
+
+        const { data: proveedor, error: errorProv } = await supabaseClient
+            .from('proveedor')
+            .select('nombre')
+            .eq('id_proveedor', lote.id_proveedor)
+            .single();
+        if (errorProv) throw errorProv;
+
+        const { data: material, error: errorMat } = await supabaseClient
+            .from('materiales')
+            .select('nombre')
+            .eq('id_mp', lote.id_mp)
+            .single();
+        if (errorMat) throw errorMat;
+
+        const modal = document.getElementById('modalDetalleLote');
+        const contenido = document.getElementById('contenidoModalDetalleLote');
+
+        contenido.innerHTML = `
+      <p><strong>ID Lote:</strong> ${lote.id_lote}</p>
+      <p><strong>Material:</strong> ${material?.nombre.toUpperCase() || lote.id_mp}</p>
+      <p><strong>Nombre Proveedor:</strong> ${proveedor?.nombre || '-'}</p>
+      
+      <p><strong>Cantidad Disponible:</strong> ${lote.cantidad_disponible}</p>
+      
+      <p><strong>Fecha Ingreso:</strong> ${lote.fecha_ingreso ? new Date(lote.fecha_ingreso).toLocaleDateString() : '-'}</p>
+      <p><strong>Fecha Caducidad:</strong> ${lote.fecha_caducidad ? new Date(lote.fecha_caducidad).toLocaleDateString() : '-'}</p>
+      <p><strong>Estado:</strong> ${lote.estado}</p>
+    `;
+        //<p><strong>Lote:</strong> ${lote.lote}</p>
+        //<p><strong>Cantidad Consumida:</strong> ${lote.cantidad_consumida}</p>
+        modal.style.display = 'flex';
+
+    } catch (err) {
+        console.error("Error mostrando detalle del lote:", err);
+        alert("No se pudo mostrar el detalle del lote.");
+    }
+}
 window.toggleLinea = toggleLinea;
