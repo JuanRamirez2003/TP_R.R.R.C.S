@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Traer planificación y OPs pendientes
     const [{ data: planificacion }, { data: ordenes }] = await Promise.all([
         supabaseClient.from('planificacion_semanal')
-            .select(`id,id_op,id_linea,dia,orden:orden_produccion(id_orden_produccion, numero_op, cant_lote, id_producto, estado, prioridad)`)//AGREGE PRIORIDAD
+            .select(`id,id_op,id_linea,dia,orden:orden_produccion(id_orden_produccion, numero_op, cant_lote, id_producto, estado, prioridad, ver_orden)`)//AGREGE PRIORIDAD
             .eq('dia', hoy),
         supabaseClient.from('orden_produccion')
             .select('id_orden_produccion, numero_op, id_producto, cant_lote, estado  ')
@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // card.style.cssText = `display:inline-block;margin:2px;padding:4px 8px;border-radius:4px;background:#2a2a2a;font-size:0.9em;font-weight:bold;cursor:pointer;transition: background 0.2s;`;
 
             // Asignar color de fondo según prioridad
-           //console.log("OP prioridad:", op.prioridad);
+           console.log("OP prioridad:", op);
            let bgColor = '#2a2a2a'; // color por defecto
             switch (op.prioridad) {
                 case 'urgente':
@@ -437,14 +437,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (lineaData?.duracion) duracion = lineaData.duracion;
                 } catch (err) { console.error(err); }
                 modalBody.innerHTML = `
-                    <h3>Detalle de OP ${op.numero_op}</h3>
+                    <h3>Detalle de ${op.numero_op}</h3>
                     <p><b>Línea:</b> ${i}</p>
-                    <p><b>Producto:</b> ${op.id_producto}</p>
+                    <p><b>Producto:</b> ${op.ver_orden.map(item => `
+                                            ${item.nombre}
+                                            `).join('')}
                     <p><b>Cantidad de lotes:</b> ${op.cant_lote}</p>
                     <p><b>Duración estimada por lote:</b> ${duracion} minutos</p>
                     <p><b>Tiempo total estimado:</b> ${duracion * op.cant_lote} minutos</p>
                     <p><b>Estado:</b> ${op.estado || 'Pendiente'}</p>
-                    <p><b>ID OP:</b> ${op.id_orden_produccion}</p>
+                    <!--<p><b>ID OP:</b> ${op.id_orden_produccion}</p>-->
                 `;
                 modal.style.display = 'flex';
             });
