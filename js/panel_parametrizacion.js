@@ -22,6 +22,7 @@ async function cargarProductos() {
 
 // Cargar líneas de producción
 async function cargarLineasProduccion() {
+  filtrarTabla();
   const { data, error } = await supabase.from("linea_produccion").select("*");
   if (error) {
     console.error("Error cargando líneas de producción:", error);
@@ -82,7 +83,8 @@ function editarFila(datos) {
   form.scrollIntoView({ behavior: "smooth" });
 
   document.getElementById("btn-cancelar").style.display = "block";
-   
+
+   //filtrarTabla();
 }
 
 // Recalcular capacidad diaria automáticamente
@@ -201,6 +203,7 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
     form.querySelector(".btn-guardar").innerHTML = `<i class="fas fa-save"></i> Guardar parámetros`;
     document.getElementById("form-wrapper").style.display = "none";
     await cargarLineasProduccion();
+    filtrarTabla();
 
   } catch (error) {
     console.error("❌ Error en validación o guardado:", error);
