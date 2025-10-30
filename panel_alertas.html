@@ -7,18 +7,24 @@
 </head>
 <body>
   <h2>⚠️ Panel de Alertas</h2>
+
   <div class="filtros">
-    <input type="date" id="filtro-fecha">
-    <input type="text" id="filtro-producto" placeholder="Producto o Cliente">
-    <select id="filtro-urgencia">
-      <option value="">Todas las urgencias</option>
-      <option value="alta">Alta</option>
-      <option value="media">Media</option>
-      <option value="baja">Baja</option>
+    <input 
+      type="text" 
+      id="buscador" 
+      placeholder="Buscar por producto, motivo o número de OP..."
+    >
+    <select id="filtro-estado">
+      <option value="todas">Todas</option>
+      <option value="vencidas">Vencidas</option>
+      <option value="por-vencer">Por vencer</option>
     </select>
-    <button onclick="filtrarAlertas()">Filtrar</button>
   </div>
+
+  <h3 id="contador-alertas"></h3>
   <div id="contenedor-alertas" class="alertas-grid"></div>
-  <script src="js/panel_alertas.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script type="module" src="js/panel_alertas.js"></script>
 </body>
 </html>
