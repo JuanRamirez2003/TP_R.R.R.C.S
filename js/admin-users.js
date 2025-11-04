@@ -5,6 +5,15 @@ const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+// Restaurar ID de operario en el backend
+(async () => {
+ const userId = localStorage.getItem("currentUserId");
+if (userId) {
+  const { error } = await supabaseClient.rpc("set_app_user_id", { value: userId });
+  if (error) console.error("Error al restaurar ID de operario:", error);
+}
+})();
+
 // ================== FUNCIONES ==================
 
 // Mostrar sección
@@ -251,6 +260,7 @@ function filtrarTabla(inputId, tablaId) {
     tr.style.display = textoFila.includes(filtro) ? '' : 'none';
   });
 }
+
 
 // Event listeners de los inputs
 document.getElementById('filtroUsuarios').addEventListener('input', () => filtrarTabla('filtroUsuarios', 'tablaUsuarios'));

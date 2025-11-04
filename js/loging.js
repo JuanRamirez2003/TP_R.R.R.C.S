@@ -189,51 +189,68 @@ manualLoginButton.addEventListener("click", async () => {
       return;
     }
 
-    let usersData;
-    try {
-      const { data: users, error } = await supabaseClient
-        .from("usuarios")
-        .select("*")
-        .eq("opCode", opCode)
-        .eq("dni", dni);
-      if (error) throw error;
-      usersData = users;
-    } catch (err) {
-      console.error("Error consultando usuarios:", err);
-      showMessage("Error al consultar la base de datos", "error", 3000);
-      return;
-    }
+    // Buscar usuario
+    const { data: users, error } = await supabaseClient
+      .from("usuarios")
+      .select("*")
+      .eq("opCode", opCode)
+      .eq("dni", dni);
 
-    if (!usersData || usersData.length === 0) {
+    if (error) throw error;
+    if (!users || users.length === 0) {
       showMessage("❌ Usuario no encontrado", "error", 2500);
-      showScreen("manual-login-screen");
       return;
     }
 
-    currentUser = usersData[0];
+    currentUser = users[0];
+    localStorage.setItem("currentUserId", currentUser.id);
+    // Setear ID de usuario para auditoría usando Opción 3
+    await supabaseClient.rpc('set_app_user_id', { value: currentUser.id.toString() });
+    console.log('✅ Usuario establecido para auditoría:', currentUser.id);
+
 
     if (!currentUser.descriptor) {
       showMessage("El usuario no tiene descriptor facial guardado", "error", 3000);
-      showScreen("manual-login-screen");
       return;
     }
 
+// ✅ Establecer el id del operario en la sesión del backend
+try {
+  // Asegurarse que currentUser.id sea un número o string válido
+  const userIdValue = currentUser?.id?.toString() ?? null;
+  if (!userIdValue) {
+    throw new Error("El usuario no tiene ID válido");
+  }
+
+  const { error: rpcError } = await supabaseClient.rpc("set_app_user_id", {
+    value: userIdValue,
+  });
+
+  if (rpcError) {
+    console.error("Error al establecer app_user_id:", rpcError);
+    showMessage("No se pudo vincular el usuario con la sesión", "error", 3000);
+  } else {
+    console.log("✅ ID de operario establecido para auditoría:", userIdValue);
+  }
+} catch (err) {
+  console.error("Error RPC set_app_user_id:", err);
+}
+    // Cargar descriptor facial
     try {
       referenceDescriptor = new Float32Array(JSON.parse(currentUser.descriptor));
     } catch (err) {
       console.error("Error al parsear descriptor:", err);
-      showMessage("Descriptor inválido en la base de datos", "error", 3000);
-      showScreen("manual-login-screen");
+      showMessage("Descriptor facial inválido", "error", 3000);
       return;
     }
 
+    // Cargar modelos y comenzar verificación
     await loadModels();
     startFaceVerification();
 
   } catch (err) {
     console.error("Error inesperado al iniciar login manual:", err);
     showMessage("Error inesperado. Intente nuevamente.", "error", 3000);
-    showScreen("manual-login-screen");
   }
 });
 
