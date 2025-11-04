@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Área TI</title>
+<link rel="stylesheet" href="css/ventas.css"> <!-- tu CSS original -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* Mantener estilo original y mejorar visualización */
+
+/* KPI Cards arriba, en fila */
+.kpi-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+.kpi-card {
+    flex: 1 1 180px;
+    background-color: #fff;
+    color: #111;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Gráficos */
+.chart-card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+canvas {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+/* Tablas */
+.table-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+thead {
+    background: #374151;
+    color: #fff;
+}
+thead th {
+    padding: 10px;
+    text-align: left;
+}
+tbody td {
+    padding: 10px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Botones de descarga */
+.btn-download {
+    background-color: #1e3a8a;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+.kpi-desc {
+    display: block;
+    font-size: 0.85rem;       /* un poco más pequeño */
+    color: #1f2937;           /* gris oscuro */
+    margin-bottom: 5px;       /* separa del título */
+    font-style: italic;        /* da un toque elegante */
+    text-align: center;
+}
+.btn-download:hover {
+    background-color: #1d4ed8;
+}
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>Área TI</h2>
+    <ul>
+      <li><button class="btn-seccion" data-seccion="usuarios">Usuarios</button></li>
+      <li><button class="btn-seccion" data-seccion="ordenes">Órdenes</button></li>
+      <li><button class="btn-seccion" data-seccion="clientes">Clientes</button></li>
+      <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
+    </ul>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <!-- Sección Usuarios -->
+    <section id="seccion-usuarios" class="seccion active">
+      <h1>Usuarios y Accesos</h1>
+
+      <!-- KPI Cards (arriba) -->
+<div class="kpi-cards">
+  <div class="kpi-card">
+    <small class="kpi-desc">Cantidad de usuarios que actualmente tienen cuenta activa</small>
+    <h3>Usuarios activos</h3>
+    <p id="totalUsuariosActivos">0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Cantidad de usuarios registrados pero inactivos</small>
+    <h3>Usuarios inactivos</h3>
+    <p id="totalUsuariosInactivos">0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Usuarios que se registraron en los últimos 30 días</small>
+    <h3>Usuarios nuevos (último mes)</h3>
+    <p id="usuariosNuevosMes">0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Usuarios que nunca han iniciado sesión o no han realizado accesos</small>
+    <h3>Usuarios sin acceso</h3>
+    <p id="usuariosSinAcceso">0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Total de accesos realizados por todos los usuarios</small>
+    <h3>Total de accesos</h3>
+    <p id="totalAccesos">0</p>
+  </div>
+</div>
+
+<!-- Gráficos -->
+<div class="chart-card">
+  <small class="kpi-desc">Distribución de usuarios según el área a la que pertenecen</small>
+  <h2>Usuarios por Área</h2>
+  <button class="btn-download" onclick="downloadChart('usuariosAreaChart', 'usuarios_area.png')">Descargar</button>
+  <canvas id="usuariosAreaChart"></canvas>
+</div>
+
+<div class="chart-card">
+  <small class="kpi-desc">Cantidad de accesos por tipo de acción realizada por los usuarios</small>
+  <h2>Accesos por Tipo de Acción</h2>
+  <button class="btn-download" onclick="downloadChart('accesosTipoChart', 'accesos_tipo.png')">Descargar</button>
+  <canvas id="accesosTipoChart"></canvas>
+</div>
+
+<div class="chart-card">
+  <small class="kpi-desc">Evolución diaria de accesos durante los últimos 30 días</small>
+  <h2>Accesos por Fecha (últimos 30 días)</h2>
+  <button class="btn-download" onclick="downloadChart('accesosFechaChart', 'accesos_fecha.png')">Descargar</button>
+  <canvas id="accesosFechaChart"></canvas>
+</div>
+
+<div class="table-container">
+  <small class="kpi-desc">Lista de los 5 usuarios más activos según cantidad de accesos</small>
+  <h2>Top 5 Usuarios Más Activos</h2>
+  <table id="topUsuariosTable">
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Cantidad de accesos</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+    </section>
+
+    <!-- Sección Órdenes -->
+    <section id="seccion-ordenes" class="seccion">
+      <h1>Órdenes</h1>
+      <p>Aquí se mostrarán los KPIs de órdenes y producción.</p>
+    </section>
+
+    <!-- Sección Clientes -->
+    <section id="seccion-clientes" class="seccion">
+      <h1>Clientes</h1>
+      <p>Aquí se mostrarán los KPIs relacionados con clientes.</p>
+    </section>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/gerente.js"></script>
+<script>
+function cerrarSesion() {
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.href = "index.html";
+}
+
+// Cambiar de sección
+document.querySelectorAll('.btn-seccion').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const seccion = btn.dataset.seccion;
+    document.querySelectorAll('.seccion').forEach(s => s.style.display = 'none');
+    document.getElementById(`seccion-${seccion}`).style.display = 'block';
+  });
+});
+
+// Descargar gráficos como imagen
+function downloadChart(canvasId, filename) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const link = document.createElement('a');
+  link.href = canvas.toDataURL('image/png', 1.0);
+  link.download = filename;
+  link.click();
+}
+</script>
+</body>
+</html>
