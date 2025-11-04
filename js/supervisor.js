@@ -1051,7 +1051,7 @@ async function cargarOP() {
       <td>
         ${op.estado === 'Pendiente'
         ? `<button onclick="editarOP(${op.id_orden_produccion})" class="btn-editar">✏️ Editar</button>
-             <button onclick="eliminarOP(${op.id_orden_produccion})" class="btn-eliminar">❌Eliminar</button>`
+             <button onclick="eliminarOP(${op.id_orden_produccion})" class="btn-eliminar">❌Dar Baja</button>`
         : 'No disponible'}
       </td>
     `;
@@ -1185,34 +1185,88 @@ async function verOrden(id_orden_produccion) {
 
 function cerrarModal() { document.getElementById('modalOrden').style.display = 'none'; }
 
-/* Editar OP
+ 
+//Editar OP
 async function editarOP(id_orden_produccion) {
-  const { data, error } = await supabaseClient.from('orden_produccion')
-    .select('*').eq('id_orden_produccion', id_orden_produccion).single();
-  if (error) return console.error("Error al cargar OP para editar:", error);
+  // Obtener la OP desde Supabase
+  const { data, error } = await supabaseClient
+    .from('orden_produccion')
+    .select('*')
+    .eq('id_orden_produccion', id_orden_produccion)
+    .single();
 
+  if (error) {
+    console.error("Error al cargar OP para editar:", error);
+    alert("Ocurrió un error al cargar la orden de producción.");
+    return;
+  }
+
+  let huboCambios = false; // bandera para detectar modificaciones
+
+  // Editar las cantidades de los productos
   const productos = data.ver_orden.map(p => {
     const cant = prompt(`Editar cantidad de ${p.nombre}:`, p.cantidad);
-    if (cant && !isNaN(cant) && cant > 0) return { nombre: p.nombre, cantidad: parseInt(cant, 10) };
-    return p;
+
+    // Si el usuario cancela el prompt, mantener el valor original
+    if (cant === null) return p;
+
+    const cantidadNum = parseInt(cant, 10);
+
+    // Validación de cantidad
+    if (isNaN(cantidadNum) || cantidadNum <= 0) {
+      alert(`La cantidad para ${p.nombre} debe ser un número mayor que 0.`);
+      return p;
+    }
+
+    // Si la cantidad cambió, marcar bandera
+    if (cantidadNum !== p.cantidad) huboCambios = true;
+
+    return { nombre: p.nombre, cantidad: cantidadNum };
   });
 
-  const { error: updateError } = await supabaseClient.from('orden_produccion')
-    .update({ ver_orden: productos }).eq('id_orden_produccion', id_orden_produccion);
-  if (updateError) return console.error("Error al actualizar OP:", updateError);
+  // Si no hubo cambios, no actualizar ni mostrar alerta
+  if (!huboCambios) {
+    console.log("No se realizaron cambios en la OP.");
+    return;
+  }
 
-  cargarOP();
+  // Actualizar la OP en la base de datos
+  const { error: updateError } = await supabaseClient
+    .from('orden_produccion')
+    .update({ ver_orden: productos })
+    .eq('id_orden_produccion', id_orden_produccion);
+
+  if (updateError) {
+    console.error("Error al actualizar OP:", updateError);
+    alert("Error al actualizar la orden de producción.");
+  } else {
+    alert("✅ La orden de producción se actualizó correctamente.");
+  }
 }
 
-// Eliminar OP
+
+// Eliminar OP (Falta retornar stock reservado)
+// Dar de baja una OP (sin eliminarla físicamente)
 async function eliminarOP(id_orden_produccion) {
-  if (!confirm("¿Eliminar esta OP?")) return;
-  const { error } = await supabaseClient.from('orden_produccion')
-    .delete().eq('id_orden_produccion', id_orden_produccion);
-  if (error) return console.error("Error al eliminar OP:", error);
-  cargarOP();
+  if (!confirm("¿Dar de baja esta OP?")) return;
+
+  // Actualiza el estado en lugar de eliminar el registro
+  const { error } = await supabaseClient
+    .from('orden_produccion')
+    .update({ estado: 'Baja' })
+    .eq('id_orden_produccion', id_orden_produccion);
+
+  if (error) {
+    console.error("Error al dar de baja la OP:", error);
+    alert("❌ Ocurrió un error al dar de baja la orden de producción.");
+    return;
+  }
+
+  alert("✅ La orden de producción fue dada de baja correctamente.");
+  cargarOP(); // actualiza la vista
 }
-  */
+
+//////
 async function verificarStockMaterias() {
   try {
     const { data, error } = await supabaseClient
