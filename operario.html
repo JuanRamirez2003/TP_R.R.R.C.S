@@ -87,6 +87,24 @@
   #registroTable th {
   color: black;
 }
+/* Estilos para texto dentro de las líneas de producción */
+#lineasContainer,
+#lineasContainer * {
+  color: rgb(0, 0, 0) !important;
+}
+
+/* Si las cajas de etapas tienen fondo oscuro, mejoramos contraste */
+.etapa, .bloque-etapa, .linea-etapa {
+  background-color: #333 !important;
+  color: #000000 !important;
+  border: 1px solid #555 !important;
+}
+
+/* Si hay etiquetas de estado o detalle, que sean claras también */
+.detalle-etapa, .texto-etapa, .estado-etapa {
+  color: #000000 !important;
+  font-weight: 500;
+}
     </style>
 </head>
 <body>
