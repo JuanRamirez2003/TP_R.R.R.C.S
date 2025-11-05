@@ -491,3 +491,312 @@ tr:hover {
 #logoEmpresa:hover {
   transform: scale(1.05);
 }
+
+
+
+
+/* ===================== */
+/* MODAL DE CONFIRMACIÓN / BAJA CLIENTE */
+/* ===================== */
+
+/* Fondo oscuro translúcido */
+.modal-overlay-bajaC {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75);
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Mostrar el modal */
+.modal-overlay-bajaC.mostrar {
+  display: flex;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Contenedor principal del modal */
+.modal-bajaC {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  padding: 25px 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(85, 166, 48, 0.4);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  animation: scaleUp 0.25s ease-in-out;
+}
+
+/* Título */
+.modal-bajaC h3 {
+  color: #ffffff;
+  margin-bottom: 10px;
+  font-size: 20px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+}
+
+/* Mensaje */
+.modal-bajaC p {
+  font-size: 15px;
+  margin: 20px 0;
+  color: #d0d0d0;
+}
+
+/* Botonera */
+.modal-buttons-bajaC {
+  display: flex;
+  justify-content: space-around;
+  gap: 10px;
+}
+
+/* Botones del modal */
+.modal-buttons-bajaC button {
+  flex: 1;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 14px;
+}
+
+/* Botón cancelar */
+#btnCancelarBajaC {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
+
+#btnCancelarBajaC:hover {
+  background-color: #3e3e3e;
+}
+
+/* Botón aceptar */
+.btn-aceptar-bajaC {
+  background-color: #4a8c2a;
+  color: #000;
+}
+
+.btn-aceptar-bajaC:hover {
+  background-color: #55a630;
+  color: #fff;
+}
+
+/* 🔸 Variante visual para "cliente ya inactivo" */
+.modal-bajaC.inactivo {
+  border-left: 5px solid #dc3545;
+}
+
+.modal-bajaC.inactivo h3 {
+  color: #ff6666;
+}
+
+.modal-bajaC.inactivo p {
+  color: #ffb3b3;
+}
+
+/* 🔹 Animaciones suaves */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.9); opacity: 0.8; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Fondo del modal */
+.modal-error {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+/* Mostrar */
+.modal-error.mostrar {
+  display: flex;
+}
+
+/* Contenido del modal */
+.modal-error-contenido {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  padding: 25px 35px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  min-width: 300px;
+  max-width: 400px;
+}
+
+/* Botón cerrar */
+.modal-error-contenido button {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #55a630;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.modal-error-contenido button:hover {
+  background-color: #4a8c2a;
+  color: #fff;
+}
+
+/* ===== Modal de INFOOOO (OC) ===== */
+.modal-info {
+  display: none; /* oculto por defecto */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* fondo oscuro semitransparente */
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-info.mostrar {
+  display: flex;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-info-contenido {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  padding: 25px 35px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(85, 166, 48, 0.4);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  animation: scaleUp 0.25s ease-in-out;
+}
+
+.modal-info-contenido h3 {
+  margin-bottom: 15px;
+  color: #55a630; /* verde característico del proyecto */
+}
+
+.modal-info-contenido p {
+  margin-bottom: 20px;
+  line-height: 1.5;
+  white-space: pre-line; /* respeta saltos de línea */
+}
+
+.modal-info-contenido button {
+  padding: 10px 20px;
+  background-color: #4a8c2a;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.modal-info-contenido button:hover {
+  background-color: #55a630;
+  color: #fff;
+}
+
+@keyframes fadeInModal {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+/* ===== Modal de ERROR (Facturación) ===== */
+.modal-error-facturacion {
+  display: none; /* oculto por defecto */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* fondo oscuro semitransparente */
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+    
+}
+
+.modal-error-facturacion.mostrar {
+  display: flex;
+}
+
+.modal-error-facturacion-contenido {
+  background-color: #1e1e1e;
+  color: #f8d7da; /* texto claro rojizo */
+  padding: 25px 35px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(220, 53, 69, 0.4);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  animation: fadeInModalError 0.3s ease;
+}
+
+.modal-error-facturacion-contenido h3 {
+  margin-bottom: 15px;
+  color: #dc3545; /* rojo de error */
+}
+
+.modal-error-facturacion-contenido p {
+  margin-bottom: 20px;
+  line-height: 1.5;
+  white-space: pre-line; /* respeta saltos de línea */
+}
+
+.modal-error-facturacion-contenido button {
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.modal-error-facturacion-contenido button:hover {
+  background-color: #ff4d5b;
+  color: #fff;
+}
+
+@keyframes fadeInModalError {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

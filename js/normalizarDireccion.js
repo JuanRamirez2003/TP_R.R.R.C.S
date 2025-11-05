@@ -6,12 +6,12 @@ function normalizarDireccion() {
     const direccion = document.getElementById('direccion').value.trim();
 
     if (!validarFormatoDireccion(direccion)) {
-        alert("El formato de la dirección debe ser: Calle número, Municipio \n NO SE OLVIDE DE PONER LA COMA");
-        return;
+        mostrarError("El formato de la dirección debe ser: Calle número, Municipio        NO SE OLVIDE DE PONER LA COMA");
+        return; 
     }
     // Si la dirección ya está en la lista de válidas, no hacer fetch
     if (direccionesValidas.includes(direccion)) {
-        alert("La dirección ya es válida.");
+        mostrarError("La dirección ya es válida.");
         return;
     }
 
@@ -86,3 +86,22 @@ function direccionEsValida(direccion) {
     return direccionesValidas.includes(direccion);
 }
 
+function mostrarError(mensaje) {
+  const modal = document.getElementById('modalError');
+  const mensajeP = document.getElementById('mensajeErrorTexto');
+  const btnCerrar = document.getElementById('btnCerrarError');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de error, usando alert()");
+    return alert(mensaje);
+  }
+
+  mensajeP.innerHTML = mensaje;
+
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
+}

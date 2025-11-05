@@ -197,10 +197,14 @@ async function editarCliente(dni) {
   }
 }
 
-// ================== DAR DE BAJA CLIENTE ==================
+/* ================== DAR DE BAJA CLIENTE ==================
 async function bajaCliente(dni) {
-  if (!confirm('¿Desea dar de baja este cliente?')) return;
+ // const confirmar = await mostrarModalBajaC();
+ // console.log('Confirmar baja:', confirmar);
+  if (!confirmar) return;
+
   try {
+    console.log('Dando de BAJA al cliente con DNI/CUIL:', dni);
     const { error } = await supabaseClient.from('clientes')
       .update({ estado: 'inactivo' })
       .eq('dni_cuil', dni);
@@ -210,7 +214,42 @@ async function bajaCliente(dni) {
     console.error(err);
     mostrarError('Error al dar de baja el cliente');
   }
+}*/
+async function bajaCliente(dni) {
+  try {
+    const { data, error: fetchError } = await supabaseClient
+      .from('clientes')
+      .select('estado')
+      .eq('dni_cuil', dni)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Si el cliente ya está inactivo, mostrar el modal de aviso
+    if (data.estado === 'inactivo') {
+      await mostrarModalBajaC(true);
+      return;
+    }
+
+    // Si está activo, mostrar el modal de confirmación
+    const confirmar = await mostrarModalBajaC();
+    if (!confirmar) return;
+
+    const { error } = await supabaseClient
+      .from('clientes')
+      .update({ estado: 'inactivo' })
+      .eq('dni_cuil', dni);
+
+    if (error) throw error;
+
+    console.log("Cliente dado de baja correctamente ✅");
+    listarClientes();
+  } catch (err) {
+    console.error(err);
+    mostrarError('Error al dar de baja el cliente');
+  }
 }
+
 
 
 async function listarClientes() {
@@ -268,12 +307,30 @@ function validarCUIL(cuil) {
   return regex.test(cuil);
 }
 
-function mostrarError(mensaje) {
+/*function mostrarError(mensaje) {
   const div = document.getElementById('mensajeError');
   if (!div) return alert(mensaje);
   div.innerText = mensaje;
   div.style.display = 'block';
   setTimeout(() => div.style.display = 'none', 4000);
+}*/
+function mostrarError(mensaje) {
+  const modal = document.getElementById('modalError');
+  const mensajeP = document.getElementById('mensajeErrorTexto');
+  const btnCerrar = document.getElementById('btnCerrarError');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de error, usando alert()");
+    return alert(mensaje);
+  }
+
+  mensajeP.textContent = mensaje;
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
 }
 
 // ===================== ÓRDENES DE VENTA =====================
@@ -399,7 +456,7 @@ async function agregarProducto() {
 
   } catch (err) {
     console.error('Error agregando producto:', err);
-    alert('Ocurrió un error al agregar el producto.');
+    mostrarErrorOC('Ocurrió un error al agregar el producto.');
   }
 }
 
@@ -416,8 +473,8 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
     const cliente = document.getElementById('clienteOrden').value;
     const productosDivs = document.querySelectorAll('#productosContainer .producto-item');
 
-    if (!cliente) return alert('Seleccione un cliente');
-    if (productosDivs.length === 0) return alert('Agregue al menos un producto');
+    if (!cliente) return mostrarErrorOC('Seleccione un cliente');
+    if (productosDivs.length === 0) return mostrarErrorOC('Agregue al menos un producto');
 
     const productosConStock = [];
     const productosPendientes = [];
@@ -427,7 +484,7 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
       const id_producto = parseInt(div.querySelector('.productoSelect').value);
       const cantidad = parseInt(div.querySelector('.cantidadInput').value);
 
-      if (!id_producto || cantidad < 1) return alert('Complete todos los productos y cantidades');
+      if (!id_producto || cantidad < 1) return mostrarError('Complete todos los productos y cantidades');
 
       const { data: prodData, error: prodError } = await supabaseClient
         .from('productos')
@@ -542,7 +599,7 @@ if (productosPendientes.length > 0) {
     if (ordenPendiente)
       mensaje += `Productos pendientes: ${productosPendientes.map(p => p.nombre).join(', ')}.`;
 
-    alert(mensaje);
+    mostrarInfoOC(mensaje);
 
     document.getElementById('formOrden').style.display = 'none';
     listarOrdenes();
@@ -550,7 +607,7 @@ if (productosPendientes.length > 0) {
 
   } catch (err) {
     console.error('Error guardando orden completa:', err);
-    alert('Ocurrió un error al registrar la orden.');
+    mostrarErrorOC('Ocurrió un error al registrar la orden.');
   }
 });
 
@@ -629,7 +686,7 @@ async function listarFacturas() {
     }
   } catch (err) {
     console.error('Error listando facturas:', JSON.stringify(err, null, 2));
-    alert('Ocurrió un error al cargar las facturas. Ver consola para más detalles.');
+    mostrarErrorFacturacion('Ocurrió un error al cargar las facturas.');//alert ('Ocurrió un error al cargar las facturas. Ver consola para más detalles.');
   }
 }
 
@@ -656,7 +713,7 @@ async function verFactura(idFactura) {
 
     if (error) throw error;
     if (!data) {
-      alert('Factura no encontrada');
+      mostrarErrorFacturacion('Factura no encontrada');//alert('Factura no encontrada');
       return;
     }
 
@@ -845,7 +902,7 @@ async function verFactura(idFactura) {
 
   } catch (err) {
     console.error("Error al ver factura:", err);
-    alert("Ocurrió un error al cargar la factura. Ver consola para más detalles.");
+    mostrarErrorFacturacion("Ocurrió un error al cargar la factura. Ver consola para más detalles.");//alert("Ocurrió un error al cargar la factura. Ver consola para más detalles.");
   }
 }
 
@@ -876,5 +933,103 @@ function cerrarModalFacturaPDF() {
 }
 function descargarFacturaPDF() {
   if (window._pdfFactura) window._pdfFactura.save("factura.pdf");
-  else alert("PDF no disponible para descarga.");
+  else mostrarErrorFacturacion("PDF no disponible para descarga.");//alert("PDF no disponible para descarga.");
+}
+
+
+function mostrarModalBajaC(yaInactivo = false) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("modalBajaC");
+    if (!modal) {
+      console.error("⚠️ No se encontró el modalBajaC en el DOM");
+      return resolve(false);
+    }
+
+    const titulo = document.getElementById("modalTituloBajaC");
+    const mensaje = document.getElementById("modalMensajeBajaC");
+    const btnAceptar = document.getElementById("btnAceptarBajaC");
+
+    // Si el cliente ya está dado de baja, mostramos un mensaje distinto
+    if (yaInactivo) {
+      titulo.textContent = "Cliente ya inactivo";
+      mensaje.textContent = "Este cliente ya fue dado de baja y no puede volver a darse de baja.";
+      btnAceptar.style.display = "none"; // ocultamos el botón Aceptar
+    } else {
+      titulo.textContent = "Confirmar baja";
+      mensaje.textContent = "¿Desea dar de baja este cliente?";
+      btnAceptar.style.display = "inline-block";
+    }
+
+    modal.classList.add("mostrar");
+
+    const btnCancelar = document.getElementById("btnCancelarBajaC");
+
+    btnCancelar.onclick = () => {
+      modal.classList.remove("mostrar");
+      resolve(false);
+    };
+
+    btnAceptar.onclick = () => {
+      modal.classList.remove("mostrar");
+      resolve(true);
+    };
+  });
+}
+
+function mostrarErrorOC(mensaje) {
+  const modal = document.getElementById('modalErrorOC');
+  const mensajeP = document.getElementById('mensajeErrorTextoOC');
+  const btnCerrar = document.getElementById('btnCerrarErrorOC');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de error OC, usando alert()");
+    return alert(mensaje);
+  }
+
+  mensajeP.textContent = mensaje;
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
+}
+
+
+function mostrarInfoOC(mensaje) {
+  const modal = document.getElementById('modalInfoOC');
+  const mensajeP = document.getElementById('mensajeInfoTextoOC');
+  const btnCerrar = document.getElementById('btnCerrarInfoOC');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de información OC");
+    return alert(mensaje);
+  }
+
+  mensajeP.textContent = mensaje;
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
+}
+
+function mostrarErrorFacturacion(mensaje) {
+  const modal = document.getElementById('modalErrorFacturacion');
+  const mensajeP = document.getElementById('mensajeErrorTextoFacturacion');
+  const btnCerrar = document.getElementById('btnCerrarErrorFacturacion');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de error de facturación, usando alert()");
+    return alert(mensaje);
+  }
+
+  mensajeP.textContent = mensaje;
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
 }

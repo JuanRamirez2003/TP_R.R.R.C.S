@@ -45,7 +45,7 @@
 
 
 
-        /* === MODAL AUTO OP === */
+    /* === MODAL AUTO OP === */
     #modalOP {
       position: fixed;
       inset: 0;
@@ -186,14 +186,14 @@
 
 <body>
   <div class="dashboard">
-     <!-- Logo superior derecho -->
-        <img src="logo.png" alt="Logo de la empresa" id="logoEmpresa">
+    <!-- Logo superior derecho -->
+    <img src="logo.png" alt="Logo de la empresa" id="logoEmpresa">
     <!-- Menú lateral -->
     <aside class="sidebar">
       <h2>Vendedor</h2>
       <ul>
         <li><button onclick="mostrarSeccion('clientes')">Gestión de Clientes</button></li>
-        <li><button onclick="mostrarSeccion('ordenes')">Órdenes de Venta</button></li>
+        <li><button onclick="mostrarSeccion('ordenes')">Órdenes de Ventas</button></li>
         <li><button onclick="mostrarSeccion('facturas')">Facturación</button></li>
       </ul>
       <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
@@ -275,7 +275,7 @@
             </div>
 
             <div class="form-group" style="margin-top:10px;">
-              <label for="direccion" style="font-weight:bold; color:white;">Dirección:</label>
+              <label for="direccion" style="color:white;">Dirección:</label>
               <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
                 <input type="text" id="direccion" name="direccion" placeholder="Ej: Calle Falsa 123, Springfield"
                   required
@@ -298,7 +298,7 @@
             </div>
 
             <button type="submit" class="btn-submit">Guardar</button>
-            <button type="button" onclick="cancelarCliente()" class="btn-submit">Cancelar</button>
+            <button type="button" onclick="cancelarCliente()" class="btn-eliminar">Cancelar</button>
           </form>
         </div>
 
@@ -307,7 +307,28 @@
           <p id="textoExitoCliente" style="font-size:18px; font-weight:bold; color:#155724;"></p>
           <button onclick="volverPanel()" class="btn-submit">Volver al panel</button>
         </div>
+
+        <!-- Modal de Error -->
+        <div id="modalError" class="modal-error">
+          <div class="modal-error-contenido">
+            <h3>Error</h3>
+            <p id="mensajeErrorTexto"></p>
+            <button id="btnCerrarError">Cerrar</button>
+          </div>
+        </div>
       </div>
+      <!-- Modal para baja de cliente -->
+      <div id="modalBajaC" class="modal-overlay-bajaC">
+        <div class=" modal-bajaC">
+          <h3 id="modalTituloBajaC">Confirmar baja</h3>
+          <p id="modalMensajeBajaC">¿Desea dar de baja este cliente?</p>
+          <div class="modal-buttons-bajaC">
+            <button id="btnCancelarBajaC">Cancelar</button>
+            <button id="btnAceptarBajaC" class="btn-aceptar-bajaC">Aceptar</button>
+          </div>
+        </div>
+      </div>
+
 
       <!-- ===================== SECCIÓN ÓRDENES ===================== -->
       <div id="ordenes" class="seccion" style="display:none;">
@@ -315,7 +336,7 @@
         <button class="btn-submit" onclick="nuevaOrden()">➕ Nueva Orden</button>
 
         <div id="formOrden" style="display:none; margin-top:20px;">
-          <h3>Nueva Orden de Venta</h3>
+          <h3>Nueva Orden de Ventas</h3>
           <form id="ordenForm">
             <div class="form-group">
               <label for="clienteOrden">Cliente:</label>
@@ -328,7 +349,7 @@
 
             <button type="button" class="btn-submit" onclick="agregarProducto()">➕ Agregar Producto</button>
             <button type="submit" class="btn-submit">Guardar Orden</button>
-            <button type="button" onclick="cancelarOrden()" class="btn-submit">Cancelar</button>
+            <button type="button" onclick="cancelarOrden()" class="btn-eliminar">Cancelar</button>
           </form>
         </div>
 
@@ -352,6 +373,24 @@
             <tbody></tbody>
           </table>
         </div>
+
+
+
+        <div id="modalErrorOC" class="modal-error">
+          <div class="modal-error-contenido">
+            <h3>Error</h3>
+            <p id="mensajeErrorTextoOC"></p>
+            <button id="btnCerrarErrorOC">Cerrar</button>
+          </div>
+        </div>
+        <div id="modalInfoOC" class="modal-info">
+          <div class="modal-info-contenido">
+            <h3>Información</h3>
+            <p id="mensajeInfoTextoOC"></p>
+            <button id="btnCerrarInfoOC">Cerrar</button>
+          </div>
+        </div>
+
       </div>
 
       <!-- ===================== SECCIÓN FACTURAS ===================== -->
@@ -395,6 +434,15 @@
             </div>
           </div>
         </div>
+
+        <!-- Modal de error de facturación -->
+        <div id="modalErrorFacturacion" class="modal-error-facturacion">
+          <div class="modal-error-facturacion-content">
+            <h3>Error de Facturación</h3>
+            <p id="mensajeErrorFacturacion"></p>
+            <button onclick="cerrarErrorFacturacion()">Cerrar</button>
+          </div>
+        </div>
         <!--
 <div style="margin-top:20px;">
   <button id="btnGenerarOP" class="btn-submit" 
@@ -436,6 +484,8 @@ Modal Órdenes de Producción -->
             <ul id="op-excedidas-list"></ul>
           </div>
         </div>
+
+
 
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
