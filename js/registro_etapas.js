@@ -81,8 +81,8 @@ function actualizarSelectsOP() {
 async function toggleLinea(n) {
     const opSelect = document.getElementById(`opSelectLinea-${n}`);
     const opId = opSelect.value;
-    if (!opId) return alert("Seleccione una OP.");
-    if (opEnEjecucion.has(opId)) return alert("Esta OP ya está en ejecución.");
+    if (!opId) return mostrarError("Seleccione una OP para iniciar la linea.");
+    if (opEnEjecucion.has(opId)) return mostrarError("Esta OP ya está en ejecución, seleccione uan diferente.");
 
     opEnEjecucion.add(opId);
     actualizarSelectsOP();
@@ -621,7 +621,29 @@ async function verDetalleLote(idLote) {
 
     } catch (err) {
         console.error("Error mostrando detalle del lote:", err);
-        alert("No se pudo mostrar el detalle del lote.");
+        mostrarError("No se pudo mostrar el detalle del lote.");
     }
 }
+
+
+
+function mostrarError(mensaje) {
+  const modal = document.getElementById('modalError');
+  const mensajeP = document.getElementById('mensajeErrorTexto');
+  const btnCerrar = document.getElementById('btnCerrarError');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de error, usando alert()");
+    return alert(mensaje);
+  }
+
+  mensajeP.textContent = mensaje;
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
+}
+
 window.toggleLinea = toggleLinea;
