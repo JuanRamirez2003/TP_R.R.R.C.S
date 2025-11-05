@@ -96,12 +96,31 @@ function validarCUIT(cuit, tipo) {
   return false;
 }
 
-function mostrarError(mensaje) {
+/*function mostrarAviso(mensaje) {
   const div = document.getElementById('mensajeError');
   if (!div) return alert(mensaje);
   div.innerText = mensaje;
   div.style.display = 'block';
   setTimeout(() => div.style.display = 'none', 4000);
+}*/
+
+function mostrarAviso(mensaje) {
+  const modal = document.getElementById('modalAviso');
+  const mensajeP = document.getElementById('mensajeAvisoTexto');
+  const btnCerrar = document.getElementById('btnCerrarAviso');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de aviso");
+    return alert(mensaje);
+  }
+
+  mensajeP.textContent = mensaje;
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
 }
 
 // ================== INPUTS Y VALIDACIONES DINÁMICAS ==================
@@ -240,13 +259,13 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
   const direccion = document.getElementById("direccion").value.trim();
   //const estado = document.getElementById("estado").value;
 
-  if (!nombre) return mostrarError("El nombre es obligatorio");
-  if (!tipo_proveedor) return mostrarError("Debe seleccionar el tipo de proveedor");
-  if (!validarCUIT(dni_cuil, tipo_proveedor)) return mostrarError("CUIT inválido según tipo de proveedor");
-  if (!pref_cont) return mostrarError("Debe seleccionar la preferencia de contacto");
-  if (!validarEmail(email)) return mostrarError("El email no tiene un formato válido");
-  if (!validarTelefono(telefono)) return mostrarError("El teléfono debe tener 10 números");
-  if (!direccionEsValida(direccion)) return mostrarError("Debe seleccionar una dirección válida de la lista");
+  if (!nombre) return mostrarAviso("El nombre es obligatorio");
+  if (!tipo_proveedor) return mostrarAviso("Debe seleccionar el tipo de proveedor");
+  if (!validarCUIT(dni_cuil, tipo_proveedor)) return mostrarAviso("CUIT inválido según tipo de proveedor");
+  if (!pref_cont) return mostrarAviso("Debe seleccionar la preferencia de contacto");
+  if (!validarEmail(email)) return mostrarAviso("El email no tiene un formato válido");
+  if (!validarTelefono(telefono)) return mostrarAviso("El teléfono debe tener 10 números");
+  if (!direccionEsValida(direccion)) return mostrarAviso("Debe seleccionar una dirección válida de la lista");
 
   try {
     const { data: existente } = await supabaseClient
@@ -291,7 +310,7 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
 
   } catch (err) {
     console.error("Error:", err);
-    mostrarError(err.message || "Error al procesar el proveedor");
+   mostrarAviso(err.message || "Error al procesar el proveedor");
   }
 });
 
@@ -315,7 +334,7 @@ async function editarProveedor(dni) {
     document.getElementById('tablaProveedorContainer').style.display = 'none';
   } catch (err) {
     console.error(err);
-    mostrarError('Error al cargar datos del proveedor');
+   mostrarAviso('Error al cargar datos del proveedor');
   }
 }
 
@@ -329,6 +348,6 @@ async function bajaProveedor(dni) {
     listarProveedores();
   } catch (err) {
     console.error(err);
-    mostrarError('Error al dar de baja el proveedor');
+   mostrarAviso('Error al dar de baja el proveedor');
   }
 }

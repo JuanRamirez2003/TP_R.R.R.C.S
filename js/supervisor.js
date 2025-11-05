@@ -148,7 +148,7 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
     cantidad: parseInt(p.querySelector('input').value, 10)
   }));
   if (productos.some(p => !p.nombre || p.cantidad <= 0)) {
-    alert("Complete todos los productos con cantidad válida");
+    mostrarAviso("Complete todos los productos con cantidad válida");//Alert
     return;
   }
   console.log(productos[0].nombre);
@@ -160,12 +160,12 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
 
   const idProducto = await obtnerIdProducto(productos[0].nombre, false);
   if (!idProducto) {
-    alert("No se pudo obtener el ID del producto");
+    mostrarAviso("No se pudo obtener el ID del producto");//Alert
     return;
   }
   const idReceta = await obtenerRecetaPorProducto(idProducto);
   if (!idReceta) {
-    alert("No se encontró receta para este producto");
+    mostrarAviso("No se encontró receta para este producto");//Alert
     return;
   }
 
@@ -173,7 +173,7 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
   console.log("Detalle de receta:", detalleReceta);
   const stockSuficiente = await verificarStockSuficiente(detalleReceta);
   if (!stockSuficiente) {
-    alert("No hay suficiente stock para producir este lote.");
+    mostrarAviso("No hay suficiente stock para producir este lote.");//Alert
     return;
   }
 
@@ -196,7 +196,7 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
 
   const okOV = await guardarOVsEnOP(idOrden);
   if (!okOV) {
-    alert("Error al guardar las OV asociadas a la OP.");
+    mostrarAviso("Error al guardar las OV asociadas a la OP.");//alert
     return;
   }
   console.log("Orden de Producción creada con éxito.");
@@ -204,7 +204,7 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
   for (const mat of detalleReceta) {
     const ok = await reservarLotes(idOrden, mat.id_mp, mat.cantidad_total);
     if (!ok) {
-      alert(`No se pudo reservar los lotes para el material ${mat.nombre_material} (ID ${mat.id_mp})`);
+      mostrarAviso(`No se pudo reservar los lotes para el material ${mat.nombre_material} (ID ${mat.id_mp})`);//alert
       return;
     }
   }
@@ -323,7 +323,7 @@ async function actualizarDetalleMateriales() {
   mostrarDetalleMateriales(verificacion.detalle);
 
   if (!verificacion.ok) {
-    alert("⚠️ Algunos materiales no tienen suficiente stock. Revisa la tabla para más detalles.");
+    mostrarAviso("⚠️ Algunos materiales no tienen suficiente stock. Revisa la tabla para más detalles.");//alert
   }
   boton.disabled = !verificacion.ok;
 }
@@ -513,7 +513,7 @@ async function agregarOV() {
   const ovDisponibles = await obtenerOVsDisponibles(idProductoSeleccionado);
 
   if (!ovDisponibles || ovDisponibles.length === 0) {
-    alert("No hay OV pendientes con este producto.");
+    mostrarAviso("No hay OV pendientes con este producto.");//Alert
     return;
   }
 
@@ -524,7 +524,7 @@ async function agregarOV() {
   const ovFiltradas = ovDisponibles.filter(ov => !seleccionadas.includes(String(ov.id_detalle)));
 
   if (ovFiltradas.length === 0) {
-    alert("Todas las OV disponibles ya fueron seleccionadas.");
+    mostrarAviso("Todas las OV disponibles ya fueron seleccionadas.");//alert
     return;
   }
 
@@ -654,7 +654,7 @@ function eliminarOV(btn) {
   const tieneOV = document.getElementById('tieneOV').value === 'si';
 
   if (tieneOV && ovItems.length === 1) {
-    alert("Debe haber al menos una OV si marcó que hay relación con OP.");
+    mostrarAviso("Debe haber al menos una OV si marcó que hay relación con OP.");//alert
     return;
   }
 
@@ -738,7 +738,7 @@ async function validarCantidadOVs() {
       sumaCajas += cantidadSeleccionada;
     }
     if (sumaCajas > cantTotalCajasOP) {
-      alert(`⚠️ La suma de cajas de las OV seleccionadas (${sumaCajas}) excede la cantidad a producir en esta OP (${cantTotalCajasOP})`);
+      mostrarAviso(`⚠️ La suma de cajas de las OV seleccionadas (${sumaCajas}) excede la cantidad a producir en esta OP (${cantTotalCajasOP})`);//Alert
       return false;
     } else {
       console.log(`✅ Cantidad total seleccionada: ${sumaCajas}, dentro del límite de OP (${cantTotalCajasOP})`);
@@ -748,7 +748,7 @@ async function validarCantidadOVs() {
 
   } catch (err) {
     console.error("Error general validando cantidades de OV:", err);
-    alert("❌ Ocurrió un error al validar las cantidades de OV. Revisa la consola.");
+    mostrarAviso("❌ Ocurrió un error al validar las cantidades de OV. Revisa la consola.");//alert VER
     return false;
   }
 }
@@ -1196,7 +1196,7 @@ async function editarOP(id_orden_produccion) {
 
   if (error) {
     console.error("Error al cargar OP para editar:", error);
-    alert("Ocurrió un error al cargar la orden de producción.");
+    mostrarAviso("Ocurrió un error al cargar la orden de producción.");//alert
     return;
   }
 
@@ -1213,7 +1213,7 @@ async function editarOP(id_orden_produccion) {
 
     // Validación de cantidad
     if (isNaN(cantidadNum) || cantidadNum <= 0) {
-      alert(`La cantidad para ${p.nombre} debe ser un número mayor que 0.`);
+      mostrarAviso(`La cantidad para ${p.nombre} debe ser un número mayor que 0.`);//alert
       return p;
     }
 
@@ -1237,9 +1237,9 @@ async function editarOP(id_orden_produccion) {
 
   if (updateError) {
     console.error("Error al actualizar OP:", updateError);
-    alert("Error al actualizar la orden de producción.");
+    mostrarAviso("Error al actualizar la orden de producción.");
   } else {
-    alert("✅ La orden de producción se actualizó correctamente.");
+    mostrarAviso("✅ La orden de producción se actualizó correctamente.");
   }
 }
 
@@ -1247,7 +1247,8 @@ async function editarOP(id_orden_produccion) {
 // Eliminar OP (Falta retornar stock reservado)
 // Dar de baja una OP y devolver materias primas reservadas a los lotes
 async function eliminarOP(id_orden_produccion) {
-  if (!confirm("¿Dar de baja esta OP y devolver las materias primas reservadas?")) return;
+  const confirmado = await mostrarConfirmacion("¿Dar de baja esta OP y devolver las materias primas reservadas?");
+if (!confirmado) return;
 
   console.log("🟢 Dando de baja OP:", id_orden_produccion);
 
@@ -1260,7 +1261,7 @@ async function eliminarOP(id_orden_produccion) {
 
   if (opError || !op) {
     console.error("❌ Error al obtener la OP:", opError);
-    alert("No se pudo obtener la información de la orden.");
+    mostrarAviso("No se pudo obtener la información de la orden.");//alert
     return;
   }
 
@@ -1271,7 +1272,7 @@ async function eliminarOP(id_orden_produccion) {
       detalleMateriales = JSON.parse(detalleMateriales);
     } catch (err) {
       console.error("❌ Error al parsear detalle_materiales:", err);
-      alert("Error al leer los materiales de la OP.");
+      mostrarAviso("Error al leer los materiales de la OP.");//alert
       return;
     }
   }
@@ -1284,7 +1285,7 @@ async function eliminarOP(id_orden_produccion) {
 
   if (updateOpError) {
     console.error("❌ Error al cambiar estado de OP:", updateOpError);
-    alert("Error al dar de baja la OP.");
+    mostrarAviso("Error al dar de baja la OP.");//alert
     return;
   }
 
@@ -1335,9 +1336,9 @@ async function eliminarOP(id_orden_produccion) {
   }
 
   if (materialesActualizados > 0) {
-    alert(`✅ OP dada de baja y se devolvieron las cantidades de ${materialesActualizados} material(es).`);
+    mostrarAviso(`✅ OP dada de baja y se devolvieron las cantidades de ${materialesActualizados} material(es).`);//alert
   } else {
-    alert("⚠️ OP dada de baja, pero no se devolvió stock (ver consola).");
+    mostrarAviso("⚠️ OP dada de baja, pero no se devolvió stock (ver consola).");//alert VER
   }
 
   cargarOP(); // refresca la vista
@@ -1479,7 +1480,7 @@ async function verDetalleLote(idLote) {
 
   } catch (err) {
     console.error("Error mostrando detalle del lote:", err);
-    alert("No se pudo mostrar el detalle del lote.");
+    mostrarAviso("No se pudo mostrar el detalle del lote.");//alert
   }
 }
 
@@ -1495,6 +1496,62 @@ window.onclick = (event) => {
     modal.style.display = 'none';
   }
 }
+
+function mostrarAviso(mensaje) {
+  const modal = document.getElementById('modalAviso');
+  const mensajeP = document.getElementById('mensajeAvisoTexto');
+  const btnCerrar = document.getElementById('btnCerrarAviso');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de aviso");
+    return alert(mensaje);
+  }
+
+  mensajeP.textContent = mensaje;
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
+}
+
+function mostrarConfirmacion(mensaje) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('modalConfirmacion');
+    const texto = document.getElementById('mensajeConfirmacionTexto');
+    const btnCancelar = document.getElementById('btnCancelarConfirmacion');
+    const btnAceptar = document.getElementById('btnAceptarConfirmacion');
+
+    if (!modal || !texto || !btnCancelar || !btnAceptar) {
+      console.error("⚠️ No se encontró el modal de confirmación");
+      return resolve(false);
+    }
+
+    texto.textContent = mensaje;
+    modal.classList.add('mostrar');
+
+    // Cerrar con botones
+    btnCancelar.onclick = () => {
+      modal.classList.remove('mostrar');
+      resolve(false);
+    };
+
+    btnAceptar.onclick = () => {
+      modal.classList.remove('mostrar');
+      resolve(true);
+    };
+
+    // Cerrar al hacer clic fuera
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('mostrar');
+        resolve(false);
+      }
+    };
+  });
+}
+
 
 
 
