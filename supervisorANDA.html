@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Supervisor - Local</title>
+  <link rel="stylesheet" href="css/ventas.css">
+  <style>
+    
+    /* Fondo del modal: ocupa toda la pantalla y centra el contenido */
+    .modal {
+      position: fixed;
+      /* flota sobre todo el contenido */
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      /* fondo semitransparente */
+      display: flex;
+      /* flex para centrar */
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      /* siempre encima de otros elementos */
+    }
+
+    /* Contenido del modal: panel blanco centrado */
+    .modal-contenido {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 500px;
+      /* ancho máximo */
+      width: 90%;
+      /* ancho adaptable a pantallas chicas */
+      max-height: 80vh;
+      /* alto máximo de la pantalla */
+      overflow-y: auto;
+      /* scroll vertical si el contenido es grande */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    /* Botón de cerrar (X) */
+    .cerrar {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #333;
+      transition: color 0.2s;
+    }
+
+    .cerrar:hover {
+      color: #ff0000;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <h2>Supervisor</h2>
+      <ul>
+        <li><button id="btnMenuCreacionOP">Creación OP</button></li>
+        <li><button onclick="mostrarSeccion('seguimientoOP'); cargarOP()">Seguimiento OP</button></li>
+        <li><button onclick="mostrarSeccion('proveedor')">Gestión de Proveedores</button></li>
+        <li><button onclick="window.location.href='panel_parametrizacion.html'">Ver Parametrizacion de Produccion</button></li>
+        <li><button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button></li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <h1>Panel de Supervisor</h1>
+
+      <!-- ===================== SECCIÓN PROVEEDORES ===================== -->
+      <div id="proveedor" class="seccion" style="display:none;">
+        <h2>Gestión de Proveedores</h2>
+        <button class="btn-submit" onclick="mostrarFormularioProveedor()">➕ Nuevo Proveedor</button>
+
+        <div id="tablaProveedorContainer" class="table-wrapper" style="margin-top:20px;">
+          <table id="tablaProveedor">
+            <thead>
+              <tr>
+                <th>CUIT</th>
+                <th>Nombre</th>
+                <th>Tipo Proveedor</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th>Preferencia Contacto</th>
+                <th>Dirección</th>
+                <th>Estado</th>
+                <th>Alta por Empleado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Formulario modal Proveedor -->
+        <div id="formProveedor" style="display:none; margin-top:20px;">
+          <h3>Nuevo Proveedor</h3>
+          <form id="proveedorForm">
+            <input type="hidden" id="id_proveedor">
+
+            <div class="form-group">
+              <label for="nombre">Nombre:</label>
+              <input type="text" id="nombre" name="nombre" required>
+            </div>
+
+            <div class="form-row" style="display:flex; flex-direction:column; gap:20px;">
+              <div class="form-group" style="width:100%;">
+                <label for="tipoProveedor">Tipo:</label>
+                <select id="tipoProveedor" name="tipoProveedor" required>
+                  <option value="">Seleccione una opción</option>
+                  <option value="responsable inscripto">Responsable inscripto</option>
+                  <option value="monotributista">Monotributista</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="width:100%;">
+                <label for="documento" id="labelDocumento">Documento:</label>
+                <input type="text" id="documento" name="documento" required placeholder="Seleccione tipo primero">
+              </div>
+            </div>
+
+            <div class="form-row" style="display:flex; flex-wrap:wrap; gap:20px; align-items:flex-start;">
+              <div class="form-group" style="flex:1;">
+                <label for="preferenciaContacto">Cont de Pref:</label>
+                <select id="preferenciaContacto" name="preferenciaContacto" required>
+                  <option value="">Seleccione una opción</option>
+                  <option value="email">Email</option>
+                  <option value="telefono">Teléfono</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label for="telefono">Teléfono:</label>
+                <input type="tel" id="telefono" name="telefono" placeholder="1123456789" required>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="ej: ejemplo@correo.com" required>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:10px;">
+              <label for="direccion" style="font-weight:bold; color:white;">Dirección:</label>
+              <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                <input type="text" id="direccion" name="direccion" placeholder="Ej: Calle Falsa 123, Springfield"
+                  required
+                  style="flex:1; padding:8px 10px; border:1px solid #ccc; border-radius:6px; font-size:14px; outline:none;"
+                  onfocus="this.style.borderColor='#007bff';" onblur="this.style.borderColor='#ccc';">
+
+                <!--Validar Dirección-->
+                </button>
+              </div>
+              <div id="resultadosDireccion" style="margin-top:8px;"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="estado">Estado:</label>
+              <select id="estado" name="estado">
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-submit">Guardar</button>
+            <button type="button" onclick="cancelarProveedor()" class="btn-submit">Cancelar</button>
+          </form>
+        </div>
+
+        <div id="mensajeExitoProveedor" style="display:none;">
+          <span id="textoExitoProveedor"></span>
+        </div>
+
+        <div id="mensajeExitoProveedor" class="mensaje"
+          style="display:none; margin-top:20px; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; text-align:center;">
+          <p id="textoExito" style="font-size:18px; font-weight:bold; color:#155724;"></p>
+          <button onclick="volverPanel()" class="btn-submit">Volver al panel</button>
+        </div>
+      </div>
+      <!-- ===================== FIN SECCIÓN PROVEEDORES ================================== -->
+
+      <!-- CREACIÓN OP -->
+      <div id="ordenProduccion" class="seccion" style="display:none;">
+        <h2>Creación de Orden de Producción</h2>
+        <form id="opForm">
+          <div class="form-group">
+            <label for="opNumero">Número de OP:</label>
+            <input type="text" id="opNumero" readonly required>
+          </div>
+          <div class="form-group">
+            <label>Productos:</label>
+            <div id="productosContainer"></div>
+          </div>
+
+
+          <div class="form-group">
+            <h3>Detalle de materiales necesarios</h3>
+            <table id="tablaMateriales" border="1" style="width:100%; border-collapse: collapse; margin-top:10px;">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Cantidad Total</th>
+                  <th>Unidad</th>
+                  <th>Condición de stock</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="3" style="text-align:center;">Sin datos aún</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="form-group">
+            <label for="tieneOV">¿Relacionar OV con esta OP?</label>
+            <select id="tieneOV">
+              <option value="no" selected>No</option>
+              <option value="si">Sí</option>
+            </select>
+          </div>
+          <div id="containerOVs" class="form-group" style="display:none;">
+            <button type="button" onclick="agregarOV()" class="btn-editar">➕ Agregar OV</button>
+            <div id="listaOVs"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="prioridadOP">Prioridad</label>
+            <select id="prioridadOP">
+              <option value="baja" selected>Baja</option>
+              <option value="normal">Normal</option>
+              <option value="alta">Alta</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </div>
+
+          <button type="submit" id="btnCrearOP" class="btn-submit" disabled>Crear OP</button>
+          <button type="button" onclick="cancelarOP()" class="btn-eliminar">Cancelar</button>
+        </form>
+      </div>
+      <!--Mensaje de éxito-->
+      <div id="mensajeExitoOP" class="mensaje"
+        style="display:none; text-align:center; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; margin-top:20px;">
+        <p id="textoExitoOP" style="font-size:18px; font-weight:bold; color:#155724;"></p>
+        <button id="btnCrearOPNuevo" class="btn-submit">Crear otra OP</button>
+        <button id="btnVerListaOP" class="btn-submit">Ver lista de OP</button>
+        <button id="btnVolverMenu" class="btn-submit">Volver al menú</button>
+      </div>
+
+      <!-- SEGUIMIENTO OP -->
+      <div id="seguimientoOP" class="seccion" style="display:none;">
+        <h2>Seguimiento de Órdenes de Producción</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Numero de OP</th>
+                <th>Orden</th>
+                <th>Estado</th>
+                <th>Fecha Emisión</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaOP"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Ver Orden -->
+  <div class="modal" id="modalOrden"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color: rgba(0,0,0,0.7); justify-content:center; align-items:center;">
+    <div class="modal-content"
+      style="background-color:#1e1e1e; padding:20px; border-radius:10px; width:90%; max-width:500px; position:relative;">
+      <span class="close-modal" onclick="cerrarModal()"
+        style="position:absolute; top:10px; right:15px; font-size:24px; cursor:pointer; color:#fff;">&times;</span>
+      <h2>Detalle de Orden</h2>
+      <div id="detalleOrden"></div>
+    </div>
+  </div>
+
+  <!-- Modal Ver detalle lote -->
+  <div id="modalDetalleLote" class="modal" style="display:none;">
+    <div class="modal-contenido">
+      <span id="cerrarModalDetalleLote" class="cerrar">&times;</span>
+      <h3>Detalle del Lote</h3>
+      <div id="contenidoModalDetalleLote">
+        <!-- Contenido dinámico -->
+      </div>
+    </div>
+  </div>
+
+    <!-- Modal de Confirmación -->
+  <div id="modalConfirmacion" class="modal-confirmacion">
+    <div class="modal-confirmacion-contenido">
+      <h2>⚠️ Confirmar Baja OP</h2>
+      <p id="mensajeConfirmacionTexto">¿Está seguro de continuar?</p>
+      <div class="botones-confirmacion">
+        <button id="btnCancelarConfirmacion" class="btn-cancelar">Cancelar</button>
+        <button id="btnAceptarConfirmacion" class="btn-aceptar">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- Modal de Aviso Genérico -->
+  <div id="modalAviso" class="modal-aviso">
+    <div class="modal-aviso-contenido">
+      <h2>Aviso</h2>
+      <p id="mensajeAvisoTexto">Este es un mensaje de aviso.</p>
+      <button id="btnCerrarAviso">Cerrar</button>
+    </div>
+  </div>
+
+
+  <!-- Notificación de stock -->
+  <div id="notificacionStock" style="
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: #f44336;
+    border-radius: 50%;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-size: 28px;
+    color: white;
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 9999;
+">
+    🔔
+  </div>
+
+  <!-- Tooltip/modal dentro de la notificación -->
+  <div id="tooltipStock" style="
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    display: none;
+    z-index: 9999;
+    font-family: Arial, sans-serif;
+">
+    <h4 style="margin-top:0; margin-bottom:10px; text-align:center;">Materias primas con stock insuficiente</h4>
+    <ul id="listaFaltantes" style="padding-left: 20px; margin-bottom: 10px; list-style: disc;"></ul>
+    <button id="btnIrPedido" style="
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    ">Ir al pedido de materias primas</button>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="js/supervisor.js"></script>
+  <script src="js/altaProveedor.js"></script>
+  <script src="js/normalizarDireccion.js"></script>
+</body>
+
+</html>
