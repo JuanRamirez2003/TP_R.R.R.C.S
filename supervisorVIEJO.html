@@ -7,43 +7,33 @@
   <title>Panel de Supervisor - Local</title>
   <link rel="stylesheet" href="css/ventas.css">
   <style>
-    
-    /* Fondo del modal: ocupa toda la pantalla y centra el contenido */
+    /* Fondo del modal */
     .modal {
       position: fixed;
-      /* flota sobre todo el contenido */
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
       background-color: rgba(0, 0, 0, 0.5);
-      /* fondo semitransparente */
       display: flex;
-      /* flex para centrar */
       justify-content: center;
       align-items: center;
       z-index: 9999;
-      /* siempre encima de otros elementos */
     }
 
-    /* Contenido del modal: panel blanco centrado */
+    /* Contenido del modal */
     .modal-contenido {
       background-color: #fff;
       padding: 20px;
       border-radius: 8px;
       max-width: 500px;
-      /* ancho máximo */
       width: 90%;
-      /* ancho adaptable a pantallas chicas */
       max-height: 80vh;
-      /* alto máximo de la pantalla */
       overflow-y: auto;
-      /* scroll vertical si el contenido es grande */
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       position: relative;
     }
 
-    /* Botón de cerrar (X) */
     .cerrar {
       position: absolute;
       top: 10px;
@@ -59,26 +49,29 @@
       color: #ff0000;
     }
   </style>
-
 </head>
 
 <body>
   <div class="dashboard">
+
+    <!-- Sidebar -->
     <aside class="sidebar">
       <h2>Supervisor</h2>
       <ul>
         <li><button id="btnMenuCreacionOP">Creación OP</button></li>
         <li><button onclick="mostrarSeccion('seguimientoOP'); cargarOP()">Seguimiento OP</button></li>
         <li><button onclick="mostrarSeccion('proveedor')">Gestión de Proveedores</button></li>
-        <li><button onclick="window.location.href='panel_parametrizacion.html'">Ver Parametrizacion de Produccion</button></li>
+        <li><button onclick="window.location.href='panel_parametrizacion.html'">Ver Parametrización de
+            Producción</button></li>
         <li><button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button></li>
       </ul>
     </aside>
 
+    <!-- Main Content -->
     <main class="main-content">
       <h1>Panel de Supervisor</h1>
 
-      <!-- ===================== SECCIÓN PROVEEDORES ===================== -->
+      <!-- SECCIÓN PROVEEDORES -->
       <div id="proveedor" class="seccion" style="display:none;">
         <h2>Gestión de Proveedores</h2>
         <button class="btn-submit" onclick="mostrarFormularioProveedor()">➕ Nuevo Proveedor</button>
@@ -123,7 +116,6 @@
                   <option value="monotributista">Monotributista</option>
                 </select>
               </div>
-
               <div class="form-group" style="width:100%;">
                 <label for="documento" id="labelDocumento">Documento:</label>
                 <input type="text" id="documento" name="documento" required placeholder="Seleccione tipo primero">
@@ -156,36 +148,15 @@
                   required
                   style="flex:1; padding:8px 10px; border:1px solid #ccc; border-radius:6px; font-size:14px; outline:none;"
                   onfocus="this.style.borderColor='#007bff';" onblur="this.style.borderColor='#ccc';">
-
-                <!--Validar Dirección-->
-                </button>
               </div>
               <div id="resultadosDireccion" style="margin-top:8px;"></div>
             </div>
-            
-            <div class="form-group">
-              <label for="estado">Estado:</label>
-              <select id="estado" name="estado">
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-              </select>
-            </div>
+
             <button type="submit" class="btn-submit">Guardar</button>
             <button type="button" onclick="cancelarProveedor()" class="btn-submit">Cancelar</button>
           </form>
         </div>
-
-        <div id="mensajeExitoProveedor" style="display:none;">
-          <span id="textoExitoProveedor"></span>
-        </div>
-
-        <div id="mensajeExitoProveedor" class="mensaje"
-          style="display:none; margin-top:20px; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; text-align:center;">
-          <p id="textoExito" style="font-size:18px; font-weight:bold; color:#155724;"></p>
-          <button onclick="volverPanel()" class="btn-submit">Volver al panel</button>
-        </div>
       </div>
-      <!-- ===================== FIN SECCIÓN PROVEEDORES ================================== -->
 
       <!-- CREACIÓN OP -->
       <div id="ordenProduccion" class="seccion" style="display:none;">
@@ -195,11 +166,11 @@
             <label for="opNumero">Número de OP:</label>
             <input type="text" id="opNumero" readonly required>
           </div>
+
           <div class="form-group">
             <label>Productos:</label>
             <div id="productosContainer"></div>
           </div>
-
 
           <div class="form-group">
             <h3>Detalle de materiales necesarios</h3>
@@ -227,6 +198,7 @@
               <option value="si">Sí</option>
             </select>
           </div>
+
           <div id="containerOVs" class="form-group" style="display:none;">
             <button type="button" onclick="agregarOV()" class="btn-editar">➕ Agregar OV</button>
             <div id="listaOVs"></div>
@@ -245,14 +217,15 @@
           <button type="submit" id="btnCrearOP" class="btn-submit" disabled>Crear OP</button>
           <button type="button" onclick="cancelarOP()" class="btn-eliminar">Cancelar</button>
         </form>
-      </div>
-      <!--Mensaje de éxito-->
-      <div id="mensajeExitoOP" class="mensaje"
-        style="display:none; text-align:center; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; margin-top:20px;">
-        <p id="textoExitoOP" style="font-size:18px; font-weight:bold; color:#155724;"></p>
-        <button id="btnCrearOPNuevo" class="btn-submit">Crear otra OP</button>
-        <button id="btnVerListaOP" class="btn-submit">Ver lista de OP</button>
-        <button id="btnVolverMenu" class="btn-submit">Volver al menú</button>
+
+        <!--Mensaje de éxito-->
+        <div id="mensajeExitoOP" class="mensaje"
+          style="display:none; text-align:center; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; margin-top:20px;">
+          <p id="textoExitoOP" style="font-size:18px; font-weight:bold; color:#155724;"></p>
+          <button id="btnCrearOPNuevo" class="btn-submit">Crear otra OP</button>
+          <button id="btnVerListaOP" class="btn-submit">Ver lista de OP</button>
+          <button id="btnVolverMenu" class="btn-submit">Volver al menú</button>
+        </div>
       </div>
 
       <!-- SEGUIMIENTO OP -->
@@ -262,7 +235,7 @@
           <table>
             <thead>
               <tr>
-                <th>Numero de OP</th>
+                <th>Número de OP</th>
                 <th>Orden</th>
                 <th>Estado</th>
                 <th>Fecha Emisión</th>
@@ -276,9 +249,8 @@
     </main>
   </div>
 
-  <!-- Modal Ver Orden -->
-  <div class="modal" id="modalOrden"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color: rgba(0,0,0,0.7); justify-content:center; align-items:center;">
+  <!-- Modales -->
+  <div class="modal" id="modalOrden" style="display:none;">
     <div class="modal-content"
       style="background-color:#1e1e1e; padding:20px; border-radius:10px; width:90%; max-width:500px; position:relative;">
       <span class="close-modal" onclick="cerrarModal()"
@@ -287,81 +259,106 @@
       <div id="detalleOrden"></div>
     </div>
   </div>
-
-  <!-- Modal Ver detalle lote -->
-  <div id="modalDetalleLote" class="modal" style="display:none;">
-    <div class="modal-contenido">
-      <span id="cerrarModalDetalleLote" class="cerrar">&times;</span>
-      <h3>Detalle del Lote</h3>
-      <div id="contenidoModalDetalleLote">
-        <!-- Contenido dinámico -->
+  <!-- Modal de Confirmación -->
+  <div id="modalConfirmacion" class="modal-confirmacion">
+    <div class="modal-confirmacion-contenido">
+      <h2>⚠️ Confirmar Baja OP</h2>
+      <p id="mensajeConfirmacionTexto">¿Está seguro de continuar?</p>
+      <div class="botones-confirmacion">
+        <button id="btnCancelarConfirmacion" class="btn-cancelar">Cancelar</button>
+        <button id="btnAceptarConfirmacion" class="btn-aceptar">Confirmar</button>
       </div>
     </div>
   </div>
 
-
-  <!-- Notificación de stock -->
-  <div id="notificacionStock" style="
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    background-color: #f44336;
-    border-radius: 50%;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    font-size: 28px;
-    color: white;
-    transition: transform 0.2s, background-color 0.3s;
-    z-index: 9999;
-">
-    🔔
+  <div id="modalDetalleLote" class="modal" style="display:none;">
+    <div class="modal-contenido">
+      <span id="cerrarModalDetalleLote" class="cerrar">&times;</span>
+      <h3>Detalle del Lote</h3>
+      <div id="contenidoModalDetalleLote"></div>
+    </div>
   </div>
 
-  <!-- Tooltip/modal dentro de la notificación -->
-  <div id="tooltipStock" style="
-    position: fixed;
-    top: 90px;
-    right: 20px;
-    width: 320px;
-    max-height: 400px;
-    overflow-y: auto;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-    display: none;
-    z-index: 9999;
-    font-family: Arial, sans-serif;
-">
+  <!-- Notificaciones -->
+  <div id="notificacionStock"
+    style="position: fixed; top: 20px; right: 20px; width: 60px; height: 60px; background-color: #f44336; border-radius: 50%; display: none; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 28px; color: white; transition: transform 0.2s, background-color 0.3s; z-index: 9999;">
+    🔔</div>
+
+  <div id="tooltipStock"
+    style="position: fixed; top: 90px; right: 20px; width: 320px; max-height: 400px; overflow-y: auto; background-color: #fff; border: 1px solid #ccc; border-radius: 12px; padding: 15px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); display: none; z-index: 9999; font-family: Arial, sans-serif;">
     <h4 style="margin-top:0; margin-bottom:10px; text-align:center;">Materias primas con stock insuficiente</h4>
     <ul id="listaFaltantes" style="padding-left: 20px; margin-bottom: 10px; list-style: disc;"></ul>
-    <button id="btnIrPedido" style="
-        width: 100%;
-        padding: 10px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background-color 0.3s;
-    ">Ir al pedido de materias primas</button>
+    <button id="btnIrPedido"
+      style="width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">Ir
+      al pedido de materias primas</button>
   </div>
 
+  <div id="notificacionVencidas"
+    style="position: fixed; top: 20px; right: 100px; width: 60px; height: 60px; background-color: #ff9800; border-radius: 50%; display: none; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 28px; color: white; transition: transform 0.2s, background-color 0.3s; z-index: 9999;">
+    ⚠️</div>
+
+  <div id="tooltipVencidas"
+    style="position: fixed; top: 90px; right: 100px; width: 320px; max-height: 400px; overflow-y: auto; background-color: #fff; border: 1px solid #ccc; border-radius: 12px; padding: 15px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); display: none; z-index: 9999; font-family: Arial, sans-serif;">
+    <h4 style="margin-top:0; margin-bottom:10px; text-align:center;">Órdenes con entrega hoy o vencidas</h4>
+    <ul id="listaVencidas" style="padding-left: 20px; margin-bottom: 10px; list-style: disc;"></ul>
+  </div>
+
+  <!-- Modal de Aviso Genérico -->
+  <div id="modalAviso" class="modal-aviso">
+    <div class="modal-aviso-contenido">
+      <h2>Aviso</h2>
+      <p id="mensajeAvisoTexto">Este es un mensaje de aviso.</p>
+      <button id="btnCerrarAviso">Cerrar</button>
+    </div>
+  </div>
+
+
+
+  <!-- Scripts -->
+  <script>
+    // Cuando el usuario hace clic en la campana de vencidas
+    document.getElementById("notificacionVencidas").addEventListener("click", () => {
+      window.location.href = "panel_alertas.html";
+    });
+
+    // 🟡 Opcional: animación al pasar el mouse
+    const notiVencidas = document.getElementById("notificacionVencidas");
+
+    notiVencidas.addEventListener("mouseenter", () => {
+      notiVencidas.style.transform = "scale(1.1)";
+    });
+
+    notiVencidas.addEventListener("mouseleave", () => {
+      notiVencidas.style.transform = "scale(1)";
+    });
+
+    // 🟠 Si tenés tooltipVencidas, podés mantenerlo visible mientras se pasa el mouse
+    const tooltipVencidas = document.getElementById("tooltipVencidas");
+
+    notiVencidas.addEventListener("mouseenter", () => {
+      tooltipVencidas.style.display = "block";
+    });
+    notiVencidas.addEventListener("mouseleave", () => {
+      setTimeout(() => {
+        tooltipVencidas.style.display = "none";
+      }, 300);
+    });
+    tooltipVencidas.addEventListener("mouseenter", () => {
+      tooltipVencidas.style.display = "block";
+    });
+    tooltipVencidas.addEventListener("mouseleave", () => {
+      tooltipVencidas.style.display = "none";
+    });
+  </script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
   <script src="js/supervisor.js"></script>
   <script src="js/altaProveedor.js"></script>
   <script src="js/normalizarDireccion.js"></script>
+  <script src="js/alertasOP.js"></script>
 </body>
 
 </html>

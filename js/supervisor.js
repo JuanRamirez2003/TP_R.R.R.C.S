@@ -208,7 +208,7 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
       return;
     }
   }
-
+  console.log(idOrden)  
   mostrarMensajeExito(idOrden);
 
   /*
@@ -829,7 +829,7 @@ async function mostrarMensajeExito(idOrden) {
       console.error("Error al obtener datos de OP:", error);
       return;
     }
-    //console.log("ESTA ACCCCCAAA");
+    console.log("ESTA ACCCCCAAA");
     console.log(data.ver_orden);
     const productosHtml = data.ver_orden
     .map(p => `<p>${p.nombre.toUpperCase()}</p>  <p>Cantidad de Lote/s: ${p.cantidad}</p> <p>Cantidad de Cajas Estimadas: ${p.cantidad * cantidadPorLote}</p>`)
@@ -931,7 +931,7 @@ async function mostrarMensajeExito(idOrden) {
     const mensaje = document.getElementById('mensajeExitoOP');
     const texto = document.getElementById('textoExitoOP');
 
-    texto.innerHTML = `
+    texto.innerHTML = ` 
       <h3>✅ Orden de Producción Creada</h3>
       <p><strong>Número OP:</strong> ${data.numero_op}</p>
       <p><strong>Fecha Emisión:</strong> ${new Date(data.fecha_emision).toLocaleString()}</p>
@@ -971,7 +971,7 @@ async function mostrarMensajeExito(idOrden) {
 
 
   } catch (err) {
-    console.error("Error en mostrarMensajeExito:", err);
+    console.error("Error en mostrarMensajeExito:", err); 
   }
 }
 
