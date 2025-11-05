@@ -36,7 +36,7 @@ function calcularFechas() {
 // ---------------------- Cargar líneas ----------------------
 async function cargarLineas() {
   const { data, error } = await supabaseClient.from("linea_productos").select("*");
-  if (error) return alert("Error al cargar líneas: " + error.message);
+  if (error) return mostrarAviso("Error al cargar líneas: " + error.message);//alert
   lineasGlobal = data;
   const filtro = document.getElementById("filtro-linea");
   data.forEach(l => {
@@ -59,7 +59,7 @@ async function renderAgendaDesdeSupabase() {
     .select("*")
     .gte("dia", hoyStr);
 
-  if (error) return alert("Error al cargar planificación: " + error.message);
+  if (error) return alemostrarAvisort("Error al cargar planificación: " + error.message);//alert
   agenda.innerHTML = "";
 
   const prioridadOrden = { urgente: 1, alta: 2, normal: 3, baja: 4 };
@@ -108,14 +108,14 @@ async function planificarSemana() {
   await supabaseClient.from("planificacion_semanal").delete().gte("dia", hoyStr);
 
   const { data: ordenes, error: opError } = await supabaseClient.from("orden_produccion").select("*").eq("estado", "Pendiente");
-  if (opError) return alert("Error al cargar órdenes: " + opError.message);
-  if (!ordenes?.length) return alert("No hay órdenes pendientes");
+  if (opError) return mostrarAviso("Error al cargar órdenes: " + opError.message);//alert
+  if (!ordenes?.length) return mostrarAviso("No hay órdenes pendientes");//alert
 
   const [{ data: lineas, error: lineasError }, { data: lineasProd, error: lpError }] = await Promise.all([
     supabaseClient.from("linea_productos").select("*"),
     supabaseClient.from("linea_produccion").select("*")
   ]);
-  if (lineasError || lpError) return alert("Error al cargar líneas o duraciones");
+  if (lineasError || lpError) return mostrarAviso("Error al cargar líneas o duraciones");//alert
 
   const carga = {};
   for (const l of lineas) {
@@ -169,10 +169,10 @@ async function planificarSemana() {
 
   if (planificaciones.length) {
     const { error: insertError } = await supabaseClient.from("planificacion_semanal").insert(planificaciones);
-    if (insertError) return alert("Error al guardar planificación: " + insertError.message);
-    alert("Planificación generada correctamente");
+    if (insertError) return mostrarAviso("Error al guardar planificación: " + insertError.message);//alert
+    mostrarAviso("Planificación generada correctamente");
     renderAgendaDesdeSupabase();
-  } else alert("No se pudo generar planificación");
+  } else mostrarAviso("No se pudo generar planificación");//alert
 }
 
 // ---------------------- Minutos a hora ----------------------
@@ -305,7 +305,7 @@ async function mostrarDetalleOP(id_op, id_linea) {
     .select("*")
     .eq("id_orden_produccion", id_op)
     .single();
-  if (error) return alert("Error al cargar OP: " + error.message);
+  if (error) return mostrarAviso("Error al cargar OP: " + error.message);//alert
 
   // Contenido básico del modal
   let contenido = `
@@ -547,7 +547,7 @@ async function verDetalleLote(idLote) {
 
   } catch (err) {
     console.error("Error mostrando detalle del lote:", err);
-    alert("No se pudo mostrar el detalle del lote.");
+    mostrarAviso("No se pudo mostrar el detalle del lote.");//alert
   }
 }
 
@@ -581,3 +581,22 @@ async function mostrarDetalleLinea(id_linea){
   document.getElementById("modalDetalle").style.display = "flex";
 }
 */
+
+function mostrarAviso(mensaje) {
+  const modal = document.getElementById('modalAviso');
+  const mensajeP = document.getElementById('mensajeAvisoTexto');
+  const btnCerrar = document.getElementById('btnCerrarAviso');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de aviso");
+    return alert(mensaje);
+  }
+
+  mensajeP.textContent = mensaje;
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
+}
