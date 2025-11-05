@@ -1051,7 +1051,7 @@ async function cargarOP() {
       <td>
         ${op.estado === 'Pendiente'
         ? `<button onclick="editarOP(${op.id_orden_produccion})" class="btn-editar">✏️ Editar</button>
-             <button onclick="eliminarOP(${op.id_orden_produccion})" class="btn-eliminar">❌Eliminar</button>`
+             <button onclick="eliminarOP(${op.id_orden_produccion})" class="btn-eliminar">❌Dar Baja</button>`
         : 'No disponible'}
       </td>
     `;
@@ -1184,35 +1184,166 @@ async function verOrden(id_orden_produccion) {
 }
 
 function cerrarModal() { document.getElementById('modalOrden').style.display = 'none'; }
-
-/* Editar OP
+//////////////////////////
+//Editar OP
 async function editarOP(id_orden_produccion) {
-  const { data, error } = await supabaseClient.from('orden_produccion')
-    .select('*').eq('id_orden_produccion', id_orden_produccion).single();
-  if (error) return console.error("Error al cargar OP para editar:", error);
+  // Obtener la OP desde Supabase
+  const { data, error } = await supabaseClient
+    .from('orden_produccion')
+    .select('*')
+    .eq('id_orden_produccion', id_orden_produccion)
+    .single();
 
+  if (error) {
+    console.error("Error al cargar OP para editar:", error);
+    alert("Ocurrió un error al cargar la orden de producción.");
+    return;
+  }
+
+  let huboCambios = false; // bandera para detectar modificaciones
+
+  // Editar las cantidades de los productos
   const productos = data.ver_orden.map(p => {
     const cant = prompt(`Editar cantidad de ${p.nombre}:`, p.cantidad);
-    if (cant && !isNaN(cant) && cant > 0) return { nombre: p.nombre, cantidad: parseInt(cant, 10) };
-    return p;
+
+    // Si el usuario cancela el prompt, mantener el valor original
+    if (cant === null) return p;
+
+    const cantidadNum = parseInt(cant, 10);
+
+    // Validación de cantidad
+    if (isNaN(cantidadNum) || cantidadNum <= 0) {
+      alert(`La cantidad para ${p.nombre} debe ser un número mayor que 0.`);
+      return p;
+    }
+
+    // Si la cantidad cambió, marcar bandera
+    if (cantidadNum !== p.cantidad) huboCambios = true;
+
+    return { nombre: p.nombre, cantidad: cantidadNum };
   });
 
-  const { error: updateError } = await supabaseClient.from('orden_produccion')
-    .update({ ver_orden: productos }).eq('id_orden_produccion', id_orden_produccion);
-  if (updateError) return console.error("Error al actualizar OP:", updateError);
+  // Si no hubo cambios, no actualizar ni mostrar alerta
+  if (!huboCambios) {
+    console.log("No se realizaron cambios en la OP.");
+    return;
+  }
 
-  cargarOP();
+  // Actualizar la OP en la base de datos
+  const { error: updateError } = await supabaseClient
+    .from('orden_produccion')
+    .update({ ver_orden: productos })
+    .eq('id_orden_produccion', id_orden_produccion);
+
+  if (updateError) {
+    console.error("Error al actualizar OP:", updateError);
+    alert("Error al actualizar la orden de producción.");
+  } else {
+    alert("✅ La orden de producción se actualizó correctamente.");
+  }
 }
 
-// Eliminar OP
+
+// Eliminar OP (Falta retornar stock reservado)
+// Dar de baja una OP y devolver materias primas reservadas a los lotes
 async function eliminarOP(id_orden_produccion) {
-  if (!confirm("¿Eliminar esta OP?")) return;
-  const { error } = await supabaseClient.from('orden_produccion')
-    .delete().eq('id_orden_produccion', id_orden_produccion);
-  if (error) return console.error("Error al eliminar OP:", error);
-  cargarOP();
+  if (!confirm("¿Dar de baja esta OP y devolver las materias primas reservadas?")) return;
+
+  console.log("🟢 Dando de baja OP:", id_orden_produccion);
+
+  // 1️⃣ Obtener detalle de la OP
+  const { data: op, error: opError } = await supabaseClient
+    .from('orden_produccion')
+    .select('id_orden_produccion, detalle_materiales')
+    .eq('id_orden_produccion', id_orden_produccion)
+    .single();
+
+  if (opError || !op) {
+    console.error("❌ Error al obtener la OP:", opError);
+    alert("No se pudo obtener la información de la orden.");
+    return;
+  }
+
+  // Parsear el JSON por si viene como string
+  let detalleMateriales = op.detalle_materiales;
+  if (typeof detalleMateriales === "string") {
+    try {
+      detalleMateriales = JSON.parse(detalleMateriales);
+    } catch (err) {
+      console.error("❌ Error al parsear detalle_materiales:", err);
+      alert("Error al leer los materiales de la OP.");
+      return;
+    }
+  }
+
+  // 2️⃣ Cambiar estado a 'Baja'
+  const { error: updateOpError } = await supabaseClient
+    .from('orden_produccion')
+    .update({ estado: 'Baja' })
+    .eq('id_orden_produccion', id_orden_produccion);
+
+  if (updateOpError) {
+    console.error("❌ Error al cambiar estado de OP:", updateOpError);
+    alert("Error al dar de baja la OP.");
+    return;
+  }
+
+  // 3️⃣ Reponer las cantidades en lote_mp según id_mp
+  let materialesActualizados = 0;
+
+  for (const mat of detalleMateriales) {
+    const id_mp = mat.id_mp;
+    const cantidad = Number(mat.cantidad_total);
+
+    if (!id_mp || isNaN(cantidad) || cantidad <= 0) {
+      console.warn("⚠️ Material inválido:", mat);
+      continue;
+    }
+
+    // Buscar el lote más reciente o cualquier lote asociado al id_mp
+    const { data: lote, error: loteError } = await supabaseClient
+      .from('lote_mp')
+      .select('id_lote, cantidad_disponible, cantidad_reservada')
+      .eq('id_mp', id_mp)
+      .order('id_lote', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (loteError || !lote) {
+      console.error(`❌ No se encontró lote para id_mp=${id_mp}:`, loteError);
+      continue;
+    }
+
+    const nuevaDisponible = (lote.cantidad_disponible || 0) + cantidad;
+    const nuevaReservada = Math.max((lote.cantidad_reservada || 0) - cantidad, 0);
+
+    // Actualizar las cantidades
+    const { error: updateLoteError } = await supabaseClient
+      .from('lote_mp')
+      .update({
+        cantidad_disponible: nuevaDisponible,
+        cantidad_reservada: nuevaReservada
+      })
+      .eq('id_lote', lote.id_lote);
+
+    if (updateLoteError) {
+      console.error(`❌ Error al actualizar lote ${lote.id_lote}:`, updateLoteError);
+    } else {
+      console.log(`✅ Lote ${lote.id_lote} actualizado correctamente`);
+      materialesActualizados++;
+    }
+  }
+
+  if (materialesActualizados > 0) {
+    alert(`✅ OP dada de baja y se devolvieron las cantidades de ${materialesActualizados} material(es).`);
+  } else {
+    alert("⚠️ OP dada de baja, pero no se devolvió stock (ver consola).");
+  }
+
+  cargarOP(); // refresca la vista
 }
-  */
+
+//////
 async function verificarStockMaterias() {
   try {
     const { data, error } = await supabaseClient
