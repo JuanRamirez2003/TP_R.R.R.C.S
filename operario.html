@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,17 +8,20 @@
     <link rel="stylesheet" href="css/ventas.css">
     <link rel="stylesheet" href="css/lineasProduccion.css">
     <style>
-        
         /* Contenedores de tablas con scroll horizontal */
         table {
             width: 100%;
             border-collapse: collapse;
         }
-        th, td {
-            border:1px solid #ccc;/*none*/
-            padding:5px 10px;
-            text-align:center;
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            /*none*/
+            padding: 5px 10px;
+            text-align: center;
         }
+
         .table-wrapper {
             overflow-x: auto;
             margin-bottom: 20px;
@@ -25,88 +29,103 @@
 
         /* Responsivo general */
         @media (max-width: 768px) {
-            input, select, button {
+
+            input,
+            select,
+            button {
                 width: 100%;
-                margin-top:5px;
+                margin-top: 5px;
             }
+
             .sidebar {
                 width: 100%;
                 margin-bottom: 10px;
             }
+
             .main-content {
                 width: 100%;
             }
         }
 
         @media (max-width: 480px) {
-            th, td {
+
+            th,
+            td {
                 font-size: 12px;
                 padding: 4px 6px;
             }
         }
-   #registroEtapas {
-    padding: 20px;
-  }
 
-  #registroEtapas label {
-    display: inline-block;
-    margin: 10px 5px 5px 0;
-    font-weight: 600;
-  }
+        #registroEtapas {
+            padding: 20px;
+        }
 
-  #registroEtapas select, 
-  #registroEtapas button {
-    margin: 5px 10px 15px 0;
-    padding: 5px 10px;
-  }
+        #registroEtapas label {
+            display: inline-block;
+            margin: 10px 5px 5px 0;
+            font-weight: 600;
+        }
 
-  #registroTable {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
+        #registroEtapas select,
+        #registroEtapas button {
+            margin: 5px 10px 15px 0;
+            padding: 5px 10px;
+        }
 
-  #registroTable th, #registroTable td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: center;
-  }
+        #registroTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
 
-  #registroTable th {
-    background-color: #f2f2f2;
-  }
+        #registroTable th,
+        #registroTable td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
 
-  #registroTable tr:nth-child(even) {
-    background-color: #fafafa;
-  }
+        #registroTable th {
+            background-color: #f2f2f2;
+        }
 
-  #registroTable tr:hover {
-    background-color: #e6f7ff;
-  }
+        #registroTable tr:nth-child(even) {
+            background-color: #fafafa;
+        }
 
-  #registroTable th {
-  color: black;
-}
-/* Estilos para texto dentro de las líneas de producción */
-#lineasContainer,
-#lineasContainer * {
-  color: rgb(0, 0, 0) !important;
-}
+        #registroTable tr:hover {
+            background-color: #e6f7ff;
+        }
 
-/* Si las cajas de etapas tienen fondo oscuro, mejoramos contraste */
-.etapa, .bloque-etapa, .linea-etapa {
-  background-color: #333 !important;
-  color: #000000 !important;
-  border: 1px solid #555 !important;
-}
+        #registroTable th {
+            color: black;
+        }
 
-/* Si hay etiquetas de estado o detalle, que sean claras también */
-.detalle-etapa, .texto-etapa, .estado-etapa {
-  color: #000000 !important;
-  font-weight: 500;
-}
+        /* Estilos para texto dentro de las líneas de producción */
+        #lineasContainer,
+        #lineasContainer * {
+            color: rgb(0, 0, 0) !important;
+        }
+
+        /* Si las cajas de etapas tienen fondo oscuro, mejoramos contraste */
+        .etapa,
+        .bloque-etapa,
+        .linea-etapa {
+            background-color: #333 !important;
+            color: #000000 !important;
+            border: 1px solid #555 !important;
+        }
+
+        /* Si hay etiquetas de estado o detalle, que sean claras también */
+        .detalle-etapa,
+        .texto-etapa,
+        .estado-etapa {
+            color: #000000 !important;
+            font-weight: 500;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="dashboard">
@@ -122,7 +141,7 @@
             <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
         </aside>
         <!-- Notificación de stock -->
-<div id="notificacionStock" style="
+        <div id="notificacionStock" style="
     position: fixed;
     top: 20px;
     right: 20px;
@@ -140,11 +159,11 @@
     transition: transform 0.2s, background-color 0.3s;
     z-index: 9999;
 ">
-    🔔
-</div>
+            🔔
+        </div>
 
-<!-- Tooltip/modal dentro de la notificación -->
-<div id="tooltipStock" style="
+        <!-- Tooltip/modal dentro de la notificación -->
+        <div id="tooltipStock" style="
     position: fixed;
     top: 90px;
     right: 20px;
@@ -160,9 +179,9 @@
     z-index: 9999;
     font-family: Arial, sans-serif;
 ">
-    <h4 style="margin-top:0; margin-bottom:10px; text-align:center;">Planificacion Semanal</h4>
-    <ul id="listaFaltantes" style="padding-left: 20px; margin-bottom: 10px; list-style: disc;"></ul>
-    <button id="btnIrPedido" style="
+            <h4 style="margin-top:0; margin-bottom:10px; text-align:center;">Planificacion Semanal</h4>
+            <ul id="listaFaltantes" style="padding-left: 20px; margin-bottom: 10px; list-style: disc;"></ul>
+            <button id="btnIrPedido" style="
         width: 100%;
         padding: 10px;
         background-color: #007bff;
@@ -173,7 +192,7 @@
         font-weight: bold;
         transition: background-color 0.3s;
     ">Ir a Autoplanificación</button>
-</div>
+        </div>
 
         <!-- Contenido principal -->
         <main class="main-content">
@@ -183,7 +202,7 @@
             <div id="IngresoMateriales" class="seccion" style="display:none;">
                 <h2>Ingreso de Materiales</h2>
                 <form id="MaterialesForm">
-                  <div class="form-group">
+                    <div class="form-group">
                         <label for="Tipo_Material">Tipo de Material:</label>
                         <select id="Tipo_Material" name="tipo_Material" required onchange="habilitarMaterial()">
                             <option value="">Seleccione...</option>
@@ -192,7 +211,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="Id_Material">Material:</label> 
+                        <label for="Id_Material">Material:</label>
                         <select id="Id_Material" name="Id_Material" required onchange="mostrarDatosMaterial()" disabled>
                             <option value="">Seleccione...</option>
                         </select>
@@ -223,7 +242,8 @@
 
                     <div class="form-group">
                         <label for="cantidad_disponible">Cantidad ingresada:</label>
-                        <input type="number" id="cantidad_disponible" name="cantidad_disponible" min="1" step="1" disabled required>
+                        <input type="number" id="cantidad_disponible" name="cantidad_disponible" min="1" step="1"
+                            disabled required>
                     </div>
 
                     <div class="form-group">
@@ -242,12 +262,13 @@
                             <option value="No conforme">No conforme</option>
                         </select>
                     </div>
-                      
+
 
                     <button type="submit" class="btn-submit" disabled>Registrar Lote</button>
                     <button type="submit" id="btnCancelar" class="btn-submit">Cancelar</button>
                 </form>
-                <div id="mensajeExito" class="mensaje" style="display:none; text-align:center; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; margin-top:20px;">
+                <div id="mensajeExito" class="mensaje"
+                    style="display:none; text-align:center; padding:20px; background-color:#d4edda; border:1px solid #28a745; border-radius:8px; margin-top:20px;">
                     <p id="textoExito" style="font-size:18px; font-weight:bold; color:#155724;"></p>
                     <button id="btnOtroLote" class="btn-submit">Cargar otro lote</button>
                     <button id="btnVolverPrincipal" class="btn-submit">Volver a página principal</button>
@@ -302,76 +323,85 @@
                 <button onclick="volverMateriales()" class="btn-submit">Volver a Materiales</button>
             </div>
 
-<!-- Registro de Etapas -->
-<div id="registroEtapas" class="seccion" style="display:none;">
-  <h2>Registro de Etapas de Producción</h2>
+            <!-- Registro de Etapas -->
+            <div id="registroEtapas" class="seccion" style="display:none;">
+                <h2>Registro de Etapas de Producción</h2>
 
-  <!-- Contenedor para líneas de producción tipo cinta -->
-  <div id="lineasContainer"></div>
+                <!-- Contenedor para líneas de producción tipo cinta -->
+                <div id="lineasContainer"></div>
+                <!-- Modal de Error -->
+                <div id="modalError" class="modal-error">
+                    <div class="modal-error-contenido">
+                        <h3>Error</h3>
+                        <p id="mensajeErrorTexto"></p>
+                        <button id="btnCerrarError">Cerrar</button>
+                    </div>
+                </div>
 
-  <!-- Tabla de registro de etapas finalizadas -->
-  <div class="table-wrapper">
-    <h3>Órdenes Finalizadas</h3>
-    <table id="registroTable">
-      <thead >
-        <tr>
-          <!--<th>#</th>-->
-          <th>OP</th>
-          <th>Etapa</th>
-          <th>Estado</th>
-          <th>Operario</th>
-          <th>Fecha Inicio</th>
-          <th>Fecha Fin</th>
-          <th>Observaciones</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
+                <!-- Tabla de registro de etapas finalizadas -->
+                <div class="table-wrapper">
+                    <h3>Órdenes Finalizadas</h3>
+                    <table id="registroTable">
+                        <thead>
+                            <tr>
+                                <!--<th>#</th>-->
+                                <th>OP</th>
+                                <th>Etapa</th>
+                                <th>Estado</th>
+                                <th>Operario</th>
+                                <th>Fecha Inicio</th>
+                                <th>Fecha Fin</th>
+                                <th>Observaciones</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
 
-<!-- 🔹 Modal para ver detalle de Lote -->
-<div id="modalDetalleLote" 
-     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            <!-- 🔹 Modal para ver detalle de Lote -->
+            <div id="modalDetalleLote" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999;">
-  <div style="background:#2a2a2a; padding:20px; border-radius:10px; width:400px; max-height:80%; overflow:auto;">
-    <h3 style="text-align:center;">Detalle del Lote</h3>
-    <div id="contenidoModalDetalleLote"></div>
-    <br>
-    <button onclick="document.getElementById('modalDetalleLote').style.display='none'"
-            style="background:#55a630; border:none; color:white; padding:6px 12px; border-radius:6px; cursor:pointer;">
-      Cerrar
-    </button>
-  </div>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const notificacion = document.getElementById('notificacionStock');
-    const tooltip = document.getElementById('tooltipStock');
-    const btnIrPedido = document.getElementById('btnIrPedido');
+                <div
+                    style="background:#2a2a2a; padding:20px; border-radius:10px; width:400px; max-height:80%; overflow:auto;">
+                    <h3 style="text-align:center;">Detalle del Lote</h3>
+                    <div id="contenidoModalDetalleLote"></div>
+                    <br>
+                    <button onclick="document.getElementById('modalDetalleLote').style.display='none'"
+                        style="background:#55a630; border:none; color:white; padding:6px 12px; border-radius:6px; cursor:pointer;">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const notificacion = document.getElementById('notificacionStock');
+                    const tooltip = document.getElementById('tooltipStock');
+                    const btnIrPedido = document.getElementById('btnIrPedido');
 
-    // Mostrar siempre la notificación
-    notificacion.style.display = 'flex';
+                    // Mostrar siempre la notificación
+                    notificacion.style.display = 'flex';
 
-    // Toggle tooltip al hacer clic en la campana
-    notificacion.addEventListener('click', () => {
-        tooltip.style.display = tooltip.style.display === 'none' ? 'block' : 'none';
-    });
+                    // Toggle tooltip al hacer clic en la campana
+                    notificacion.addEventListener('click', () => {
+                        tooltip.style.display = tooltip.style.display === 'none' ? 'block' : 'none';
+                    });
 
-    // Redirigir a autoplanificación al hacer clic en el botón
-    btnIrPedido.addEventListener('click', () => {
-        window.location.href = 'autoplanificacion.html';
-    });
-});
-</script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <script>
-    const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co"
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-    </script>
-    <script src="js/ingresoMateriales.js"></script>
-    <script src="js/registro_etapas.js"></script>
+                    // Redirigir a autoplanificación al hacer clic en el botón
+                    btnIrPedido.addEventListener('click', () => {
+                        window.location.href = 'autoplanificacion.html';
+                    });
+                });
+            </script>
+            <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+            <script>
+                const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co"
+                const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
+                const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+            </script>
+            <script src="js/ingresoMateriales.js"></script>
+            <script src="js/registro_etapas.js"></script>
 </body>
+
 </html>
