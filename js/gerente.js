@@ -424,7 +424,177 @@ function generarGraficosClientes(clientes, facturas) {
     options: { responsive:true, plugins:{ legend:{ position:'bottom' } } }
   });
 }
+/* ================ Cargar datos y KPIs ================ */
+async function cargarProduccionYProveedores(){
+  try {
+    // Traer líneas de producción
+    const { data: lineas, error: errLineas } = await supabaseClient
+      .from('linea_produccion')
+      .select('id, id_producto, duracion, id_linea, horas_jornada, eficiencia, estado, capacidad_diaria');
+    if (errLineas) throw errLineas;
 
+    // Traer proveedores
+    const { data: proveedores, error: errProv } = await supabaseClient
+      .from('proveedor')
+      .select('id_proveedor, nombre, estado, fecha_creacion, puntaje, tipo_proveedor');
+    if (errProv) throw errProv;
+
+    // Traer lotes
+    const { data: lotes, error: errLotes } = await supabaseClient
+      .from('lote_mp')
+      .select('id_lote, id_mp, lote, cantidad, cantidad_disponible, cantidad_consumida, cantidad_reservada, fecha_ingreso, fecha_caducidad, estado, id_proveedor');
+    if (errLotes) throw errLotes;
+
+    // Traer relaciones materia-prveedor y productos para nombres
+    const { data: mprov, error: errMProv } = await supabaseClient
+      .from('materiaprima_proveedor')
+      .select('id_mp, id_proveedor');
+    if (errMProv) throw errMProv;
+
+    const { data: productos, error: errProductos } = await supabaseClient
+      .from('productos')
+      .select('id_producto, nombre');
+    if (errProductos) throw errProductos;
+
+    // KPIs calculados
+    const lineasActivas = lineas.filter(l=> (l.estado||'').toLowerCase()==='activa').length;
+    const eficienciaVals = lineas.filter(l=> typeof l.eficiencia === 'number' || !isNaN(Number(l.eficiencia))).map(l=>Number(l.eficiencia));
+    const eficienciaProm = eficienciaVals.length ? (eficienciaVals.reduce((a,b)=>a+b,0)/eficienciaVals.length) : 0;
+    const capacidadTotal = lineas.reduce((s,l)=> s + (Number(l.capacidad_diaria) || 0), 0);
+    const duracionVals = lineas.filter(l=> l.duracion !== null && l.duracion !== undefined).map(l=>Number(l.duracion));
+    const duracionProm = duracionVals.length ? Math.round(duracionVals.reduce((a,b)=>a+b,0)/duracionVals.length) : 0;
+
+    const proveedoresActivos = proveedores.filter(p=> (p.estado||'').toLowerCase()==='activo').length;
+    const lotesTotales = lotes.length;
+    const stockDisponible = lotes.reduce((s,l)=> s + (Number(l.cantidad_disponible) || 0), 0);
+    const hoy = new Date();
+    const lotesVencidos = lotes.filter(l=> l.fecha_caducidad && new Date(l.fecha_caducidad) < hoy).length;
+
+    // Mostrar KPIs
+    document.getElementById('kpiLineasActivas').innerText = lineasActivas;
+    document.getElementById('kpiEficienciaProm').innerText = `${eficienciaProm.toFixed(1)}%`;
+    document.getElementById('kpiCapacidadDiaria').innerText = capacidadTotal;
+    document.getElementById('kpiDuracionProm').innerText = duracionProm;
+    document.getElementById('kpiProveedoresActivos').innerText = proveedoresActivos;
+    document.getElementById('kpiLotesTotales').innerText = lotesTotales;
+    document.getElementById('kpiStockDisponible').innerText = stockDisponible;
+    document.getElementById('kpiLotesVencidos').innerText = lotesVencidos;
+
+    // Llenar tabla de lotes
+    const tbody = document.getElementById('tablaLotes');
+    tbody.innerHTML = '';
+    for (const l of lotes.slice(0,200)) { // limita 200 filas para rendimiento
+      const prov = proveedores.find(p=> p.id_proveedor == l.id_proveedor);
+      const mp = productos.find(p=> p.id_producto == l.id_mp);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td style="padding:8px">${l.lote}</td><td style="padding:8px">${mp ? mp.nombre : l.id_mp}</td><td style="padding:8px">${prov ? prov.nombre : (l.id_proveedor || '-')}</td><td style="padding:8px">${l.cantidad_disponible ?? 0}</td><td style="padding:8px">${l.estado}</td><td style="padding:8px">${l.fecha_caducidad ?? ''}</td>`;
+      tbody.appendChild(tr);
+    }
+
+    // Generar gráficos
+    generarGraficosProduccion({
+      lineas, proveedores, lotes, mprov, productos
+    });
+
+  } catch (err) {
+    console.error("Error cargando producción y proveedores:", err);
+    alert("No se pudieron cargar los datos de producción.");
+  }
+}
+
+/* ================ Generar gráficos ================ */
+function generarGraficosProduccion({ lineas, proveedores, lotes, mprov, productos }) {
+  // Eficiencia por línea (mostrar top 20)
+  const eficienciaMap = {};
+  lineas.forEach(l=>{
+    const key = l.id_linea || `Linea ${l.id}`;
+    eficienciaMap[key] = (eficienciaMap[key] || []).concat( (l.eficiencia === null || l.eficiencia === undefined) ? [] : [Number(l.eficiencia)] );
+  });
+  const eficienciaArr = Object.entries(eficienciaMap).map(([k,arr])=> ({k, avg: arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length) : 0}));
+  eficienciaArr.sort((a,b)=> b.avg - a.avg);
+  const topEficiencia = eficienciaArr.slice(0,20);
+  new Chart(document.getElementById('chartEficienciaLinea'), {
+    type: 'bar',
+    data: { labels: topEficiencia.map(x=>x.k), datasets: [{ label:'Eficiencia %', data: topEficiencia.map(x=>x.avg), backgroundColor:'#4caf50' }] },
+    options: { responsive:true, plugins:{ legend:{ display:false } } }
+  });
+
+  // Capacidad diaria por línea (top 20)
+  const capacidadMap = {};
+  lineas.forEach(l=>{
+    const key = l.id_linea || `Linea ${l.id}`;
+    capacidadMap[key] = (capacidadMap[key] || 0) + (Number(l.capacidad_diaria) || 0);
+  });
+  const capacidadArr = Object.entries(capacidadMap).map(([k,v])=>({k,v})).sort((a,b)=> b.v - a.v).slice(0,20);
+  new Chart(document.getElementById('chartCapacidadLinea'), {
+    type: 'bar',
+    data: { labels: capacidadArr.map(x=>x.k), datasets: [{ label:'Capacidad', data: capacidadArr.map(x=>x.v), backgroundColor:'#1e88e5' }] },
+    options: { responsive:true, plugins:{ legend:{ display:false } } }
+  });
+
+  // Stock por materia prima (sum cantidad_disponible por id_mp) top 20
+  const stockMP = {};
+  lotes.forEach(l=> { stockMP[l.id_mp] = (stockMP[l.id_mp] || 0) + (Number(l.cantidad_disponible) || 0); });
+  const stockArr = Object.entries(stockMP).map(([id,v])=> ({ id, v, nombre: (productos.find(p=>p.id_producto==id)?.nombre || id) })).sort((a,b)=> b.v - a.v).slice(0,20);
+  new Chart(document.getElementById('chartStockMP'), {
+    type: 'bar',
+    data: { labels: stockArr.map(x=>x.nombre), datasets: [{ label:'Stock disponible', data: stockArr.map(x=>x.v), backgroundColor:'#ffb300' }] },
+    options: { responsive:true, plugins:{ legend:{ display:false } }, indexAxis: 'y' }
+  });
+
+  // Conformidad de lotes
+  const conformidad = { 'Conforme':0, 'No Conforme':0, 'Otro':0 };
+  lotes.forEach(l=>{
+    const e = l.estado || 'Otro';
+    if (e === 'Conforme') conformidad.Conforme++;
+    else if (e === 'No Conforme') conformidad['No Conforme']++;
+    else conformidad.Otro++;
+  });
+  new Chart(document.getElementById('chartConformidad'), {
+    type: 'pie',
+    data: { labels: Object.keys(conformidad), datasets: [{ data: Object.values(conformidad), backgroundColor:['#4caf50','#f44336','#9e9e9e'] }] },
+    options: { responsive:true }
+  });
+
+  // Vencimientos próximos 30 días (counts per day)
+  const vencimientos = {};
+  const hoy = new Date();
+  for (let i=0;i<30;i++){
+    const d = new Date(hoy); d.setDate(hoy.getDate() + i);
+    vencimientos[d.toISOString().split('T')[0]] = 0;
+  }
+  lotes.forEach(l=>{
+    if (!l.fecha_caducidad) return;
+    const fc = new Date(l.fecha_caducidad);
+    const diff = (fc - hoy)/(1000*60*60*24);
+    if (diff >= 0 && diff < 30){
+      const key = fc.toISOString().split('T')[0];
+      if (key in vencimientos) vencimientos[key] += 1;
+    }
+  });
+  new Chart(document.getElementById('chartVencimientos'), {
+    type: 'line',
+    data: { labels: Object.keys(vencimientos), datasets: [{ label:'Lotes por día', data: Object.values(vencimientos), borderColor:'#d32f2f', backgroundColor:'rgba(211,47,47,0.15)', fill:true }] },
+    options: { responsive:true }
+  });
+
+  // Top proveedores por cantidad de materias (usar materiaprima_proveedor)
+  const provCount = {};
+  mprov.forEach(mp=>{
+    provCount[mp.id_proveedor] = (provCount[mp.id_proveedor]||0) + 1;
+  });
+  const provArr = Object.entries(provCount).map(([id,c])=> ({ id, c, nombre: (proveedores.find(p=>p.id_proveedor==id)?.nombre || id) })).sort((a,b)=> b.c - a.c).slice(0,10);
+  new Chart(document.getElementById('chartTopProveedores'), {
+    type: 'bar',
+    data: { labels: provArr.map(x=>x.nombre), datasets: [{ label:'Cantidad MP', data: provArr.map(x=>x.c), backgroundColor:'#8e24aa' }] },
+    options: { responsive:true, plugins:{ legend:{ display:false } }, indexAxis: 'y' }
+  });
+}
+
+/* ================ Inicializar ================ */
+document.addEventListener('DOMContentLoaded', async ()=> {
+  await cargarProduccionYProveedores();
+});
 // Inicializar
 document.addEventListener('DOMContentLoaded', async ()=> {
   await cargarDashboardClientes();
