@@ -590,6 +590,169 @@ function generarGraficosProduccion({ lineas, proveedores, lotes, mprov, producto
     options: { responsive:true, plugins:{ legend:{ display:false } }, indexAxis: 'y' }
   });
 }
+// ================== DESCARGAR INFORME COMPLETO EN PDF ==================
+async function descargarReportePDF() {
+  try {
+    console.log("Generando informe PDF...");
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("p", "mm", "a4");
+    const nombreArchivo = "Informe_Gerente_General.pdf";
+
+    // ========= PORTADA =========
+    const logo = document.querySelector("logo.png")?.src; // opcional si tenés logo
+    const fecha = new Date().toLocaleString();
+    const gerente = "Gerente general";
+
+    // Fondo
+    doc.setFillColor(245, 247, 250);
+    doc.rect(0, 0, 210, 297, "F");
+
+    // Logo
+    if (logo) {
+      const img = await loadImage(logo);
+      doc.addImage(img, "PNG", 80, 40, 50, 50);
+    }
+
+    // Título
+    doc.setTextColor(30, 58, 138);
+    doc.setFontSize(24);
+    doc.text("Informe General del Área TI", 105, 110, { align: "center" });
+
+    doc.setFontSize(14);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Fecha de generación: ${fecha}`, 105, 130, { align: "center" });
+    doc.text(`Responsable: ${gerente}`, 105, 140, { align: "center" });
+
+    doc.addPage();
+
+    // ========= CONTENIDO =========
+    const secciones = document.querySelectorAll(".seccion");
+    const clones = [];
+
+    // Clonamos las secciones (visibles para html2canvas)
+    for (const seccion of secciones) {
+      const clon = seccion.cloneNode(true);
+      clon.style.position = "absolute";
+      clon.style.top = "0";
+      clon.style.left = "0";
+      clon.style.width = "1000px";
+      clon.style.visibility = "visible";
+      clon.style.opacity = "1";
+      clon.style.zIndex = "-1";
+      document.body.appendChild(clon);
+      clones.push(clon);
+    }
+
+    let y = 20;
+
+    for (let i = 0; i < clones.length; i++) {
+      const seccion = clones[i];
+      const titulo = seccion.querySelector("h1")?.innerText || "Sección";
+
+      doc.setFontSize(16);
+      doc.setTextColor(30, 58, 138);
+      doc.text(titulo, 10, y);
+      y += 6;
+
+      // KPIs
+      const kpis = seccion.querySelectorAll(".kpi-card");
+      if (kpis.length > 0) {
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        for (const kpi of kpis) {
+          const tituloKpi = kpi.querySelector("h3")?.innerText || "";
+          const valorKpi = kpi.querySelector("p")?.innerText || "";
+          const desc = kpi.querySelector(".kpi-desc")?.innerText || "";
+
+          doc.text(`• ${tituloKpi}: ${valorKpi}`, 12, y);
+          y += 5;
+          if (desc) {
+            doc.setFontSize(9);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`   ${desc}`, 12, y);
+            y += 4;
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+          }
+          if (y > 260) {
+            doc.addPage();
+            y = 20;
+          }
+        }
+        y += 4;
+      }
+
+      // Gráficos Chart.js
+      const charts = seccion.querySelectorAll("canvas");
+      for (const chartCanvas of charts) {
+        const chartInstance = Chart.getChart(chartCanvas);
+        if (chartInstance) {
+          const imgData = chartInstance.toBase64Image();
+          const imgWidth = 170;
+          const imgHeight = 100;
+          if (y + imgHeight > 270) {
+            doc.addPage();
+            y = 20;
+          }
+          doc.addImage(imgData, "PNG", 20, y, imgWidth, imgHeight);
+          y += imgHeight + 10;
+        }
+      }
+
+      // Tablas
+      const tabla = seccion.querySelector("table");
+      if (tabla) {
+        const headers = [];
+        tabla.querySelectorAll("thead th").forEach(th => headers.push(th.innerText));
+        const cuerpo = [];
+        tabla.querySelectorAll("tbody tr").forEach(tr => {
+          const fila = [];
+          tr.querySelectorAll("td").forEach(td => fila.push(td.innerText));
+          cuerpo.push(fila);
+        });
+
+        if (cuerpo.length > 0) {
+          doc.autoTable({
+            startY: y,
+            head: [headers],
+            body: cuerpo,
+            theme: "striped",
+            headStyles: { fillColor: [30, 58, 138] },
+          });
+          y = doc.lastAutoTable.finalY + 10;
+        }
+      }
+
+      if (i < clones.length - 1) {
+        doc.addPage();
+        y = 20;
+      }
+    }
+
+    // Eliminamos los clones del DOM
+    clones.forEach(c => c.remove());
+
+    // Guardar PDF
+    doc.save(nombreArchivo);
+    console.log("Informe PDF generado correctamente.");
+
+  } catch (err) {
+    console.error("Error generando PDF:", err);
+    alert("No se pudo generar el informe en PDF.");
+  }
+}
+
+// Utilidad para cargar imagen (logo)
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = url;
+  });
+}
 
 /* ================ Inicializar ================ */
 document.addEventListener('DOMContentLoaded', async ()=> {

@@ -16,6 +16,15 @@
     gap: 15px;
     margin-bottom: 30px;
 }
+/* ======== Estilo para los títulos h2 ======== */
+h2 {
+  color: #1e3a8a;            /* Azul oscuro */
+  font-weight: 600;          /* Negrita media */
+  text-align: center;        /* Centrado */
+  margin-bottom: 10px;       /* Separación visual */
+  text-transform: uppercase; /* Mayúsculas para resaltar */
+  letter-spacing: 1px;       /* Espaciado sutil */
+}
 .kpi-card {
     flex: 1 1 180px;
     background-color: #fff;
@@ -25,15 +34,17 @@
     text-align: center;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
+/* ---- Ajuste visual solo para la tabla de lotes ---- */
 #tablaLotes thead {
-  background-color: #1e3a8a;
-  color: #fff;
+  background-color: #1e3a8a !important; /* azul oscuro */
+  color: #ffffff !important;            /* texto blanco */
   font-weight: bold;
 }
-#tablaLotes th, #tablaLotes td {
+
+#tablaLotes th {
   padding: 10px;
+  border-bottom: 2px solid #fff;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
 }
 /* Gráficos */
 .chart-card {
@@ -95,6 +106,7 @@ tbody td {
 .btn-download:hover {
     background-color: #1d4ed8;
 }
+
 </style>
 </head>
 <body>
@@ -102,16 +114,15 @@ tbody td {
 
   <!-- Sidebar -->
   <aside class="sidebar">
-    <h2>Área TI</h2>
+    <h2>Área Gerente General</h2>
     <ul>
       <li><button class="btn-seccion" data-seccion="usuarios">Usuarios</button></li>
       <li><button class="btn-seccion" data-seccion="ordenes">Órdenes</button></li>
       <li><button class="btn-seccion" data-seccion="clientes">Clientes</button></li>
-      <li><button class="btn-seccion" data-seccion="produccion y suministros">Producción y Suministros</button></li>
+      <li><button class="btn-seccion" data-seccion="produccion">Producción y Suministros</button></li>
+      <button class="btn-download" onclick="descargarReportePDF()"> Descargar Informe en PDF</button>
       <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
-      <button id="btnDescargarInforme" class="btn-download" style="margin:20px;">
-  Descargar Informe en PDF
-</button>
+      
     </ul>
   </aside>
 
@@ -239,329 +250,224 @@ tbody td {
 </div>
     </section>
 
-    <!-- Sección Clientes -->
-    <section id="seccion-clientes" class="seccion">
-      <h1>Clientes</h1>
-      <!-- KPIs de Clientes -->
-<div class="kpi-cards">
-  <div class="kpi-card">
-    <small class="kpi-desc">Cantidad total de clientes registrados</small>
-    <h3>Total Clientes</h3>
-    <p id="kpiTotalClientes">0</p>
-  </div>
-  <div class="kpi-card">
-    <small class="kpi-desc">Clientes activos actualmente</small>
-    <h3>Activos</h3>
-    <p id="kpiClientesActivos">0</p>
-  </div>
-  <div class="kpi-card">
-    <small class="kpi-desc">Altas en los últimos 30 días</small>
-    <h3>Nuevos</h3>
-    <p id="kpiClientesNuevos">0</p>
-  </div>
-  <div class="kpi-card">
-    <small class="kpi-desc">Clientes que realizaron al menos una compra</small>
-    <h3>Con Compras</h3>
-    <p id="kpiClientesConCompras">0</p>
-  </div>
-  <div class="kpi-card">
-    <small class="kpi-desc">Ticket promedio por cliente (promedio total facturado)</small>
-    <h3>Ticket Promedio</h3>
-    <p id="kpiTicketPromedio">$ 0</p>
-  </div>
-  <div class="kpi-card">
-    <small class="kpi-desc">Clientes registrados sin compras realizadas</small>
-    <h3>Sin Compras</h3>
-    <p id="kpiClientesSinCompras">0</p>
-  </div>
-</div>
+   <!-- Sección Clientes -->
+<section id="seccion-clientes" class="seccion">
+  <h1>Clientes</h1>
 
-<!-- Gráficos -->
-<div class="chart-card">
-  <small class="kpi-desc">Distribución de clientes por tipo</small>
-  <h2>Clientes por Tipo</h2>
-  <canvas id="chartClientesTipo"></canvas>
-</div>
+  <!-- KPIs de Clientes -->
+  <div class="kpi-cards">
+    <div class="kpi-card">
+      <small class="kpi-desc">Cantidad total de clientes registrados</small>
+      <h3>Total Clientes</h3>
+      <p id="kpiTotalClientes">0</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Clientes activos actualmente</small>
+      <h3>Activos</h3>
+      <p id="kpiClientesActivos">0</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Altas en los últimos 30 días</small>
+      <h3>Nuevos</h3>
+      <p id="kpiClientesNuevos">0</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Clientes que realizaron al menos una compra</small>
+      <h3>Con Compras</h3>
+      <p id="kpiClientesConCompras">0</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Ticket promedio por cliente (promedio total facturado)</small>
+      <h3>Ticket Promedio</h3>
+      <p id="kpiTicketPromedio">$ 0</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Clientes registrados sin compras realizadas</small>
+      <h3>Sin Compras</h3>
+      <p id="kpiClientesSinCompras">0</p>
+    </div>
+  </div>
 
-<div class="chart-card">
-  <small class="kpi-desc">Distribución de clientes por estado</small>
-  <h2>Clientes por Estado</h2>
-  <canvas id="chartClientesEstado"></canvas>
-</div>
+  <!-- Gráficos con botones -->
+  <div class="chart-card">
+    <small class="kpi-desc">Distribución de clientes por tipo</small>
+    <h2>Clientes por Tipo</h2>
+    <button class="btn-download" onclick="downloadChart('chartClientesTipo', 'clientes_tipo.png')">Descargar</button>
+    <canvas id="chartClientesTipo"></canvas>
+  </div>
 
-<div class="chart-card">
-  <small class="kpi-desc">Altas de clientes (últimos 30 días)</small>
-  <h2>Altas Recientes</h2>
-  <canvas id="chartClientesAltas"></canvas>
-</div>
+  <div class="chart-card">
+    <small class="kpi-desc">Distribución de clientes por estado</small>
+    <h2>Clientes por Estado</h2>
+    <button class="btn-download" onclick="downloadChart('chartClientesEstado', 'clientes_estado.png')">Descargar</button>
+    <canvas id="chartClientesEstado"></canvas>
+  </div>
 
-<div class="chart-card">
-  <small class="kpi-desc">Top 10 clientes por monto total facturado</small>
-  <h2>Top 10 por Facturación</h2>
-  <canvas id="chartTopClientes"></canvas>
-</div>
+  <div class="chart-card">
+    <small class="kpi-desc">Altas de clientes (últimos 30 días)</small>
+    <h2>Altas Recientes</h2>
+    <button class="btn-download" onclick="downloadChart('chartClientesAltas', 'clientes_altas.png')">Descargar</button>
+    <canvas id="chartClientesAltas"></canvas>
+  </div>
 
-<div class="chart-card">
-  <small class="kpi-desc">Comparativa mensual de nuevos vs recurrentes (últimos 6 meses)</small>
-  <h2>Nuevos vs Recurrentes</h2>
-  <canvas id="chartClientesRecurrentes"></canvas>
-</div>
+  <div class="chart-card">
+    <small class="kpi-desc">Top 10 clientes por monto total facturado</small>
+    <h2>Top 10 por Facturación</h2>
+    <button class="btn-download" onclick="downloadChart('chartTopClientes', 'top_clientes.png')">Descargar</button>
+    <canvas id="chartTopClientes"></canvas>
+  </div>
 
-    </section>
-    <main class="main-content">
+  <div class="chart-card">
+    <small class="kpi-desc">Comparativa mensual de nuevos vs recurrentes (últimos 6 meses)</small>
+    <h2>Nuevos vs Recurrentes</h2>
+    <button class="btn-download" onclick="downloadChart('chartClientesRecurrentes', 'clientes_recurrentes.png')">Descargar</button>
+    <canvas id="chartClientesRecurrentes"></canvas>
+  </div>
+</section>
+
+   <section id="seccion-produccion" class="seccion">
       <h1>Producción y Suministros</h1>
 
-      <!-- KPI Cards -->
-      <div class="kpi-cards">
-        <div class="kpi-card">
-          <small class="kpi-desc">Líneas registradas con estado Activa</small>
-          <h3>Líneas Activas</h3><p id="kpiLineasActivas">0</p>
-        </div>
-        <div class="kpi-card">
-          <small class="kpi-desc">Promedio de eficiencia (%)</small>
-          <h3>Eficiencia Promedio</h3><p id="kpiEficienciaProm">0%</p>
-        </div>
-        <div class="kpi-card">
-          <small class="kpi-desc">Suma de capacidad diaria de todas las líneas</small>
-          <h3>Capacidad Diaria Total</h3><p id="kpiCapacidadDiaria">0</p>
-        </div>
-        <div class="kpi-card">
-          <small class="kpi-desc">Duración promedio por producto (minutos)</small>
-          <h3>Duración Promedio</h3><p id="kpiDuracionProm">0</p>
-        </div>
-        <div class="kpi-card">
-          <small class="kpi-desc">Proveedores con estado activo</small>
-          <h3>Proveedores Activos</h3><p id="kpiProveedoresActivos">0</p>
-        </div>
-        <div class="kpi-card">
-          <small class="kpi-desc">Total de lotes registrados</small>
-          <h3>Lotes Totales</h3><p id="kpiLotesTotales">0</p>
-        </div>
-        <div class="kpi-card">
-          <small class="kpi-desc">Stock disponible total (sum cantidad_disponible)</small>
-          <h3>Stock Disponible</h3><p id="kpiStockDisponible">0</p>
-        </div>
-        <div class="kpi-card">
-          <small class="kpi-desc">Lotes vencidos (fecha_caducidad anterior a hoy)</small>
-          <h3>Lotes Vencidos</h3><p id="kpiLotesVencidos">0</p>
-        </div>
-      </div>
-
-      <!-- Charts -->
-      <div class="chart-card clearfix">
-        <small class="kpi-desc">Eficiencia por Línea / Producto</small>
-        <h2>Eficiencia por Línea</h2>
-        <button class="btn-download" onclick="downloadChart('chartEficienciaLinea','eficiencia_linea.png')">Descargar</button>
-        <canvas id="chartEficienciaLinea"></canvas>
-      </div>
-
-      <div class="chart-card clearfix">
-        <small class="kpi-desc">Capacidad diaria por línea</small>
-        <h2>Capacidad por Línea</h2>
-        <button class="btn-download" onclick="downloadChart('chartCapacidadLinea','capacidad_linea.png')">Descargar</button>
-        <canvas id="chartCapacidadLinea"></canvas>
-      </div>
-
-      <div class="chart-card clearfix">
-        <small class="kpi-desc">Stock disponible por materia prima</small>
-        <h2>Stock por Materia Prima</h2>
-        <button class="btn-download" onclick="downloadChart('chartStockMP','stock_mp.png')">Descargar</button>
-        <canvas id="chartStockMP"></canvas>
-      </div>
-
-      <div class="chart-card clearfix">
-        <small class="kpi-desc">Lotes conformes vs no conformes</small>
-        <h2>Conformidad de Lotes</h2>
-        <button class="btn-download" onclick="downloadChart('chartConformidad','conformidad_lotes.png')">Descargar</button>
-        <canvas id="chartConformidad"></canvas>
-      </div>
-
-      <div class="chart-card clearfix">
-        <small class="kpi-desc">Vencimientos próximos en los siguientes 30 días</small>
-        <h2>Vencimientos (30 días)</h2>
-        <button class="btn-download" onclick="downloadChart('chartVencimientos','vencimientos.png')">Descargar</button>
-        <canvas id="chartVencimientos"></canvas>
-      </div>
-
-      <div class="table-container" style="margin-top: 20px;">
-  <small class="kpi-desc">Listado resumen de los lotes registrados con su materia prima y proveedor</small>
-  <h2>Resumen de Lotes</h2>
-  <table id="tablaLotes">
-    <thead>
-      <tr>
-        <th>Lote</th>
-        <th>Materia Prima</th>
-        <th>Proveedor</th>
-        <th>Cant. Disponible</th>
-        <th>Estado</th>
-        <th>Caducidad</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
-    </main>
+  <!-- KPI Cards -->
+  <div class="kpi-cards">
+    <div class="kpi-card">
+      <small class="kpi-desc">Líneas registradas con estado Activa</small>
+      <h3>Líneas Activas</h3><p id="kpiLineasActivas">0</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Promedio de eficiencia (%)</small>
+      <h3>Eficiencia Promedio</h3><p id="kpiEficienciaProm">0%</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Suma de capacidad diaria de todas las líneas</small>
+      <h3>Capacidad Diaria Total</h3><p id="kpiCapacidadDiaria">0</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Duración promedio por producto (minutos)</small>
+      <h3>Duración Promedio</h3><p id="kpiDuracionProm">0</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Proveedores con estado activo</small>
+      <h3>Proveedores Activos</h3><p id="kpiProveedoresActivos">0</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Total de lotes registrados</small>
+      <h3>Lotes Totales</h3><p id="kpiLotesTotales">0</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Stock disponible total (sum cantidad_disponible)</small>
+      <h3>Stock Disponible</h3><p id="kpiStockDisponible">0</p>
+    </div>
+    <div class="kpi-card">
+      <small class="kpi-desc">Lotes vencidos (fecha_caducidad anterior a hoy)</small>
+      <h3>Lotes Vencidos</h3><p id="kpiLotesVencidos">0</p>
+    </div>
   </div>
+
+  <!-- Charts -->
+  <div class="chart-card clearfix">
+    <small class="kpi-desc">Eficiencia por Línea / Producto</small>
+    <h2>Eficiencia por Línea</h2>
+    <button class="btn-download" onclick="downloadChart('chartEficienciaLinea','eficiencia_linea.png')">Descargar</button>
+    <canvas id="chartEficienciaLinea"></canvas>
+  </div>
+
+  <div class="chart-card clearfix">
+    <small class="kpi-desc">Capacidad diaria por línea</small>
+    <h2>Capacidad por Línea</h2>
+    <button class="btn-download" onclick="downloadChart('chartCapacidadLinea','capacidad_linea.png')">Descargar</button>
+    <canvas id="chartCapacidadLinea"></canvas>
+  </div>
+
+  <div class="chart-card clearfix">
+    <small class="kpi-desc">Stock disponible por materia prima</small>
+    <h2>Stock por Materia Prima</h2>
+    <button class="btn-download" onclick="downloadChart('chartStockMP','stock_mp.png')">Descargar</button>
+    <canvas id="chartStockMP"></canvas>
+  </div>
+
+  <div class="chart-card clearfix">
+    <small class="kpi-desc">Lotes conformes vs no conformes</small>
+    <h2>Conformidad de Lotes</h2>
+    <button class="btn-download" onclick="downloadChart('chartConformidad','conformidad_lotes.png')">Descargar</button>
+    <canvas id="chartConformidad"></canvas>
+  </div>
+
+  <div class="chart-card clearfix">
+    <small class="kpi-desc">Vencimientos próximos en los siguientes 30 días</small>
+    <h2>Vencimientos (30 días)</h2>
+    <button class="btn-download" onclick="downloadChart('chartVencimientos','vencimientos.png')">Descargar</button>
+    <canvas id="chartVencimientos"></canvas>
+  </div>
+
+  <div class="table-container" style="margin-top: 20px;">
+    <small class="kpi-desc">Listado resumen de los lotes registrados con su materia prima y proveedor</small>
+    <h2>Resumen de Lotes</h2>
+    <table id="tablaLotes">
+      <thead>
+        <tr>
+          <th>Lote</th>
+          <th>Materia Prima</th>
+          <th>Proveedor</th>
+          <th>Cant. Disponible</th>
+          <th>Estado</th>
+          <th>Caducidad</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
 
   </main>
 </div>
 
+<!-- ================== Scripts principales ================== -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.30/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/gerente.js"></script>
+
 <script>
 function cerrarSesion() {
   localStorage.clear();
   sessionStorage.clear();
   window.location.href = "index.html";
 }
-// Mostrar solo la sección seleccionada o la de producción
-document.querySelectorAll('.btn-seccion').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const seccion = btn.dataset.seccion;
 
-    // Ocultar todas las secciones y el main extra
-    document.querySelectorAll('.seccion').forEach(s => s.style.display = 'none');
-    const mainProd = document.querySelector('main.main-content:nth-of-type(2)');
-    if (mainProd) mainProd.style.display = 'none';
+document.addEventListener("DOMContentLoaded", () => {
+  const botones = document.querySelectorAll(".btn-seccion");
+  const secciones = document.querySelectorAll(".seccion");
 
-    // Mostrar la que corresponde
-    if (seccion === 'produccion y suministros') {
-      if (mainProd) mainProd.style.display = 'block';
-    } else {
+  // 🔹 Ocultar todas las secciones al inicio
+  secciones.forEach(s => s.style.display = "none");
+
+  // 🔹 Manejar cambio de secciones
+  botones.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const seccion = btn.dataset.seccion;
+      secciones.forEach(s => s.style.display = "none"); // Oculta todas
       const target = document.getElementById(`seccion-${seccion}`);
-      if (target) target.style.display = 'block';
-    }
-  });
-});
-// Cambiar de sección
-document.querySelectorAll('.btn-seccion').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const seccion = btn.dataset.seccion;
-    document.querySelectorAll('.seccion').forEach(s => s.style.display = 'none');
-    document.getElementById(`seccion-${seccion}`).style.display = 'block';
-  });
-});
-
-// Descargar gráficos como imagen
-function downloadChart(canvasId, filename) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const link = document.createElement('a');
-  link.href = canvas.toDataURL('image/png', 1.0);
-  link.download = filename;
-  link.click();
-}
-</script>
-<!-- ================== Scripts principales ================== -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  // ================== Configuración Supabase ==================
-  const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-  const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-  // ================== Manejo de secciones ==================
-  const links = document.querySelectorAll(".sidebar a");
-  const sections = document.querySelectorAll(".section");
-
-  links.forEach(link => {
-    link.addEventListener("click", e => {
-      e.preventDefault();
-      const target = link.getAttribute("href").substring(1);
-      sections.forEach(sec => sec.style.display = "none");
-      document.getElementById(target).style.display = "block";
+      if (target) target.style.display = "block"; // Muestra la elegida
     });
   });
 
-  // ================== Botón Descargar PDF ==================
-  const btnInforme = document.getElementById("btnInforme");
-  if (btnInforme) {
-    btnInforme.addEventListener("click", async () => {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF("p", "pt", "a4");
-      const dashboard = document.querySelector(".dashboard-content");
-
-      await html2canvas(dashboard, { scale: 2 }).then(canvas => {
-        const imgData = canvas.toDataURL("image/png");
-        const imgProps = doc.getImageProperties(imgData);
-        const pdfWidth = doc.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        doc.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-        doc.save("reporte_gerente.pdf");
-      });
-    });
-  }
-
-  // ================== Gráficos (con validaciones) ==================
-  function crearGrafico(idCanvas, tipo, data, options = {}) {
-    const canvas = document.getElementById(idCanvas);
-    if (!canvas) return; // evita error si el canvas no existe
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return; // evita error si no puede crear contexto
-    new Chart(ctx, {
-      type: tipo,
-      data,
-      options: {
-        plugins: {
-          datalabels: {
-            color: "#fff",
-            display: true,
-            align: "center"
-          },
-          title: {
-            display: true,
-            text: options.title || "",
-            font: { size: 18 }
-          }
-        },
-        ...options
-      },
-      plugins: [ChartDataLabels]
-    });
-  }
-
-  // ================== Ejemplo de gráficos ==================
-  crearGrafico("chartVentasMensuales", "bar", {
-    labels: ["Enero", "Febrero", "Marzo", "Abril"],
-    datasets: [{
-      label: "Ventas ($)",
-      data: [45000, 52000, 61000, 72000],
-      backgroundColor: "#3B82F6"
-    }]
-  }, { title: "Ventas mensuales" });
-
-  crearGrafico("chartClientes", "pie", {
-    labels: ["Nuevos", "Frecuentes", "Inactivos"],
-    datasets: [{
-      data: [30, 50, 20],
-      backgroundColor: ["#10B981", "#3B82F6", "#EF4444"]
-    }]
-  }, { title: "Distribución de clientes" });
-
-  // ================== Mostrar tabla ==================
-  const tablaResumen = document.getElementById("tablaResumen");
-  if (tablaResumen) {
-    tablaResumen.innerHTML = `
-      <thead>
-        <tr>
-          <th>Cliente</th>
-          <th>Orden</th>
-          <th>Total ($)</th>
-          <th>Fecha</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Juan Pérez</td><td>#1024</td><td>25.300</td><td>2025-11-02</td></tr>
-        <tr><td>María Gómez</td><td>#1025</td><td>17.800</td><td>2025-11-03</td></tr>
-        <tr><td>Carlos Ruiz</td><td>#1026</td><td>32.100</td><td>2025-11-04</td></tr>
-      </tbody>
-    `;
-  }
+  // 🔹 Descargar gráfico individual
+  window.downloadChart = function (canvasId, filename) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png", 1.0);
+    link.download = filename;
+    link.click();
+  };
 });
 </script>
 </body>
