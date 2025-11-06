@@ -590,7 +590,36 @@ function generarGraficosProduccion({ lineas, proveedores, lotes, mprov, producto
     options: { responsive:true, plugins:{ legend:{ display:false } }, indexAxis: 'y' }
   });
 }
-// ================== DESCARGAR INFORME COMPLETO EN PDF ==================
+// ====================== Registro automático de gráficos ======================
+window.__graficos = window.__graficos || [];
+
+(function() {
+  const OriginalChart = Chart; // guardamos la clase original
+
+  Chart = function(ctx, config) {
+    const chartInstance = new OriginalChart(ctx, config);
+    window.__graficos.push(chartInstance); // registramos automáticamente
+    return chartInstance;
+  };
+
+  // Copiamos todas las propiedades estáticas
+  Object.keys(OriginalChart).forEach(key => {
+    Chart[key] = OriginalChart[key];
+  });
+})();
+
+// ====================== Función para cargar imagen ======================
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+// ====================== Generar PDF ======================
 async function descargarReportePDF() {
   try {
     console.log("Generando informe PDF...");
@@ -599,26 +628,30 @@ async function descargarReportePDF() {
     const doc = new jsPDF("p", "mm", "a4");
     const nombreArchivo = "Informe_Gerente_General.pdf";
 
+    // Esperar a que todos los charts se dibujen
+    await new Promise(r => setTimeout(r, 1500));
+
     // ========= PORTADA =========
-    const logo = document.querySelector("logo.png")?.src; // opcional si tenés logo
+    const logo = "logo.png"; // Ruta de tu logo
     const fecha = new Date().toLocaleString();
-    const gerente = "Gerente general";
+    const gerente = "Gerente General";
 
     // Fondo
     doc.setFillColor(245, 247, 250);
     doc.rect(0, 0, 210, 297, "F");
 
     // Logo
-    if (logo) {
+    try {
       const img = await loadImage(logo);
       doc.addImage(img, "PNG", 80, 40, 50, 50);
+    } catch (e) {
+      console.warn("No se pudo cargar el logo:", e);
     }
 
     // Título
     doc.setTextColor(30, 58, 138);
     doc.setFontSize(24);
     doc.text("Informe General del Área TI", 105, 110, { align: "center" });
-
     doc.setFontSize(14);
     doc.setTextColor(80, 80, 80);
     doc.text(`Fecha de generación: ${fecha}`, 105, 130, { align: "center" });
@@ -628,32 +661,16 @@ async function descargarReportePDF() {
 
     // ========= CONTENIDO =========
     const secciones = document.querySelectorAll(".seccion");
-    const clones = [];
-
-    // Clonamos las secciones (visibles para html2canvas)
-    for (const seccion of secciones) {
-      const clon = seccion.cloneNode(true);
-      clon.style.position = "absolute";
-      clon.style.top = "0";
-      clon.style.left = "0";
-      clon.style.width = "1000px";
-      clon.style.visibility = "visible";
-      clon.style.opacity = "1";
-      clon.style.zIndex = "-1";
-      document.body.appendChild(clon);
-      clones.push(clon);
-    }
-
     let y = 20;
 
-    for (let i = 0; i < clones.length; i++) {
-      const seccion = clones[i];
-      const titulo = seccion.querySelector("h1")?.innerText || "Sección";
+    for (let i = 0; i < secciones.length; i++) {
+      const seccion = secciones[i];
+      const titulo = seccion.querySelector("h1, h2, h3")?.innerText || `Sección ${i + 1}`;
 
       doc.setFontSize(16);
       doc.setTextColor(30, 58, 138);
       doc.text(titulo, 10, y);
-      y += 6;
+      y += 8;
 
       // KPIs
       const kpis = seccion.querySelectorAll(".kpi-card");
@@ -680,13 +697,15 @@ async function descargarReportePDF() {
             y = 20;
           }
         }
-        y += 4;
+        y += 6;
       }
 
-      // Gráficos Chart.js
+      // Gráficos Chart.js (usando canvas originales)
       const charts = seccion.querySelectorAll("canvas");
       for (const chartCanvas of charts) {
-        const chartInstance = Chart.getChart(chartCanvas);
+        const chartInstance = Chart.getChart(chartCanvas) ||
+                              (window.__graficos && window.__graficos.find(c => c.canvas === chartCanvas));
+
         if (chartInstance) {
           const imgData = chartInstance.toBase64Image();
           const imgWidth = 170;
@@ -697,20 +716,18 @@ async function descargarReportePDF() {
           }
           doc.addImage(imgData, "PNG", 20, y, imgWidth, imgHeight);
           y += imgHeight + 10;
+        } else {
+          console.warn("No se encontró instancia Chart.js para:", chartCanvas);
         }
       }
 
       // Tablas
       const tabla = seccion.querySelector("table");
       if (tabla) {
-        const headers = [];
-        tabla.querySelectorAll("thead th").forEach(th => headers.push(th.innerText));
-        const cuerpo = [];
-        tabla.querySelectorAll("tbody tr").forEach(tr => {
-          const fila = [];
-          tr.querySelectorAll("td").forEach(td => fila.push(td.innerText));
-          cuerpo.push(fila);
-        });
+        const headers = Array.from(tabla.querySelectorAll("thead th")).map(th => th.innerText);
+        const cuerpo = Array.from(tabla.querySelectorAll("tbody tr")).map(tr =>
+          Array.from(tr.querySelectorAll("td")).map(td => td.innerText)
+        );
 
         if (cuerpo.length > 0) {
           doc.autoTable({
@@ -719,31 +736,28 @@ async function descargarReportePDF() {
             body: cuerpo,
             theme: "striped",
             headStyles: { fillColor: [30, 58, 138] },
+            margin: { left: 10, right: 10 }
           });
           y = doc.lastAutoTable.finalY + 10;
         }
       }
 
-      if (i < clones.length - 1) {
+      if (i < secciones.length - 1) {
         doc.addPage();
         y = 20;
       }
     }
 
-    // Eliminamos los clones del DOM
-    clones.forEach(c => c.remove());
-
     // Guardar PDF
     doc.save(nombreArchivo);
     console.log("Informe PDF generado correctamente.");
-
   } catch (err) {
     console.error("Error generando PDF:", err);
     alert("No se pudo generar el informe en PDF.");
   }
 }
 
-// Utilidad para cargar imagen (logo)
+// Función para cargar imagen (logo)
 function loadImage(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();

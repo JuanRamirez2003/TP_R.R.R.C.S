@@ -445,6 +445,13 @@ function cerrarSesion() {
 document.addEventListener("DOMContentLoaded", () => {
   const botones = document.querySelectorAll(".btn-seccion");
   const secciones = document.querySelectorAll(".seccion");
+  const btnPDF = document.querySelector(".btn-download"); // Botón de descargar PDF
+
+  // 🔹 Inicialmente deshabilitamos el botón PDF
+  btnPDF.disabled = true;
+  btnPDF.style.opacity = 0.5; // apariencia de deshabilitado
+
+  const seccionesVisitadas = new Set();
 
   // 🔹 Ocultar todas las secciones al inicio
   secciones.forEach(s => s.style.display = "none");
@@ -453,9 +460,22 @@ document.addEventListener("DOMContentLoaded", () => {
   botones.forEach(btn => {
     btn.addEventListener("click", () => {
       const seccion = btn.dataset.seccion;
-      secciones.forEach(s => s.style.display = "none"); // Oculta todas
+
+      // Ocultar todas
+      secciones.forEach(s => s.style.display = "none");
+
+      // Mostrar la sección elegida
       const target = document.getElementById(`seccion-${seccion}`);
-      if (target) target.style.display = "block"; // Muestra la elegida
+      if (target) target.style.display = "block";
+
+      // Marcar la sección como visitada
+      seccionesVisitadas.add(seccion);
+
+      // 🔹 Habilitar botón PDF si se visitaron todas las secciones
+      if (seccionesVisitadas.size === secciones.length) {
+        btnPDF.disabled = false;
+        btnPDF.style.opacity = 1;
+      }
     });
   });
 
@@ -470,5 +490,6 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 </script>
+
 </body>
 </html>
