@@ -179,13 +179,121 @@ tbody td {
     <!-- Sección Órdenes -->
     <section id="seccion-ordenes" class="seccion">
       <h1>Órdenes</h1>
-      <p>Aquí se mostrarán los KPIs de órdenes y producción.</p>
+      <!-- KPI Cards -->
+<div class="kpi-cards">
+  <div class="kpi-card">
+    <small class="kpi-desc">Total de órdenes de producción registradas</small>
+    <h3>Total de Órdenes</h3>
+    <p id="totalOrdenes">0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Órdenes con estado “finalizada” o equivalente</small>
+    <h3>Órdenes Completadas</h3>
+    <p id="ordenesCompletadas">0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Órdenes con prioridad alta</small>
+    <h3>Órdenes Prioritarias</h3>
+    <p id="ordenesPrioridadAlta">0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Órdenes pendientes de entrega</small>
+    <h3>Órdenes Pendientes</h3>
+    <p id="ordenesPendientes">0</p>
+  </div>
+</div>
+
+<!-- Gráficos -->
+<div class="chart-card">
+  <small class="kpi-desc">Cantidad de órdenes según su estado actual</small>
+  <h2>Órdenes por Estado</h2>
+  <button class="btn-download" onclick="downloadChart('ordenesEstadoChart','ordenes_estado.png')">Descargar</button>
+  <canvas id="ordenesEstadoChart"></canvas>
+</div>
+
+<div class="chart-card">
+  <small class="kpi-desc">Distribución de órdenes por prioridad (baja, normal, alta)</small>
+  <h2>Órdenes por Prioridad</h2>
+  <button class="btn-download" onclick="downloadChart('ordenesPrioridadChart','ordenes_prioridad.png')">Descargar</button>
+  <canvas id="ordenesPrioridadChart"></canvas>
+</div>
+
+<div class="chart-card">
+  <small class="kpi-desc">Órdenes emitidas durante los últimos 30 días</small>
+  <h2>Órdenes por Fecha (últimos 30 días)</h2>
+  <button class="btn-download" onclick="downloadChart('ordenesFechaChart','ordenes_fecha.png')">Descargar</button>
+  <canvas id="ordenesFechaChart"></canvas>
+</div>
     </section>
 
     <!-- Sección Clientes -->
     <section id="seccion-clientes" class="seccion">
       <h1>Clientes</h1>
-      <p>Aquí se mostrarán los KPIs relacionados con clientes.</p>
+      <!-- KPIs de Clientes -->
+<div class="kpi-cards">
+  <div class="kpi-card">
+    <small class="kpi-desc">Cantidad total de clientes registrados</small>
+    <h3>Total Clientes</h3>
+    <p id="kpiTotalClientes">0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Clientes activos actualmente</small>
+    <h3>Activos</h3>
+    <p id="kpiClientesActivos">0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Altas en los últimos 30 días</small>
+    <h3>Nuevos</h3>
+    <p id="kpiClientesNuevos">0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Clientes que realizaron al menos una compra</small>
+    <h3>Con Compras</h3>
+    <p id="kpiClientesConCompras">0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Ticket promedio por cliente (promedio total facturado)</small>
+    <h3>Ticket Promedio</h3>
+    <p id="kpiTicketPromedio">$ 0</p>
+  </div>
+  <div class="kpi-card">
+    <small class="kpi-desc">Clientes registrados sin compras realizadas</small>
+    <h3>Sin Compras</h3>
+    <p id="kpiClientesSinCompras">0</p>
+  </div>
+</div>
+
+<!-- Gráficos -->
+<div class="chart-card">
+  <small class="kpi-desc">Distribución de clientes por tipo</small>
+  <h2>Clientes por Tipo</h2>
+  <canvas id="chartClientesTipo"></canvas>
+</div>
+
+<div class="chart-card">
+  <small class="kpi-desc">Distribución de clientes por estado</small>
+  <h2>Clientes por Estado</h2>
+  <canvas id="chartClientesEstado"></canvas>
+</div>
+
+<div class="chart-card">
+  <small class="kpi-desc">Altas de clientes (últimos 30 días)</small>
+  <h2>Altas Recientes</h2>
+  <canvas id="chartClientesAltas"></canvas>
+</div>
+
+<div class="chart-card">
+  <small class="kpi-desc">Top 10 clientes por monto total facturado</small>
+  <h2>Top 10 por Facturación</h2>
+  <canvas id="chartTopClientes"></canvas>
+</div>
+
+<div class="chart-card">
+  <small class="kpi-desc">Comparativa mensual de nuevos vs recurrentes (últimos 6 meses)</small>
+  <h2>Nuevos vs Recurrentes</h2>
+  <canvas id="chartClientesRecurrentes"></canvas>
+</div>
+
     </section>
 
   </main>
