@@ -1048,6 +1048,7 @@ async function cargarOP() {
       <td><button onclick="verOrden(${op.id_orden_produccion})" class="btn-editar">📄 Ver Orden</button></td>
       <td>${op.estado}</td>
       <td>${new Date(op.fecha_emision).toLocaleString()}</td>
+      <td>${op.prioridad}</td>
       <td>
         ${op.estado === 'Pendiente'
         ? `<button onclick="editarOP(${op.id_orden_produccion})" class="btn-editar">✏️ Editar</button>
@@ -1552,12 +1553,20 @@ function mostrarConfirmacion(mensaje) {
   });
 }
 
-
-
-
 // Inicialización al cargar la página
 (async () => {
   await cargarProductosDisponibles();
   prepararNuevaOP();
   verificarStockMaterias();
 })();
+
+//Buscador Seguimiento OP
+document.getElementById("buscador").addEventListener("input", e => {
+  const valor = e.target.value.toLowerCase();
+  const items = document.querySelectorAll("#tablaOP tr"); // o cualquier clase/lista
+
+  items.forEach(item => {
+    const texto = item.textContent.toLowerCase();
+    item.style.display = texto.includes(valor) ? "" : "none";
+  });
+});
