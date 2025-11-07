@@ -792,37 +792,51 @@ async function descargarTrazabilidadPDF() {
     const saltoPagina = 270;
 
     try {
-        // 🔹 Traer todos los datos
-        const [{ data: ops }, { data: detalleLotes }, { data: lotes }, { data: opOV }, { data: ordenesVenta }, { data: detalleOV }, { data: productos }] = await Promise.all([
-            supabaseClient.from('orden_produccion').select('*'),
-            supabaseClient.from('detalle_lote_op').select('*'),
-            supabaseClient.from('lote_mp').select('*'),
-            supabaseClient.from('op_ov').select('*'),
-            supabaseClient.from('orden_ventas').select('*'),
-            supabaseClient.from('detalle_ordenes').select('*'),
-            supabaseClient.from('productos').select('*')
-        ]);
+        // 🔹 Traer todas las OP
+        const { data: ops, error: opError } = await supabaseClient.from('orden_produccion').select('*');
+        if (opError) throw opError;
+        console.log(`OP cargadas: ${ops.length}`);
 
-        console.log("Datos cargados:", {
-            ops: ops.length,
-            detalleLotes: detalleLotes.length,
-            lotes: lotes.length,
-            opOV: opOV.length,
-            ordenesVenta: ordenesVenta.length,
-            detalleOV: detalleOV.length,
-            productos: productos.length
-        });
+        // 🔹 Traer relaciones OP → OV
+        const { data: opOV, error: opOVError } = await supabaseClient.from('op_ov').select('*');
+        if (opOVError) throw opOVError;
+        console.log(`Relaciones OP→OV cargadas: ${opOV.length}`);
 
+        // 🔹 Traer OV
+        const { data: ordenesVenta, error: ovError } = await supabaseClient.from('orden_ventas').select('*');
+        if (ovError) throw ovError;
+        console.log(`Órdenes de venta cargadas: ${ordenesVenta.length}`);
+
+        // 🔹 Traer detalle de OV
+        const { data: detalleOV, error: detOVError } = await supabaseClient.from('detalle_ordenes').select('*');
+        if (detOVError) throw detOVError;
+        console.log(`Detalle de OV cargado: ${detalleOV.length}`);
+
+        // 🔹 Traer productos
+        const { data: productos, error: prodError } = await supabaseClient.from('productos').select('*');
+        if (prodError) throw prodError;
+        console.log(`Productos cargados: ${productos.length}`);
+
+        // 🔹 Crear mapas para acceso rápido
+        const mapOV = new Map(ordenesVenta.map(o => [Number(o.id_orden), o]));
+        const mapDetalleOV = detalleOV.reduce((acc, d) => {
+            const key = Number(d.id_orden);
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(d);
+            return acc;
+        }, {});
+        const mapProductos = new Map(productos.map(p => [Number(p.id_producto), p]));
+
+        // 🔹 Empezar a escribir PDF
         for (let op of ops) {
             doc.setFontSize(14);
             doc.text(`OP N°: ${op.numero_op || op.id_orden_produccion}`, 10, y);
             y += 6;
-
             doc.setFontSize(11);
             doc.text(`Estado: ${op.estado || 'N/A'}`, 10, y);
             y += 5;
 
-            const producto = productos.find(p => Number(p.id_producto) === Number(op.id_producto));
+            const producto = mapProductos.get(Number(op.id_producto));
             doc.text(`Producto: ${producto ? producto.nombre : 'N/A'}`, 10, y);
             y += 5;
 
@@ -831,77 +845,45 @@ async function descargarTrazabilidadPDF() {
             doc.text(`Motivo: ${op.motivo || '-'}`, 10, y);
             y += 6;
 
-            // 🔹 Lotes consumidos
-            const detalleOP = detalleLotes.filter(d => Number(d.id_orden_produccion) === Number(op.id_orden_produccion));
-            if (detalleOP.length) {
-                doc.setFontSize(12);
-                doc.text("Lotes Consumidos:", 10, y);
-                y += 5;
-                detalleOP.forEach(d => {
-                    const lote = lotes.find(l => Number(l.id_lote) === Number(d.id_lote));
-                    if (lote) {
-                        doc.setFontSize(10);
-                        doc.text(`- Lote: ${lote.lote}, Cantidad: ${d.cantidad_lote}, Estado: ${lote.estado}`, 12, y);
-                        y += 5;
-                        if (y > saltoPagina) { doc.addPage(); y = 10; }
-                    }
-                });
-            } else {
-                doc.setFontSize(10);
-                doc.text("Lotes Consumidos: Ninguno", 10, y);
-                y += 5;
-            }
-
-            // 🔹 Órdenes de venta relacionadas
-            const relacionesOV = opOV
-                .filter(r => Number(r.id_op) === Number(op.id_orden_produccion) && r.id_ov != null)
-                .map(r => Number(r.id_ov));
-
-            if (relacionesOV.length) {
+            // 🔹 OV asociadas
+            const relacionesOV = opOV.filter(r => Number(r.id_op) === Number(op.id_orden_produccion) && (r.id_ov || r.id_detalle_ov));
+            if (relacionesOV.length > 0) {
                 doc.setFontSize(12);
                 doc.text("Órdenes de Venta Relacionadas:", 10, y);
                 y += 5;
 
-                for (let ovId of relacionesOV) {
-                    const ov = ordenesVenta.find(o => Number(o.id_orden) === ovId);
-                    if (ov) {
-                        doc.setFontSize(11);
-                        doc.text(`OV N°: ${ov.id_orden}, Cliente ID: ${ov.id_cliente}, Estado: ${ov.estado}`, 12, y);
-                        y += 5;
-
-                        // Detalle de productos de la OV
-                        const detalles = detalleOV.filter(d => Number(d.id_orden) === ovId);
-                        if (detalles.length) {
-                            detalles.forEach(det => {
-                                const prodOV = productos.find(p => Number(p.id_producto) === Number(det.id_producto));
-                                doc.setFontSize(10);
-                                doc.text(`   - Producto: ${prodOV ? prodOV.nombre : det.id_producto}, Cantidad: ${det.cantidad}, Estado: ${det.estado_detalle_ov}`, 14, y);
-                                y += 5;
-                                if (y > saltoPagina) { doc.addPage(); y = 10; }
-                            });
-                        } else {
-                            doc.setFontSize(10);
-                            doc.text("   - Detalles: Ninguno", 14, y);
-                            y += 5;
-                        }
-
-                    } else {
-                        console.warn("No se encontró OV para id_ov:", ovId);
-                        doc.setFontSize(10);
-                        doc.text("OV no encontrada en la base de datos", 12, y);
-                        y += 5;
+                relacionesOV.forEach(r => {
+                    let ov = null;
+                    if (r.id_ov != null) {
+                        ov = mapOV.get(Number(r.id_ov));
+                    } else if (r.id_detalle_ov != null) {
+                        // Buscar detalle de OV para obtener id_orden
+                        const detalle = detalleOV.find(d => Number(d.id_detalle) === Number(r.id_detalle_ov));
+                        if (detalle) ov = mapOV.get(Number(detalle.id_orden));
                     }
+                    if (ov) {
+                        doc.setFontSize(10);
+                        doc.text(`- OV ID: ${ov.id_orden}, Cliente ID: ${ov.id_cliente}, Estado: ${ov.estado}`, 12, y);
+                        y += 5;
 
-                    if (y > saltoPagina) { doc.addPage(); y = 10; }
-                }
-
+                        // Productos de esa OV
+                        const detalles = mapDetalleOV[Number(ov.id_orden)] || [];
+                        detalles.forEach(d => {
+                            const prodOV = mapProductos.get(Number(d.id_producto));
+                            doc.setFontSize(9);
+                            doc.text(`   * Producto: ${prodOV ? prodOV.nombre : 'N/A'}, Cantidad: ${d.cantidad}`, 14, y);
+                            y += 4;
+                            if (y > saltoPagina) { doc.addPage(); y = 10; }
+                        });
+                        if (y > saltoPagina) { doc.addPage(); y = 10; }
+                    }
+                });
             } else {
                 doc.setFontSize(10);
                 doc.text("Órdenes de Venta Relacionadas: Ninguna", 10, y);
                 y += 5;
             }
 
-            // 🔹 Separador
             y += 5;
             doc.setDrawColor(0);
             doc.line(10, y, 200, y);
