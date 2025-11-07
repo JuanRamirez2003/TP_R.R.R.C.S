@@ -619,7 +619,7 @@ function loadImage(url) {
   });
 }
 
-// ====================== Generar PDF ======================
+// ====================== Generar PDF profesional ======================
 async function descargarReportePDF() {
   try {
     console.log("Generando informe PDF...");
@@ -628,7 +628,7 @@ async function descargarReportePDF() {
     const doc = new jsPDF("p", "mm", "a4");
     const nombreArchivo = "Informe_Gerente_General.pdf";
 
-    // Esperar a que todos los charts se dibujen
+    // Esperar un momento para asegurar que los charts estén renderizados
     await new Promise(r => setTimeout(r, 1500));
 
     // ========= PORTADA =========
@@ -667,12 +667,13 @@ async function descargarReportePDF() {
       const seccion = secciones[i];
       const titulo = seccion.querySelector("h1, h2, h3")?.innerText || `Sección ${i + 1}`;
 
+      // Título de sección
       doc.setFontSize(16);
       doc.setTextColor(30, 58, 138);
       doc.text(titulo, 10, y);
       y += 8;
 
-      // KPIs
+      // ================= KPIs =================
       const kpis = seccion.querySelectorAll(".kpi-card");
       if (kpis.length > 0) {
         doc.setFontSize(11);
@@ -700,7 +701,7 @@ async function descargarReportePDF() {
         y += 6;
       }
 
-      // Gráficos Chart.js (usando canvas originales)
+      // ================= Gráficos profesionales =================
       const charts = seccion.querySelectorAll("canvas");
       for (const chartCanvas of charts) {
         const chartInstance = Chart.getChart(chartCanvas) ||
@@ -708,20 +709,34 @@ async function descargarReportePDF() {
 
         if (chartInstance) {
           const imgData = chartInstance.toBase64Image();
-          const imgWidth = 170;
-          const imgHeight = 100;
+
+          // Tamaño proporcional
+          const maxWidth = 170; // ancho máximo en mm
+          const maxHeight = 120; // alto máximo en mm
+          const canvasWidth = chartCanvas.width;
+          const canvasHeight = chartCanvas.height;
+          const ratio = Math.min(maxWidth / canvasWidth, maxHeight / canvasHeight);
+          const imgWidth = canvasWidth * ratio;
+          const imgHeight = canvasHeight * ratio;
+
+          // Nueva página si no cabe
           if (y + imgHeight > 270) {
             doc.addPage();
             y = 20;
           }
+
+          // Fondo blanco para resaltar
+          doc.setFillColor(255, 255, 255);
+          doc.rect(15, y - 2, imgWidth + 10, imgHeight + 4, "F");
+
           doc.addImage(imgData, "PNG", 20, y, imgWidth, imgHeight);
-          y += imgHeight + 10;
+          y += imgHeight + 12; // separación vertical
         } else {
           console.warn("No se encontró instancia Chart.js para:", chartCanvas);
         }
       }
 
-      // Tablas
+      // ================= Tablas =================
       const tabla = seccion.querySelector("table");
       if (tabla) {
         const headers = Array.from(tabla.querySelectorAll("thead th")).map(th => th.innerText);
@@ -736,12 +751,14 @@ async function descargarReportePDF() {
             body: cuerpo,
             theme: "striped",
             headStyles: { fillColor: [30, 58, 138] },
-            margin: { left: 10, right: 10 }
+            margin: { left: 10, right: 10 },
+            styles: { fontSize: 10 }
           });
           y = doc.lastAutoTable.finalY + 10;
         }
       }
 
+      // Página siguiente para nueva sección
       if (i < secciones.length - 1) {
         doc.addPage();
         y = 20;
@@ -757,7 +774,7 @@ async function descargarReportePDF() {
   }
 }
 
-// Función para cargar imagen (logo)
+// ================= Función para cargar imágenes =================
 function loadImage(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -767,6 +784,7 @@ function loadImage(url) {
     img.src = url;
   });
 }
+
 
 /* ================ Inicializar ================ */
 document.addEventListener('DOMContentLoaded', async ()=> {
