@@ -254,7 +254,7 @@ async function verLotes(idMaterial) {
         lotes.forEach(lote => {
             const nomProveedor = proveedores.find(p=>p.id_proveedor===lote.id_proveedor)?.nombre || '';
             const tr = document.createElement('tr');
-            tr.innerHTML = `
+            tr.innerHTML = `   
                 <td data-label="ID Lote">${lote.id_lote}</td>
                 <td data-label="Lote">${lote.lote}</td>
                 <td data-label="Cantidad">${lote.cantidad_disponible}</td>
@@ -264,6 +264,7 @@ async function verLotes(idMaterial) {
                 <td data-label="Cant Disponible">${lote.cantidad_disponible}</td>
                 <td data-label="Cant Consumida">${lote.cantidad_consumida}</td>
                 <td data-label="Proveedor">${nomProveedor}</td>
+                <td data-label="Acciones">No Disponible</td>
             `;
             tbody.appendChild(tr);
         });
