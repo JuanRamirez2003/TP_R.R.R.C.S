@@ -785,7 +785,140 @@ function loadImage(url) {
   });
 }
 
+async function descargarTrazabilidadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("p", "mm", "a4");
+    let y = 10;
+    const saltoPagina = 270;
 
+    try {
+        // 🔹 Traer todos los datos
+        const [{ data: ops }, { data: detalleLotes }, { data: lotes }, { data: opOV }, { data: ordenesVenta }, { data: detalleOV }, { data: productos }] = await Promise.all([
+            supabaseClient.from('orden_produccion').select('*'),
+            supabaseClient.from('detalle_lote_op').select('*'),
+            supabaseClient.from('lote_mp').select('*'),
+            supabaseClient.from('op_ov').select('*'),
+            supabaseClient.from('orden_ventas').select('*'),
+            supabaseClient.from('detalle_ordenes').select('*'),
+            supabaseClient.from('productos').select('*')
+        ]);
+
+        console.log("Datos cargados:", {
+            ops: ops.length,
+            detalleLotes: detalleLotes.length,
+            lotes: lotes.length,
+            opOV: opOV.length,
+            ordenesVenta: ordenesVenta.length,
+            detalleOV: detalleOV.length,
+            productos: productos.length
+        });
+
+        for (let op of ops) {
+            doc.setFontSize(14);
+            doc.text(`OP N°: ${op.numero_op || op.id_orden_produccion}`, 10, y);
+            y += 6;
+
+            doc.setFontSize(11);
+            doc.text(`Estado: ${op.estado || 'N/A'}`, 10, y);
+            y += 5;
+
+            const producto = productos.find(p => Number(p.id_producto) === Number(op.id_producto));
+            doc.text(`Producto: ${producto ? producto.nombre : 'N/A'}`, 10, y);
+            y += 5;
+
+            doc.text(`Fecha Emisión: ${op.fecha_emision ? new Date(op.fecha_emision).toLocaleDateString() : 'N/A'}`, 10, y);
+            y += 5;
+            doc.text(`Motivo: ${op.motivo || '-'}`, 10, y);
+            y += 6;
+
+            // 🔹 Lotes consumidos
+            const detalleOP = detalleLotes.filter(d => Number(d.id_orden_produccion) === Number(op.id_orden_produccion));
+            if (detalleOP.length) {
+                doc.setFontSize(12);
+                doc.text("Lotes Consumidos:", 10, y);
+                y += 5;
+                detalleOP.forEach(d => {
+                    const lote = lotes.find(l => Number(l.id_lote) === Number(d.id_lote));
+                    if (lote) {
+                        doc.setFontSize(10);
+                        doc.text(`- Lote: ${lote.lote}, Cantidad: ${d.cantidad_lote}, Estado: ${lote.estado}`, 12, y);
+                        y += 5;
+                        if (y > saltoPagina) { doc.addPage(); y = 10; }
+                    }
+                });
+            } else {
+                doc.setFontSize(10);
+                doc.text("Lotes Consumidos: Ninguno", 10, y);
+                y += 5;
+            }
+
+            // 🔹 Órdenes de venta relacionadas
+            const relacionesOV = opOV
+                .filter(r => Number(r.id_op) === Number(op.id_orden_produccion) && r.id_ov != null)
+                .map(r => Number(r.id_ov));
+
+            if (relacionesOV.length) {
+                doc.setFontSize(12);
+                doc.text("Órdenes de Venta Relacionadas:", 10, y);
+                y += 5;
+
+                for (let ovId of relacionesOV) {
+                    const ov = ordenesVenta.find(o => Number(o.id_orden) === ovId);
+                    if (ov) {
+                        doc.setFontSize(11);
+                        doc.text(`OV N°: ${ov.id_orden}, Cliente ID: ${ov.id_cliente}, Estado: ${ov.estado}`, 12, y);
+                        y += 5;
+
+                        // Detalle de productos de la OV
+                        const detalles = detalleOV.filter(d => Number(d.id_orden) === ovId);
+                        if (detalles.length) {
+                            detalles.forEach(det => {
+                                const prodOV = productos.find(p => Number(p.id_producto) === Number(det.id_producto));
+                                doc.setFontSize(10);
+                                doc.text(`   - Producto: ${prodOV ? prodOV.nombre : det.id_producto}, Cantidad: ${det.cantidad}, Estado: ${det.estado_detalle_ov}`, 14, y);
+                                y += 5;
+                                if (y > saltoPagina) { doc.addPage(); y = 10; }
+                            });
+                        } else {
+                            doc.setFontSize(10);
+                            doc.text("   - Detalles: Ninguno", 14, y);
+                            y += 5;
+                        }
+
+                    } else {
+                        console.warn("No se encontró OV para id_ov:", ovId);
+                        doc.setFontSize(10);
+                        doc.text("OV no encontrada en la base de datos", 12, y);
+                        y += 5;
+                    }
+
+                    if (y > saltoPagina) { doc.addPage(); y = 10; }
+                }
+
+            } else {
+                doc.setFontSize(10);
+                doc.text("Órdenes de Venta Relacionadas: Ninguna", 10, y);
+                y += 5;
+            }
+
+            // 🔹 Separador
+            y += 5;
+            doc.setDrawColor(0);
+            doc.line(10, y, 200, y);
+            y += 5;
+            if (y > saltoPagina) { doc.addPage(); y = 10; }
+
+            console.log(`OP ${op.numero_op || op.id_orden_produccion} procesada`);
+        }
+
+        doc.save("Trazabilidad_OP.pdf");
+        console.log("PDF generado correctamente");
+
+    } catch (error) {
+        console.error("Error generando PDF de trazabilidad:", error);
+        alert("Ocurrió un error al generar el PDF. Revisa la consola.");
+    }
+}
 /* ================ Inicializar ================ */
 document.addEventListener('DOMContentLoaded', async ()=> {
   await cargarProduccionYProveedores();
