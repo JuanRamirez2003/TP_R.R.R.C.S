@@ -1068,3 +1068,25 @@ tr:hover {
   from { transform: scale(0.9); }
   to { transform: scale(1); }
 }
+
+#buscador {
+  width: 280px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #ccc;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.25s ease;
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+#buscador:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+}
+
+#buscador::placeholder {
+  color: #999;
+  font-style: italic;
+}
