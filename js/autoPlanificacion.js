@@ -278,7 +278,7 @@ async function planificarSemana() {
           f.dia === fechaKey &&
           (horaToMinutos(f.hora_inicio) < horaFin &&
             horaToMinutos(f.hora_fin) > horaInicio ||
-            f.id_op === op.id_orden_produccion) 
+            f.id_op === op.id_orden_produccion)
         );
         if (haySolape) continue;
 
@@ -1059,7 +1059,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     window.tiempoTotal = 0;
 
     //document.getElementById("tiempo-liberado").textContent = "⏱ Tiempo liberado: 0h 0m";
-    document.getElementById("tiempo-requerido").textContent = "⏳ Tiempo requerido: 0h 0m";
+    //document.getElementById("tiempo-requerido").textContent = "⏳ Tiempo requerido: 0h 0m";
     mostrarAviso22(" ", "ok");
 
     return;
@@ -1263,7 +1263,7 @@ function actualizarTiemposLinea(idLinea) {
     window.tiempoRequeridoOPUrgente = tiempoOcupado;
     console.log("$$$$$", window.tiempoRequeridoOPUrgente);
 
-    const spanRequerido = document.getElementById("tiempo-requerido");
+    //const spanRequerido = document.getElementById("tiempo-requerido");
     if (spanRequerido) {
       spanRequerido.textContent = `⚙️ Tiempo requerido: ${formatoDuracion(tiempoOcupado)}`;
     }
@@ -1346,7 +1346,7 @@ function quitarOPPlanificada(duracionMinutos) {
   if (window.tiempoPlanificadoLinea < 0) window.tiempoPlanificadoLinea = 0;
 
 
-  const spanRequerido = document.getElementById("tiempo-requerido");
+  //const spanRequerido = document.getElementById("tiempo-requerido");
   if (spanRequerido) {
     spanRequerido.textContent = `⏱ Tiempo planificado línea: ${formatoDuracion(window.tiempoPlanificadoLinea)}`;
   }
@@ -1434,11 +1434,17 @@ document.getElementById("btnGuardarLinea").addEventListener("click", async () =>
   const exito = await fijarOPsEnLineaSeleccionada(ids, idLinea, hoy);
 
   if (!exito) {
-    mostrarAviso22("❌ Error al guardar la planificación", "error");
+    mostrarAviso("❌ Error al guardar la planificación", "error");
     return;
   }
 
-  mostrarAviso22("✅ Planificación guardada correctamente", "ok");
+  mostrarAviso(`
+    <span style="font-size:1.2em;">
+      ✅ Planificación guardada correctamente<br>
+      <strong>GENERE OTRA VEZ LA PLANIFICACIÓN</strong>
+    </span>
+  `);
+
   // planificarSemana();
   document.getElementById("modalEditarPlanificacion").style.display = "none";
   resetearModalPlanificacion();
@@ -1514,7 +1520,7 @@ function resetearModalPlanificacion() {
   window.tiempoPlanificadoLinea = 0;
   window.tiempoRequeridoOPUrgente = 0;
   // document.getElementById("tiempo-liberado").textContent = "⏱ Tiempo liberado: 0h 0m";
-  document.getElementById("tiempo-requerido").textContent = "⚙️ Tiempo requerido: 0h 0m";
+  //document.getElementById("tiempo-requerido").textContent = "⚙️ Tiempo requerido: 0h 0m";
 
   mostrarAviso22(" ", "ok");
 
