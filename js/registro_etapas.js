@@ -356,59 +356,96 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Traer planificación y OPs pendientes
     const [{ data: planificacion }, { data: ordenes }] = await Promise.all([
         supabaseClient.from('planificacion_semanal')
-            .select(`id,id_op,id_linea,dia,orden:orden_produccion(id_orden_produccion, numero_op, cant_lote, id_producto, estado, prioridad, ver_orden)`)//AGREGE PRIORIDAD
-            .eq('dia', hoy),
-        supabaseClient.from('orden_produccion')
-            .select('id_orden_produccion, numero_op, id_producto, cant_lote, estado  ')
-            .eq('estado', 'Pendiente')
+            .select(`
+                id,
+                id_op,
+                id_linea,
+                dia,
+                hora_inicio,
+                hora_fin,
+                orden:orden_produccion(
+                    id_orden_produccion,
+                    numero_op,
+                    cant_lote,
+                    id_producto,
+                    estado,
+                    prioridad,
+                    ver_orden
+                )
+            `)
+            .eq('dia', hoy)
+            .order('hora_inicio', { ascending: true }),
+            supabaseClient.from('orden_produccion')
+                .select('id_orden_produccion, numero_op, id_producto, cant_lote, estado')
+                .eq('estado', 'Pendiente')
     ]);
+    console.log("📅 Planificación del día:", planificacion);
 
-    // Traer todas las líneas de producción de la DB
-    const { data: lineasDB } = await supabaseClient.from('linea_productos').select('*');
+    // Traer todas las líneas de producción ordenadas por ID
+    const { data: lineasDB } = await supabaseClient
+        .from('linea_productos')
+        .select('*')
+        .order('id_linea', { ascending: true });
 
+    // Verificar que existan líneas
+    if (!lineasDB || lineasDB.length === 0) {
+        console.error("❌ No se encontraron líneas de producción en la base de datos.");
+        return;
+    }
+
+    // Crear visualmente cada línea
     for (let i = 1; i <= 5; i++) {
         const linea = document.createElement('div');
         linea.className = 'linea-produccion';
         linea.dataset.linea = i;
 
-        // Asignar id_linea real desde la DB
-        const idLineaReal = lineasDB[i - 1]?.id_linea || i;
+        // Buscar la línea real en la DB por nombre (más robusto)
+        const nombreLinea = nombres[i];
+        const lineaDB = lineasDB.find(l => l.nombre_linea === nombreLinea);
+        const idLineaReal = lineaDB?.id_linea || i; // fallback si no se encuentra
+
         linea.dataset.idLinea = idLineaReal;
 
         // Header
-        const header = document.createElement('div'); header.className = 'linea-header';
-        const titulo = document.createElement('h4'); titulo.textContent = nombres[i];
-        const estadoCont = document.createElement('div'); estadoCont.className = 'estado-linea estado-detenida'; estadoCont.id = `estadoCont-${i}`;
-        const led = document.createElement('span'); led.className = 'estado-led';
-        const estadoText = document.createElement('span'); estadoText.id = `estado-linea-${i}`; estadoText.textContent = 'Detenida';
-        estadoCont.appendChild(led); estadoCont.appendChild(estadoText);
-        header.appendChild(titulo); header.appendChild(estadoCont);
+        const header = document.createElement('div');
+        header.className = 'linea-header';
+
+        const titulo = document.createElement('h4');
+        titulo.textContent = nombreLinea;
+
+        const estadoCont = document.createElement('div');
+        estadoCont.className = 'estado-linea estado-detenida';
+        estadoCont.id = `estadoCont-${i}`;
+
+        const led = document.createElement('span');
+        led.className = 'estado-led';
+
+        const estadoText = document.createElement('span');
+        estadoText.id = `estado-linea-${i}`;
+        estadoText.textContent = 'Detenida';
+
+        estadoCont.append(led, estadoText);
+        header.append(titulo, estadoCont);
 
         // Planificación del día
-        const planDiv = document.createElement('div'); planDiv.className = 'planificacion-diaria';
+        const planDiv = document.createElement('div');
+        planDiv.className = 'planificacion-diaria';
         planDiv.innerHTML = '<b style="color:black;">Planificación del día:</b>';
+
         const planHoyLinea = planificacion.filter(p => p.id_linea === idLineaReal && p.orden);
+        console.log(`📋 Planificación ${nombreLinea} (id_linea=${idLineaReal}):`, planHoyLinea);
+
         planHoyLinea.forEach(p => {
             const op = p.orden;
             const card = document.createElement('span');
-            // card.style.cssText = `display:inline-block;margin:2px;padding:4px 8px;border-radius:4px;background:#2a2a2a;font-size:0.9em;font-weight:bold;cursor:pointer;transition: background 0.2s;`;
 
-            // Asignar color de fondo según prioridad
-           // console.log("OP prioridad:", op);
-            let bgColor = '#2a2a2a'; // color por defecto
+            // Asignar color según prioridad
+            let bgColor = '#2a2a2a';
             switch (op.prioridad) {
-                case 'urgente':
-                    bgColor = '#ff0000';
-                    break;
-                case 'alta':
-                    bgColor = '#ff8000';
-                    break;
-                case 'normal':
-                    bgColor = '#ebeb08';
-                    break;
-                case 'baja':
-                    bgColor = '#00cc66';
-                    break;
+                case 'urgente': bgColor = '#ff0000'; break;
+                case 'alta': bgColor = '#ff8000'; break;
+                case 'normal': bgColor = '#ebeb08'; break;
+                case 'baja': bgColor = '#00cc66'; break;
             }
 
             card.style.cssText = `
@@ -419,45 +456,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 background:${bgColor};
                 font-size:0.9em;
                 font-weight:bold;
+                color:white;
                 cursor:pointer;
                 transition: background 0.2s;
             `;
-
             card.textContent = `OP ${op.numero_op} (${op.cant_lote} lotes)`;
-            card.style.color = 'white';
-            card.addEventListener('click', async () => { 
-                verDetalleOP(op, idLineaReal, i); }); //AGREGE LA FUNCION DE VER DETALLE
-            /*let duracion = 0;
-            try {
-                const { data: lineaData } = await supabaseClient
-                    .from('linea_produccion')
-                    .select('duracion')
-                    .eq('id_linea', idLineaReal)
-                    .eq('id_producto', op.id_producto)
-                    .single();
-                if (lineaData?.duracion) duracion = lineaData.duracion;
-            } catch (err) { console.error(err); }
-            modalBody.innerHTML = `
-                <h3>Detalle de ${op.numero_op}</h3>
-                <p><b>Línea:</b> ${i}</p>
-                <p><b>Producto:</b> ${op.ver_orden.map(item => `
-                                        ${item.nombre}
-                                        `).join('')}
-                <p><b>Cantidad de lotes:</b> ${op.cant_lote}</p>
-                <p><b>Duración estimada por lote:</b> ${duracion} minutos</p>
-                <p><b>Tiempo total estimado:</b> ${duracion * op.cant_lote} minutos</p>
-                <p><b>Estado:</b> ${op.estado || 'Pendiente'}</p>
-                <!--<p><b>ID OP:</b> ${op.id_orden_produccion}</p>-->
-            `;
-            modal.style.display = 'flex';
-        });*/
+
+            // Al hacer clic -> ver detalle
+            card.addEventListener('click', () => verDetalleOP(op, idLineaReal, i));
+
             planDiv.appendChild(card);
         });
 
         // Select de OPs
-        const opSelect = document.createElement('select'); opSelect.id = `opSelectLinea-${i}`;
-        const optVacio = document.createElement('option'); optVacio.value = ''; optVacio.textContent = 'Seleccione una OP';
+        const opSelect = document.createElement('select');
+        opSelect.id = `opSelectLinea-${i}`;
+
+        const optVacio = document.createElement('option');
+        optVacio.value = '';
+        optVacio.textContent = 'Seleccione una OP';
         opSelect.appendChild(optVacio);
+
         ordenes.forEach(op => {
             const option = document.createElement('option');
             option.value = op.id_orden_produccion;
@@ -468,25 +487,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         // Info OP, cinta y botón
-        const opInfo = document.createElement('div'); opInfo.id = `opInfo-${i}`; opInfo.style.margin = '5px 0';
-        const cinta = document.createElement('div'); cinta.className = 'cinta-wrapper stop'; cinta.id = `cinta${i}`;
-        const items = document.createElement('div'); items.className = 'cinta-items';
-        items.textContent = productos[i] + " " + productos[i];
+        const opInfo = document.createElement('div');
+        opInfo.id = `opInfo-${i}`;
+        opInfo.style.margin = '5px 0';
+
+        const cinta = document.createElement('div');
+        cinta.className = 'cinta-wrapper stop';
+        cinta.id = `cinta${i}`;
+
+        const items = document.createElement('div');
+        items.className = 'cinta-items';
+        items.textContent = `${productos[i]} ${productos[i]}`;
         cinta.appendChild(items);
-        const actions = document.createElement('div'); actions.className = 'linea-actions';
-        const btn = document.createElement('button'); btn.type = 'button'; btn.id = `btn-linea-${i}`; btn.textContent = 'Iniciar';
+
+        const actions = document.createElement('div');
+        actions.className = 'linea-actions';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = `btn-linea-${i}`;
+        btn.textContent = 'Iniciar';
         btn.addEventListener('click', () => toggleLinea(i));
+
         actions.appendChild(btn);
 
-        linea.appendChild(header);
-        linea.appendChild(planDiv);
-        linea.appendChild(opSelect);
-        linea.appendChild(opInfo);
-        linea.appendChild(cinta);
-        linea.appendChild(actions);
+        // Estructura final
+        linea.append(header, planDiv, opSelect, opInfo, cinta, actions);
         contenedor.appendChild(linea);
 
-        // Recuperar estado si había OP en curso
+        // Recuperar estado previo
         recuperarEstadoLinea(i, opSelect, cinta, btn, estadoCont, estadoText, opInfo);
     }
 });
@@ -524,7 +553,7 @@ async function verDetalleOP(op, idLineaReal, i) {
                    <div id="detalleMateriales" style="margin-top:10px;">Cargando...</div>
                 `;
     modal.style.display = 'flex';
-  const contMateriales = document.getElementById("detalleMateriales");
+    const contMateriales = document.getElementById("detalleMateriales");
 
     const { data: detalleLotes, error: errorLotes } = await supabaseClient
         .from('detalle_lote_op')
@@ -565,14 +594,14 @@ async function verDetalleOP(op, idLineaReal, i) {
     } else {
         contMateriales.innerHTML = '<p>No hay lotes reservados para esta OP.</p>';
     }
-      document.addEventListener("click", (e) => {
-    const fila = e.target.closest("tr[data-id-lote]");
-    if (fila) {
-      const idLote = fila.getAttribute("data-id-lote");
-      verDetalleLote(idLote);
-    }
-  });
-  
+    document.addEventListener("click", (e) => {
+        const fila = e.target.closest("tr[data-id-lote]");
+        if (fila) {
+            const idLote = fila.getAttribute("data-id-lote");
+            verDetalleLote(idLote);
+        }
+    });
+
 }
 //==============VER DETALLE DE LOTE RESERVADOS ==================
 async function verDetalleLote(idLote) {
@@ -628,22 +657,22 @@ async function verDetalleLote(idLote) {
 
 
 function mostrarError(mensaje) {
-  const modal = document.getElementById('modalError');
-  const mensajeP = document.getElementById('mensajeErrorTexto');
-  const btnCerrar = document.getElementById('btnCerrarError');
+    const modal = document.getElementById('modalError');
+    const mensajeP = document.getElementById('mensajeErrorTexto');
+    const btnCerrar = document.getElementById('btnCerrarError');
 
-  if (!modal || !mensajeP || !btnCerrar) {
-    console.error("⚠️ No se encontró el modal de error, usando alert()");
-    return alert(mensaje);
-  }
+    if (!modal || !mensajeP || !btnCerrar) {
+        console.error("⚠️ No se encontró el modal de error, usando alert()");
+        return alert(mensaje);
+    }
 
-  mensajeP.textContent = mensaje;
-  modal.classList.add('mostrar');
+    mensajeP.textContent = mensaje;
+    modal.classList.add('mostrar');
 
-  btnCerrar.onclick = () => modal.classList.remove('mostrar');
-  modal.onclick = (e) => {
-    if (e.target === modal) modal.classList.remove('mostrar');
-  };
+    btnCerrar.onclick = () => modal.classList.remove('mostrar');
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove('mostrar');
+    };
 }
 
 window.toggleLinea = toggleLinea;
