@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Líneas de Producción</title>
+  <link rel="stylesheet" href="css/lineas.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer src="js/lineas.js"></script>
+</head>
+<body>
+  <h1>🏭 Gestión de Líneas de Producción</h1>
+
+  <div class="acciones">
+    <input type="text" id="buscador" placeholder="🔍 Buscar línea...">
+    <button id="btnAgregar">➕ Agregar Línea</button>
+  </div>
+
+  <table id="tablaLineas">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Código</th>
+        <th>Descripción</th>
+        <th>Capacidad Teórica</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Modal Agregar -->
+  <div id="modalAgregar" class="modal">
+    <div class="modal-content">
+      <h2>➕ Nueva Línea</h2>
+      <form id="formAgregar">
+        <label>Código:</label>
+        <input type="text" id="codigoLinea" required>
+
+        <label>Descripción:</label>
+        <input type="text" id="descripcionLinea" required>
+
+        <label>Capacidad Teórica:</label>
+        <input type="number" id="capacidadLinea" min="0" step="0.01" required>
+
+        <div class="modal-buttons">
+          <button type="submit" class="btn-guardar">Guardar</button>
+          <button type="button" class="btn-cancelar" id="cancelarModal">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Editar -->
+  <div id="modalEditar" class="modal">
+    <div class="modal-content">
+      <h2>✏️ Editar Línea</h2>
+      <form id="formEditar">
+        <input type="hidden" id="editarIdLinea">
+
+        <label>Código:</label>
+        <input type="text" id="editarCodigo" required>
+
+        <label>Descripción:</label>
+        <input type="text" id="editarDescripcion" required>
+
+        <label>Capacidad Teórica:</label>
+        <input type="number" id="editarCapacidad" min="0" step="0.01" required>
+
+        <label>Estado:</label>
+        <select id="editarEstado">
+          <option value="Activa">Activa</option>
+          <option value="Baja">Baja</option>
+        </select>
+
+        <div class="modal-buttons">
+          <button type="submit" class="btn-guardar">Guardar Cambios</button>
+          <button type="button" class="btn-cancelar" id="cancelarEditar">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Confirmación Eliminar -->
+  <div id="modalConfirmar" class="modal">
+    <div class="modal-content modal-confirmar">
+      <h2>⚠️ Confirmar eliminación</h2>
+      <p>¿Estás seguro que deseas eliminar esta línea?</p>
+      <div class="modal-buttons">
+        <button id="confirmarEliminar" class="btn-guardar">Sí, eliminar</button>
+        <button id="cancelarEliminar" class="btn-cancelar">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Productos por Línea -->
+  <div id="modalProductos" class="modal">
+    <div class="modal-content" style="width: 600px;">
+      <h2>🍕 Productos de la Línea</h2>
+      <p id="tituloLinea"></p>
+
+      <table id="tablaProductosLinea">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Precio Unitario</th>
+            <th>Stock</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="modal-buttons">
+        <button id="btnAgregarProducto" class="btn-guardar">➕ Agregar Producto</button>
+        <button class="btn-cancelar" id="cerrarProductos">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Agregar/Editar Producto -->
+  <div id="modalGestionProducto" class="modal">
+    <div class="modal-content">
+      <h2 id="tituloModalProducto">➕ Nuevo Producto</h2>
+      <form id="formGestionProducto">
+        <input type="hidden" id="idProductoEditar">
+        <input type="hidden" id="idLineaProducto">
+
+        <label>Nombre:</label>
+        <input type="text" id="nombreProducto" required>
+
+        <label>Precio Unitario:</label>
+        <input type="number" id="precioProducto" step="0.01" min="0" required>
+
+        <label>Stock:</label>
+        <input type="number" id="stockProducto" min="0" required>
+
+        <label>Estado:</label>
+        <select id="estadoProducto">
+          <option value="Activo">Activo</option>
+          <option value="Inactivo">Inactivo</option>
+        </select>
+
+        <div class="modal-buttons">
+          <button type="submit" class="btn-guardar">Guardar</button>
+          <button type="button" class="btn-cancelar" id="cancelarGestionProducto">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

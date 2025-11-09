@@ -1,0 +1,200 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #111;
+  color: #fff;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #3b82f6;
+}
+
+.acciones {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+input[type="text"] {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #222;
+  color: #fff;
+}
+
+button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+#btnAgregar {
+  background: #22c55e;
+  color: #fff;
+}
+#btnAgregar:hover {
+  background: #16a34a;
+}
+
+/* Tabla */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1e1e1e;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+}
+
+th {
+  background: #2b2b2b;
+}
+
+tr:nth-child(even) {
+  background: #242424;
+}
+
+.baja { color: #ef4444; }
+.activa { color: #22c55e; }
+
+.btn-editar {
+  background: #3b82f6;
+  color: white;
+}
+.btn-editar:hover {
+  background: #2563eb;
+}
+.btn-eliminar {
+  background: #ef4444;
+  color: white;
+}
+.btn-eliminar:hover {
+  background: #dc2626;
+}
+
+/* === MODALES === */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(3px);
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #1f1f1f;
+  padding: 25px;
+  border-radius: 10px;
+  width: 400px;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content h2 {
+  margin-bottom: 15px;
+  text-align: center;
+  color: #3b82f6;
+}
+
+.modal-content label {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
+.modal-content input, .modal-content select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background: #2b2b2b;
+  color: #fff;
+  margin-top: 5px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.btn-guardar {
+  background: #22c55e;
+  color: #fff;
+}
+.btn-cancelar {
+  background: #ef4444;
+  color: #fff;
+}
+
+.modal-confirmar h2 {
+  color: #facc15;
+}
+.modal-confirmar p {
+  text-align: center;
+  margin-top: 10px;
+  color: #ccc;
+}
+
+/* === MODAL PRODUCTOS === */
+#tablaProductos {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1e1e1e;
+  margin-top: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+#tablaProductos th {
+  background: #2b2b2b;
+  color: #3b82f6;
+  padding: 8px;
+  text-align: left;
+}
+
+#tablaProductos td {
+  padding: 8px;
+  border-bottom: 1px solid #333;
+}
+
+#tablaProductos tr:nth-child(even) {
+  background: #242424;
+}
+
+
+#tablaProductosLinea {
+  width: 100%;
+  margin-top: 15px;
+  border-collapse: collapse;
+}
+#tablaProductosLinea th, #tablaProductosLinea td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+#tablaProductosLinea th {
+  background: #2b2b2b;
+}
+.btn-ver {
+  background: #facc15;
+  color: #111;
+}
+.btn-ver:hover {
+  background: #eab308;
+}

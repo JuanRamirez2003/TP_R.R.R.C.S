@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lotes de Materia Prima</title>
+  <link rel="stylesheet" href="css/lote_mp.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Gestión de Lotes de Materia Prima</h1>
+    <table id="tablaLotes">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Materia Prima</th>
+          <th>Lote</th>
+          <th>Cantidad</th>
+          <th>Disponible</th>
+          <th>Fecha Ingreso</th>
+          <th>Fecha Caducidad</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="bodyLotes"></tbody>
+    </table>
+  </div>
+
+  <!-- Modal de baja -->
+  <div id="modalBaja" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModalBaja()">&times;</span>
+      <h2>Dar de baja materia prima</h2>
+
+      <div class="form-group">
+        <label>ID Lote:</label>
+        <input type="text" id="bajaIdLote" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Materia prima:</label>
+        <input type="text" id="bajaNombre" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Cantidad disponible actual:</label>
+        <input type="number" id="bajaCantidadActual" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Cantidad a dar de baja:</label>
+        <input type="number" id="bajaCantidad" min="0">
+      </div>
+
+      <div class="form-group">
+        <label>Motivo:</label>
+        <textarea id="bajaMotivo" placeholder="Ej. Vencido, mal estado, contaminación, etc."></textarea>
+      </div>
+
+      <div class="botones-modal">
+        <button class="btn-guardar" onclick="confirmarBaja()">Confirmar baja</button>
+        <button class="btn-cancelar" onclick="cerrarModalBaja()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de historial -->
+  <div id="modalHistorial" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarHistorial()">&times;</span>
+      <h2>Historial de bajas</h2>
+
+      <table id="tablaHistorial">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Cantidad</th>
+            <th>Motivo</th>
+            <th>Estado anterior</th>
+            <th>Estado nuevo</th>
+          </tr>
+        </thead>
+        <tbody id="bodyHistorial"></tbody>
+      </table>
+
+      <div class="botones-modal">
+        <button class="btn-cancelar" onclick="cerrarHistorial()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/lote_mp.js" defer></script>
+</body>
+</html>
+    
