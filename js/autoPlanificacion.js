@@ -11,9 +11,9 @@ let lineaSeleccionada = null;
 let duracionTotalLinea = 0;
 
 // --- VARIABLES GLOBALES ---
-window.tiempoPlanificadoLinea = 0;      
+window.tiempoPlanificadoLinea = 0;
 window.tiempoRequeridoOPUrgente = 0;
-window.tiempoTotal = 0;   
+window.tiempoTotal = 0;
 // ---------------------- Inicialización ----------------------
 document.addEventListener("DOMContentLoaded", async () => {
   calcularFechas();
@@ -101,7 +101,7 @@ async function renderAgendaDesdeSupabase() {
         const clasePrioridad = p.prioridad?.toLowerCase() || "normal";
         bloque.className = "bloque-produccion " + clasePrioridad;
 
-        
+
         //bloque.innerHTML = `<strong>Línea ${p.id_linea}</strong><br> ${p.numero_op}<br>${p.hora_inicio} - ${p.hora_fin}`;
         ///FIJADA
         const pinActivo = p.fijada === true || p.fijada === "true"; // por si viene como string
@@ -169,37 +169,37 @@ async function planificarSemana() {
 
   const hoyStr = new Date().toISOString().split("T")[0];
 
-  // Borramos planificaciones desde hoy en adelante
-  //await supabaseClient.from("planificacion_semanal").delete().gte("dia", hoyStr);
-  //FIJADA
   await supabaseClient
     .from("planificacion_semanal")
     .delete()
     .gte("dia", hoyStr)
     .eq("fijada", false);
-  //FIJADA
 
-  // -------------------- Cargar OP fijadas existentes --------------------
   const { data: fijadas, error: fijadasError } = await supabaseClient
     .from("planificacion_semanal")
     .select("*")
     .gte("dia", hoyStr)
     .eq("fijada", true);
 
-  if (fijadasError) return mostrarAviso("Error al cargar OP fijadas: " + fijadasError.message);
+  if (fijadasError) {
+    return mostrarAviso("Error al cargar OP fijadas: " + fijadasError.message);
+  }
 
 
+  const { data: ordenes, error: opError } = await supabaseClient
+    .from("orden_produccion")
+    .select("*")
+    .eq("estado", "Pendiente");
 
+  if (opError) return mostrarAviso("Error al cargar órdenes: " + opError.message);
+  if (!ordenes?.length) return mostrarAviso("No hay órdenes pendientes");
 
-  const { data: ordenes, error: opError } = await supabaseClient.from("orden_produccion").select("*").eq("estado", "Pendiente");
-  if (opError) return mostrarAviso("Error al cargar órdenes: " + opError.message);//alert
-  if (!ordenes?.length) return mostrarAviso("No hay órdenes pendientes");//alert  
 
   const [{ data: lineas, error: lineasError }, { data: lineasProd, error: lpError }] = await Promise.all([
     supabaseClient.from("linea_productos").select("*"),
     supabaseClient.from("linea_produccion").select("*")
   ]);
-  if (lineasError || lpError) return mostrarAviso("Error al cargar líneas o duraciones");//alert
+  if (lineasError || lpError) return mostrarAviso("Error al cargar líneas o duraciones");
 
   const carga = {};
   for (const l of lineas) {
@@ -210,7 +210,7 @@ async function planificarSemana() {
     });
   }
 
-  // Inicializar carga con las fijadas, siempre al inicio del día
+
   fijadas.forEach(f => {
     const fechaKey = f.dia;
     const duracion = horaToMinutos(f.hora_fin) - horaToMinutos(f.hora_inicio);
@@ -218,16 +218,17 @@ async function planificarSemana() {
     if (!carga[f.id_linea]) return;
     if (!carga[f.id_linea][fechaKey]) carga[f.id_linea][fechaKey] = 0;
 
-    // Asignar la fijada desde el inicio del día (8:00)
+    // Asignar desde el inicio del día (por claridad)
     const inicio = carga[f.id_linea][fechaKey];
     const fin = inicio + duracion;
 
-    // Guardar también la actualización del horario en BD
     f.hora_inicio = minutosToHora(inicio);
     f.hora_fin = minutosToHora(fin);
 
     carga[f.id_linea][fechaKey] += duracion;
   });
+
+  // Actualizar horarios de fijadas en BD (por si cambiaron)
   await Promise.all(
     fijadas.map(f =>
       supabaseClient
@@ -238,13 +239,23 @@ async function planificarSemana() {
     )
   );
 
+
+  const idsFijadas = fijadas.map(f => f.id_op);
+  const ordenesFiltradas = ordenes.filter(op => !idsFijadas.includes(op.id_orden_produccion));
+
+
   const prioridadOrden = { urgente: 1, alta: 2, normal: 3, baja: 4 };
-  ordenes.sort((a, b) => (prioridadOrden[a.prioridad?.toLowerCase()] || 5) - (prioridadOrden[b.prioridad?.toLowerCase()] || 5));
+  ordenesFiltradas.sort(
+    (a, b) => (prioridadOrden[a.prioridad?.toLowerCase()] || 5) - (prioridadOrden[b.prioridad?.toLowerCase()] || 5)
+  );
 
   const planificaciones = [];
 
-  for (const op of ordenes) {
-    let cantidadLotes = Array.isArray(op.ver_orden) ? op.ver_orden.reduce((t, i) => t + (i.cantidad || 0), 0) : 1;
+  for (const op of ordenesFiltradas) {
+    let cantidadLotes = Array.isArray(op.ver_orden)
+      ? op.ver_orden.reduce((t, i) => t + (i.cantidad || 0), 0)
+      : 1;
+
     const posibles = lineasProd.filter(v => v.id_producto === op.id_producto);
     if (!posibles.length) continue;
     posibles.sort((a, b) => a.duracion - b.duracion);
@@ -252,26 +263,29 @@ async function planificarSemana() {
     let asignado = false;
     for (let i = 0; i < fechasMostrar.length && !asignado; i++) {
       const fechaKey = fechasMostrar[i].toISOString().split("T")[0];
+
       for (const cand of posibles) {
         const minutosUsados = carga[cand.id_linea][fechaKey];
         const capacidad = lineas.find(l => l.id_linea === cand.id_linea)?.capacidad_diaria_min ?? 480;
         const duracionTotal = cand.duracion * cantidadLotes;
 
+        const horaInicio = minutosUsados;
+        const horaFin = minutosUsados + duracionTotal;
+
+        // Evitar solapamientos o duplicados con fijadas
+        const haySolape = fijadas.some(f =>
+          f.id_linea === cand.id_linea &&
+          f.dia === fechaKey &&
+          (horaToMinutos(f.hora_inicio) < horaFin &&
+            horaToMinutos(f.hora_fin) > horaInicio ||
+            f.id_op === op.id_orden_produccion) 
+        );
+        if (haySolape) continue;
+
         if (minutosUsados + duracionTotal <= capacidad) {
-          const horaInicio = minutosUsados;
-          const horaFin = minutosUsados + duracionTotal;
-
-          const haySolape = fijadas.some(f =>
-            f.id_linea === cand.id_linea &&
-            f.dia === fechaKey &&
-            horaToMinutos(f.hora_inicio) < horaFin &&
-            horaToMinutos(f.hora_fin) > horaInicio
-          );
-          if (haySolape) continue;
-
           planificaciones.push({
             id_op: op.id_orden_produccion,
-            numero_op: op.numero_op,      // <-- agregado
+            numero_op: op.numero_op,
             id_linea: cand.id_linea,
             dia: fechaKey,
             hora_inicio: minutosToHora(horaInicio),
@@ -287,14 +301,20 @@ async function planificarSemana() {
     }
   }
 
-  if (planificaciones.length) {
-    const { error: insertError } = await supabaseClient.from("planificacion_semanal").insert(planificaciones);
-    if (insertError) return mostrarAviso("Error al guardar planificación: " + insertError.message);//alert
-    mostrarAviso("Planificación generada correctamente");
-    renderAgendaDesdeSupabase();
-  } else mostrarAviso("No se pudo generar planificación");//alert
-}
 
+  if (planificaciones.length) {
+    const { error: insertError } = await supabaseClient
+      .from("planificacion_semanal")
+      .insert(planificaciones);
+
+    if (insertError) return mostrarAviso("Error al guardar planificación: " + insertError.message);
+
+    mostrarAviso("✅ Planificación generada correctamente");
+    renderAgendaDesdeSupabase();
+  } else {
+    mostrarAviso("⚠️ No se pudo generar planificación");
+  }
+}
 // ---------------------- Minutos a hora ----------------------
 function minutosToHora(min) {
   const totalMin = 8 * 60 + min; // inicio jornada 8:00
@@ -745,7 +765,7 @@ async function cargarOPsPendientes() {
 
   const { data: ovCounts, error: ovError } = await supabaseClient
     .from("op_ov")
-    .select("id_op", { count: "exact" }) 
+    .select("id_op", { count: "exact" })
     .in("id_op", ops.map(op => op.id_orden_produccion));
 
   if (ovError) {
@@ -780,9 +800,9 @@ async function cargarOPsPendientes() {
 
     item.dataset.origen_real = "pendientes";
     item.dataset.id = op.id_orden_produccion;
-    item.dataset.idProducto = op.id_producto; 
-    item.dataset.numero_op = op.numero_op; 
-    item.dataset.cantidadLotes = obtenerCantidadLotes(op); 
+    item.dataset.idProducto = op.id_producto;
+    item.dataset.numero_op = op.numero_op;
+    item.dataset.cantidadLotes = obtenerCantidadLotes(op);
 
 
     const lineaRec = obtenerLineaRecomendada(op.id_producto, lineasProd);
@@ -791,7 +811,7 @@ async function cargarOPsPendientes() {
     const cantidadOV = ovMap[op.id_orden_produccion] || 0;
     const duracion = formatoDuracion(lineaRec.duracion * cantidadLotes);
     //const duracionMejorLinea = calcularDuracion(op.id_orden_produccion, lineaRec);
-  
+
     item.innerHTML = `
       <strong>${op.numero_op}</strong> - ${op.ver_orden?.[0]?.nombre || "Sin producto"}<br>
       <small>
@@ -839,7 +859,7 @@ function activarDragAndDrop() {
       try {
         draggedItem = item;
         lineaOrigen = item.closest(".lista-op")?.dataset.linea || null;
-     
+
         const idTexto = draggedItem.querySelector("strong")?.textContent || "";
         const idOrden = idTexto.trim(); // Ej: "OP-2025-123"
 
@@ -879,7 +899,7 @@ function activarDragAndDrop() {
     });
   });
 
-  
+
   document.querySelectorAll(".lista-op").forEach(lista => {
     lista.addEventListener("dragover", e => {
       try {
@@ -899,7 +919,7 @@ function activarDragAndDrop() {
         const lineaDestino = lista.dataset.linea;
         const origenReal = draggedItem.dataset.origen_real || null;
         const duracion = duracionEnMinutos;
-  
+
         if (lineaDestino === "linea-seleccionada") {
           const idLineaSeleccionada = document.getElementById("filtroLineas").value;
           if (!idLineaSeleccionada) {
@@ -938,12 +958,12 @@ function activarDragAndDrop() {
 
         lista.appendChild(draggedItem);
 
-  
+
         if (lineaDestino) {
           actualizarTiemposLinea(lineaDestino);
         }
 
-        
+
         //console.log(`🧩 Movimiento: ${lineaOrigen} → ${lineaDestino} | Origen real: ${origenReal} | Duración: ${duracion}`);
         //console.log(`⏱ Requerido: ${window.tiempoRequeridoOPUrgente} | Planificado: ${window.tiempoPlanificadoLinea}`);
 
@@ -966,7 +986,7 @@ function obtenerLineaRecomendada(idProducto, lineasProd) {
 
   return {
     id_linea: mejor.id_linea,
-    duracion: mejor.duracion 
+    duracion: mejor.duracion
   };
 }
 function obtenerCantidadLotes(op) {
@@ -1042,7 +1062,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     document.getElementById("tiempo-requerido").textContent = "⏳ Tiempo requerido: 0h 0m";
     mostrarAviso22(" ", "ok");
 
-    return; 
+    return;
   }
 
 
@@ -1082,10 +1102,10 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
 
     opItem.draggable = true;
 
-    opItem.dataset.origen_real = "linea-seleccionada"; 
+    opItem.dataset.origen_real = "linea-seleccionada";
     opItem.dataset.id = op.id_orden_produccion;
-    opItem.dataset.numero_op = op.numero_op; 
-    opItem.dataset.id_orden_produccion = op.id_orden_produccion; 
+    opItem.dataset.numero_op = op.numero_op;
+    opItem.dataset.id_orden_produccion = op.id_orden_produccion;
 
     //console.log(" ✅ ✅ ✅ ",  opItem.dataset.id_orden_produccion);
 
@@ -1148,7 +1168,7 @@ async function cantOVRelacionadas(id_op) {
       return 0;
     }
     console.log("Cantidad de OV relacionadas para OP", count);
-    return count || 0; 
+    return count || 0;
   } catch (err) {
     console.error("Excepción al consultar OV relacionadas:", err);
     return 0;
@@ -1185,7 +1205,7 @@ async function recalcularDuracionesPendientes() {
       cantidadLotes
     });*/
 
-    
+
     const lineaElegida = lineasProd.find(
       l =>
         Number(l.id_producto) === idProducto &&
@@ -1196,12 +1216,12 @@ async function recalcularDuracionesPendientes() {
     let lineaUsada = "";
 
     if (lineaElegida) {
-      
+
       duracionMin = lineaElegida.duracion * cantidadLotes;
       lineaUsada = lineaElegida.id_linea;
       //console.log(` Produce en línea ${lineaUsada}: ${duracionMin} min`);
     } else {
-      
+
       const recomendada = obtenerLineaRecomendada(idProducto, lineasProd);
       duracionMin = recomendada.duracion * cantidadLotes;
       lineaUsada = recomendada.id_linea;
@@ -1211,7 +1231,7 @@ async function recalcularDuracionesPendientes() {
       );*/
     }
 
-    
+
     const duracionTexto = formatoDuracion(duracionMin);
     const durElem = item.querySelector(".duracion-texto");
     if (durElem) durElem.textContent = duracionTexto;
@@ -1242,7 +1262,7 @@ function actualizarTiemposLinea(idLinea) {
 
     window.tiempoRequeridoOPUrgente = tiempoOcupado;
     console.log("$$$$$", window.tiempoRequeridoOPUrgente);
-   
+
     const spanRequerido = document.getElementById("tiempo-requerido");
     if (spanRequerido) {
       spanRequerido.textContent = `⚙️ Tiempo requerido: ${formatoDuracion(tiempoOcupado)}`;
@@ -1284,10 +1304,10 @@ function calcularTiempoPlanificado(data) {
     total += dur;
   });
 
-  
+
   window.tiempoPlanificadoLinea = total;
 
-  
+
   //console.log(`⏱ Tiempo planificado línea: ${formatoDuracion(total)}`);
 
   /*const spanRequerido = document.getElementById("tiempo-requerido");
@@ -1321,17 +1341,17 @@ function validarTiempoTotal() {
 
 // --- FUNCIÓN PARA QUITAR UNA OP PLANIFICADA Y RESTAR SU TIEMPO ---
 function quitarOPPlanificada(duracionMinutos) {
-  
+
   window.tiempoPlanificadoLinea -= duracionMinutos;
   if (window.tiempoPlanificadoLinea < 0) window.tiempoPlanificadoLinea = 0;
 
-  
+
   const spanRequerido = document.getElementById("tiempo-requerido");
   if (spanRequerido) {
     spanRequerido.textContent = `⏱ Tiempo planificado línea: ${formatoDuracion(window.tiempoPlanificadoLinea)}`;
   }
 
-  
+
   validarTiempoTotal();
 }
 
@@ -1359,9 +1379,9 @@ function obtenerIDsOPsPlanificadas() {
         const numero = op.dataset.numero_op || "Sin número";
         return id ? { id, numero } : null;
       })
-      .filter(Boolean); 
+      .filter(Boolean);
 
-    return resultado; 
+    return resultado;
   } catch (error) {
     console.error("Error al obtener OPs planificadas:", error);
     return [];
@@ -1399,7 +1419,7 @@ document.getElementById("btnGuardarLinea").addEventListener("click", async () =>
     return;
   }
 
-  const ids = opsPlanificadas.map(op => op.id); 
+  const ids = opsPlanificadas.map(op => op.id);
   console.log("⚠️❌", ids);
 
 
@@ -1419,7 +1439,7 @@ document.getElementById("btnGuardarLinea").addEventListener("click", async () =>
   }
 
   mostrarAviso22("✅ Planificación guardada correctamente", "ok");
- // planificarSemana();
+  // planificarSemana();
   document.getElementById("modalEditarPlanificacion").style.display = "none";
   resetearModalPlanificacion();
 });
@@ -1476,8 +1496,8 @@ async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
       huboError = true;
     }
   }
-  
-  return !huboError; 
+
+  return !huboError;
 }
 document.querySelector("#modalEditarPlanificacion .close").addEventListener("click", () => {
   resetearModalPlanificacion();
