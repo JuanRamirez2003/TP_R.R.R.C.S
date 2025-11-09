@@ -1526,3 +1526,19 @@ function resetearModalPlanificacion() {
 
 }
 
+//|||||||||||||||||||INFO MODAL EDITAR PLANIFICACIÓN|||||||||||||||||||||
+const modalAyuda = document.getElementById("modalAyuda");
+const btnAyuda = document.getElementById("btnAyuda");
+const closeAyuda = document.querySelector(".close-ayuda");
+
+btnAyuda.addEventListener("click", () => {
+  modalAyuda.style.display = "block";
+});
+
+closeAyuda.addEventListener("click", () => {
+  modalAyuda.style.display = "none";
+});
+
+window.addEventListener("click", (e) => {
+  if (e.target === modalAyuda) modalAyuda.style.display = "none";
+});
