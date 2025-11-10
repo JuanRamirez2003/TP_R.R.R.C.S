@@ -917,8 +917,8 @@ tr:hover {
 
 /* Mostrar modal */
 .modal-aviso.mostrar {
-  display: flex;
-  animation: aparecerModal 0.3s ease;
+    display: flex;
+    animation: aparecerModal 0.3s ease;
 }
 
 /* Contenido del modal */
@@ -936,44 +936,54 @@ tr:hover {
 
 /* Título */
 .modal-aviso-contenido h2 {
-  margin-bottom: 12px;
-  color: #55a630;
-  font-size: 1.5rem;
+    margin-bottom: 12px;
+    color: #55a630;
+    font-size: 1.5rem;
 }
 
 /* Texto del mensaje */
 .modal-aviso-contenido p {
-  margin-bottom: 20px;
-  font-size: 1rem;
+    margin-bottom: 20px;
+    font-size: 1rem;
 }
 
 /* Botón cerrar */
 .modal-aviso-contenido button {
-  padding: 12px 26px;
-  background-color: #4a8c2a;
-  color: #000;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
+    padding: 12px 26px;
+    background-color: #4a8c2a;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
 .modal-aviso-contenido button:hover {
-  background-color: #55a630;
-  color: #fff;
-  transform: scale(1.05);
+    background-color: #55a630;
+    color: #fff;
+    transform: scale(1.05);
 }
 
 /* Animaciones */
 @keyframes aparecerModal {
-  from { opacity: 0; }
-  to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes zoomIn {
-  from { transform: scale(0.9); }
-  to { transform: scale(1); }
+    from {
+        transform: scale(0.9);
+    }
+
+    to {
+        transform: scale(1);
+    }
 }
 
 /* Fondo del modal */
@@ -992,8 +1002,8 @@ tr:hover {
 
 /* Mostrar */
 .modal-confirmacion.mostrar {
-  display: flex;
-  animation: fadeIn 0.25s ease;
+    display: flex;
+    animation: fadeIn 0.25s ease;
 }
 
 /* Contenedor */
@@ -1011,82 +1021,223 @@ tr:hover {
 
 /* Título */
 .modal-confirmacion-contenido h2 {
-  color: #55a630;
-  margin-bottom: 12px;
+    color: #55a630;
+    margin-bottom: 12px;
 }
 
 /* Texto */
 .modal-confirmacion-contenido p {
-  margin-bottom: 25px;
-  font-size: 1rem;
+    margin-bottom: 25px;
+    font-size: 1rem;
 }
 
 /* Botones */
 .botones-confirmacion {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
 }
 
 .botones-confirmacion button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
 }
 
 .btn-cancelar {
-  background-color: #ccc;
-  color: #000;
+    background-color: #ccc;
+    color: #000;
 }
 
 .btn-cancelar:hover {
-  background-color: #bbb;
-  transform: scale(1.05);
+    background-color: #bbb;
+    transform: scale(1.05);
 }
 
 .btn-aceptar {
-  background-color: #4a8c2a;
-  color: #000000;
+    background-color: #4a8c2a;
+    color: #000000;
 }
 
 .btn-aceptar:hover {
-  background-color: #55a630;
-   color: #fff;
-  transform: scale(1.05);
+    background-color: #55a630;
+    color: #fff;
+    transform: scale(1.05);
 }
 
 /* Animaciones */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes zoomIn {
-  from { transform: scale(0.9); }
-  to { transform: scale(1); }
+    from {
+        transform: scale(0.9);
+    }
+
+    to {
+        transform: scale(1);
+    }
 }
 
 #buscador {
-  width: 280px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1.5px solid #ccc;
-  font-size: 15px;
-  outline: none;
-  transition: all 0.25s ease;
-  background-color: #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    width: 280px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #ccc;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.25s ease;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 #buscador:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+    border-color: #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
 }
 
 #buscador::placeholder {
-  color: #999;
-  font-style: italic;
+    color: #999;
+    font-style: italic;
+}
+
+/* --------------------------Notificador -----------------------*/
+/* Contenedor en esquina superior derecha */
+/* Icono de notificaciones de lote (sobre) */
+.notificaciones {
+  position: fixed;
+  top: 20px; /* igual que el otro icono */
+  right: 90px; /* a la izquierda del icono de stock (20px right + 60px ancho + 10px espacio) */
+  width: 60px;
+  height: 60px;
+  background-color: #fff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 4px 12px;
+  font-size: 28px;
+  color: #333;
+  z-index: 1000;
+  transition: transform 0.2s, background-color 0.3s;
+}
+
+/* Contador rojo */
+.contador {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Botón del sobre */
+#btnNotificaciones {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  position: relative;
+}
+
+
+/* Ventana desplegable */
+.ventana-notificaciones {
+  display: none;
+  position: absolute;
+  top: 40px;
+  right: 0;
+  width: 250px;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  border-radius: 5px;
+  padding: 10px;
+}
+.ventana-notificaciones ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+/* Ventana de notificaciones mejorada */
+.ventana-notificaciones li {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-left: 4px solid #3498db; /* valor por defecto, se puede sobrescribir según estado */
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s, border-color 0.15s;
+  cursor: default;
+}
+
+.ventana-notificaciones li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  background-color: #fefefe;
+}
+
+/* Última notificación sin margen inferior */
+.ventana-notificaciones li:last-child {
+  margin-bottom: 0;
+}
+
+/* Nombre del lote */
+.notif-lote-nombre {
+  font-weight: 600;
+  color: #46502c;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+/* Código del lote */
+.notif-lote-codigo {
+  font-size: 12px;
+  color: #7f8c8d;
+  margin-bottom: 2px;
+}
+
+/* Fecha de caducidad y días restantes */
+.notif-lote-caducidad {
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+/* Próximo a vencer: naranja / amarillo */
+.notif-proximo {
+  color: #e67e22;
+  font-weight: bold;
+  border-left: 4px solid #e67e22; /* borde lateral naranja */
+}
+
+/* Vencido: rojo */
+.notif-vencido {
+  color: #c0392b;
+  font-weight: bold;
+  border-left: 4px solid #c0392b; /* borde lateral rojo */
+}
+
+/* Separador opcional entre notificaciones */
+.ventana-notificaciones li + li {
+  margin-top: 5px;
 }

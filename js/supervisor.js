@@ -1570,3 +1570,61 @@ document.getElementById("buscador").addEventListener("input", e => {
     item.style.display = texto.includes(valor) ? "" : "none";
   });
 });
+
+///------------------------Notificacion-----------------------------------------
+// Mostrar/ocultar ventana al hacer click
+document.getElementById("btnNotificaciones").addEventListener("click", () => {
+  const ventana = document.getElementById("ventanaNotificaciones");
+  ventana.style.display = ventana.style.display === "block" ? "none" : "block";
+});
+
+// Función para actualizar notificaciones con vista mejorada
+async function actualizarNotificaciones() {
+  try {
+    const { data: lotes, error } = await supabaseClient
+      .from("lote_mp")
+      .select("id_lote, lote, materiales(nombre), fecha_caducidad, cantidad_disponible")
+      .order("fecha_caducidad", { ascending: true });
+
+    if (error) throw error;
+
+    const hoy = new Date();
+
+    const proximosAVencer = lotes.filter(lote => {
+      if (!lote.fecha_caducidad) return false;
+      if ((lote.cantidad_disponible ?? 0) <= 0) return false; // ignorar no disponible
+      const diffDias = (new Date(lote.fecha_caducidad) - hoy) / (1000 * 60 * 60 * 24);
+      return diffDias <= 14 && diffDias >= 0;
+    });
+
+    const contador = document.getElementById("contadorNotificaciones");
+    contador.textContent = proximosAVencer.length;
+    contador.style.display = proximosAVencer.length > 0 ? "inline-block" : "none";
+
+    const lista = document.getElementById("listaNotificaciones");
+    if (proximosAVencer.length === 0) {
+      lista.innerHTML = `<li>No hay notificaciones pendientes</li>`;
+    } else {
+      lista.innerHTML = proximosAVencer.map(lote => {
+        const fechaCad = new Date(lote.fecha_caducidad);
+        const diffDias = Math.floor((fechaCad - hoy) / (1000 * 60 * 60 * 24));
+        return `<li class="notif-item">
+          <span class="notif-lote-nombre">${lote.materiales?.nombre || '—'}</span>
+          <span class="notif-lote-codigo">Lote: ${lote.lote}</span>
+          <span class="notif-proximo">Próximo a vencer: ${diffDias} días</span>
+          <span class="notif-lote-caducidad">Fecha de Vencimiento: ${lote.fecha_caducidad}</span>
+        </li>`;
+      }).join("");
+    }
+  } catch (err) {
+    console.error("Error actualizando notificaciones:", err);
+  }
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  actualizarNotificaciones(); // carga inicial
+  setInterval(actualizarNotificaciones, 5 * 60 * 1000); // actualizar cada 5 min
+});
+
+

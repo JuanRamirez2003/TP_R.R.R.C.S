@@ -433,9 +433,6 @@ async function actualizarNotificaciones() {
   }
 }
 
-
-
-
 // Inicializar al cargar la página
 document.addEventListener("DOMContentLoaded", actualizarNotificaciones);
 
