@@ -1,5 +1,5 @@
 /* lote_mp.js actualizado
-   - Compatible con el HTML/CSS que me pasaste (select id="nuevoIdMp")
+   - Compatible con el HTML/CSS existente
    - Requiere SweetAlert2 y supabase-js cargados en el HTML
 */
 
@@ -13,23 +13,19 @@ const bodyHistorial = document.getElementById("bodyHistorial");
 let loteSeleccionado = null;
 let todosLosLotes = []; // almacena todos los lotes cargados
 
-
 /* ---------------------
    CARGA PRINCIPAL DE LOTES
-   --------------------- */
+--------------------- */
 async function cargarLotes() {
   try {
     const { data: lotes, error } = await supabaseClient
       .from("lote_mp")
-      .select(`
-        *,
-        materiales (id_mp, nombre)
-      `)
+      .select(`*, materiales (id_mp, nombre)`)
       .order("id_lote", { ascending: true });
 
     if (error) throw error;
 
-    todosLosLotes = lotes; // guardamos todos los lotes
+    todosLosLotes = lotes;
     mostrarLotesEnTabla(lotes);    
   } catch (err) {
     console.error("Error al cargar lotes:", err);
@@ -39,24 +35,16 @@ async function cargarLotes() {
 
 /* ---------------------
    CALCULAR DISPONIBILIDAD (según fecha y cantidad)
-   --------------------- */
-function calcularEstadoLote(lote) {
+--------------------- */
+function calcularEstadoLote({ cantidad_disponible, fecha_caducidad }) {
   const hoy = new Date();
-  const cad = lote.fecha_caducidad ? new Date(lote.fecha_caducidad) : null;
-  const cantidadDisponible = Number(lote.cantidad_disponible ?? lote.cantidad ?? 0);
+  const cad = fecha_caducidad ? new Date(fecha_caducidad) : null;
+  const cantidad = Number(cantidad_disponible ?? 0);
 
-  // prioridad: sin stock => No disponible
-  if (cantidadDisponible <= 0) {
-    return { text: "No disponible", class: "nodisponible" };
-  }
-
-  if (!cad) {
-    // sin fecha de caducidad declarada -> Disponible por defecto
-    return { text: "Disponible", class: "disponible" };
-  }
+  if (cantidad <= 0) return { text: "No disponible", class: "nodisponible" };
+  if (!cad) return { text: "Disponible", class: "disponible" };
 
   const diff = (cad - hoy) / (1000 * 60 * 60 * 24);
-
   if (diff < 0) return { text: "Vencido", class: "vencido" };
   if (diff <= 14) return { text: "Próximo a vencer", class: "proximo" };
   return { text: "Disponible", class: "disponible" };
@@ -64,16 +52,14 @@ function calcularEstadoLote(lote) {
 
 /* ---------------------
    MODAL NUEVO LOTE
-   --------------------- */
+--------------------- */
 function abrirModalNuevoLote() {
-  // Limpiar campos del modal (están en el HTML)
   document.getElementById("nuevoIdMp").innerHTML = "<option value=''>Cargando...</option>";
   document.getElementById("nuevoLote").value = "";
   document.getElementById("nuevoCantidad").value = "";
   document.getElementById("nuevoFechaIngreso").value = "";
   document.getElementById("nuevoFechaCaducidad").value = "";
 
-  // Cargar materiales en el select
   cargarMateriasParaSelect().then(() => {
     document.getElementById("modalNuevoLote").style.display = "block";
   });
@@ -83,10 +69,9 @@ function cerrarModalNuevoLote() {
   document.getElementById("modalNuevoLote").style.display = "none";
 }
 
-/* Carga la lista de materiales (tabla 'materiales') */
+/* Carga lista de materiales */
 async function cargarMateriasParaSelect() {
   try {
-    // Ajustá el nombre de la tabla/columnas si en tu BD se llaman distinto
     const { data, error } = await supabaseClient
       .from("materiales")
       .select("id_mp, nombre")
@@ -107,26 +92,17 @@ async function cargarMateriasParaSelect() {
   }
 }
 
-// 🔹 Función para generar automáticamente el código del lote
+/* Generar código de lote */
 function generarCodigoLote(id_mp) {
   const fecha = new Date();
   const año = fecha.getFullYear();
   const mes = String(fecha.getMonth() + 1).padStart(2, "0");
   const dia = String(fecha.getDate()).padStart(2, "0");
-  const secuencia = Math.floor(Math.random() * 900 + 100); // aleatorio entre 100-999
+  const secuencia = Math.floor(Math.random() * 900 + 100);
   return `LOT-MP${id_mp}-${año}${mes}${dia}-${secuencia}`;
 }
 
-// Helper: obtiene valor intentando varios ids (devuelve null si no existe)
-function getValueFromIds(...ids) {
-  for (const id of ids) {
-    const el = document.getElementById(id);
-    if (el) return el.value;
-  }
-  return null;
-}
-
-/* guardar lote nuevo */
+/* Guardar nuevo lote */
 async function guardarNuevoLote() {
   const id_mp = document.getElementById("nuevoIdMp").value;
   const cantidad = parseFloat(document.getElementById("nuevoCantidad").value);
@@ -139,20 +115,22 @@ async function guardarNuevoLote() {
   }
 
   try {
-    // 1️⃣ Obtener el último id_lote para generar el próximo número
     const { data: maxLoteData, error: maxError } = await supabaseClient
       .from("lote_mp")
       .select("id_lote")
       .order("id_lote", { ascending: false })
       .limit(1);
-
     if (maxError) throw maxError;
-    const siguienteId = maxLoteData?.length ? maxLoteData[0].id_lote + 1 : 1;
 
-    // 2️⃣ Generar código de lote automático: LOT-MP{id_mp}-{siguienteId}
+    const siguienteId = maxLoteData?.length ? maxLoteData[0].id_lote + 1 : 1;
     const codigoLote = `LOT-MP${id_mp}-${siguienteId}`;
 
-    // 3️⃣ Armar objeto de inserción
+    // Calcular disponibilidad inicial según cantidad y fecha
+    const { text: disponibilidad } = calcularEstadoLote({
+      cantidad_disponible: cantidad,
+      fecha_caducidad
+    });
+
     const nuevoLote = {
       id_mp: parseInt(id_mp),
       lote: codigoLote,
@@ -162,15 +140,13 @@ async function guardarNuevoLote() {
       cantidad_reservada: 0,
       fecha_ingreso,
       fecha_caducidad,
-      disponibilidad: "Disponible",
+      disponibilidad,
       estado: "Conforme"
     };
 
-    // 4️⃣ Insertar en Supabase
     const { error: insertError } = await supabaseClient
       .from("lote_mp")
       .insert([nuevoLote]);
-
     if (insertError) throw insertError;
 
     Swal.fire("Hecho", `✅ Lote ${codigoLote} agregado correctamente.`, "success");
@@ -182,10 +158,9 @@ async function guardarNuevoLote() {
   }
 }
 
-
 /* ---------------------
-   MODAL BAJA (dar de baja cantidad)
-   --------------------- */
+   MODAL BAJA
+--------------------- */
 async function abrirModalBaja(id_lote) {
   try {
     const { data, error } = await supabaseClient
@@ -194,10 +169,7 @@ async function abrirModalBaja(id_lote) {
       .eq("id_lote", id_lote)
       .single();
 
-    if (error || !data) {
-      console.error("Error al obtener lote para baja:", error);
-      return Swal.fire("Error", "No se pudo cargar el lote.", "error");
-    }
+    if (error || !data) return Swal.fire("Error", "No se pudo cargar el lote.", "error");
 
     loteSeleccionado = data;
     document.getElementById("bajaIdLote").value = data.id_lote;
@@ -205,7 +177,6 @@ async function abrirModalBaja(id_lote) {
     document.getElementById("bajaCantidadActual").value = data.cantidad_disponible ?? 0;
     document.getElementById("bajaCantidad").value = "";
     document.getElementById("bajaMotivo").value = "";
-
     document.getElementById("modalBaja").style.display = "block";
   } catch (err) {
     console.error("Error abrirModalBaja:", err);
@@ -217,33 +188,23 @@ function cerrarModalBaja() {
   document.getElementById("modalBaja").style.display = "none";
 }
 
-/* Confirmar baja: actualiza lote_mp y registra en baja_mp */
+/* Confirmar baja */
 async function confirmarBaja() {
   try {
     const idLote = Number(document.getElementById("bajaIdLote").value);
     const cantidadBaja = parseFloat(document.getElementById("bajaCantidad").value);
     const motivo = document.getElementById("bajaMotivo").value.trim();
 
-    if (isNaN(cantidadBaja) || cantidadBaja <= 0) {
-      return Swal.fire("Error", "Ingresá una cantidad válida (>0).", "error");
-    }
-    if (!motivo) {
-      return Swal.fire("Error", "Especificá un motivo para la baja.", "warning");
-    }
+    if (isNaN(cantidadBaja) || cantidadBaja <= 0) return Swal.fire("Error", "Cantidad inválida.", "error");
+    if (!motivo) return Swal.fire("Error", "Especificá un motivo.", "warning");
 
-    // refetch lote (por si cambió)
     const { data: lote, error: loteErr } = await supabaseClient
       .from("lote_mp")
       .select("*")
       .eq("id_lote", idLote)
       .single();
+    if (loteErr || !lote) return Swal.fire("Error", "No se pudo obtener el lote.", "error");
 
-    if (loteErr || !lote) {
-      console.error("Error al obtener lote antes de baja:", loteErr);
-      return Swal.fire("Error", "No se pudo obtener la información del lote.", "error");
-    }
-
-    // confirmación final
     const confirmacion = await Swal.fire({
       title: "Confirmar baja",
       text: `Se dará de baja ${cantidadBaja} unidades del lote ${lote.lote}.`,
@@ -254,36 +215,26 @@ async function confirmarBaja() {
     });
     if (!confirmacion.isConfirmed) return;
 
-    const nuevaCantidad = Number((lote.cantidad_disponible ?? 0) - cantidadBaja);
-    const cantidadDisponibleFinal = Math.max(0, nuevaCantidad);
-
-    // determinar nueva disponibilidad según cantidad y fecha
-    const disponibilidadInfo = calcularEstadoLote({
-      cantidad_disponible: cantidadDisponibleFinal,
+    const cantidadFinal = Math.max(0, (lote.cantidad_disponible ?? 0) - cantidadBaja);
+    const { text: nuevaDisponibilidad } = calcularEstadoLote({
+      cantidad_disponible: cantidadFinal,
       fecha_caducidad: lote.fecha_caducidad
     });
-    const nuevaDisponibilidad = disponibilidadInfo.text;
 
-    // actualizar lote_mp
     const { error: errorUpdate } = await supabaseClient
       .from("lote_mp")
       .update({
-        cantidad_disponible: cantidadDisponibleFinal,
+        cantidad_disponible: cantidadFinal,
         cantidad_consumida: (Number(lote.cantidad_consumida ?? 0) + cantidadBaja),
         disponibilidad: nuevaDisponibilidad
       })
       .eq("id_lote", idLote);
+    if (errorUpdate) return Swal.fire("Error", "No se pudo actualizar el lote.", "error");
 
-    if (errorUpdate) {
-      console.error("Error actualizando lote en baja:", errorUpdate);
-      return Swal.fire("Error", "No se pudo actualizar el lote.", "error");
-    }
+    const usuarioActual = JSON.parse(localStorage.getItem("usuarioActual") || "null");
+    const idUsuario = usuarioActual?.id ?? null;
 
-    // insertar en baja_mp (historial)
-    const usuarioActual = JSON.parse(localStorage.getItem("usuarioActual") || "null"); // si no existe, queda null
-    const idUsuario = usuarioActual?.id || null;
-
-    const { error: errorInsert } = await supabaseClient
+    await supabaseClient
       .from("baja_mp")
       .insert([{
         id_lote: idLote,
@@ -295,14 +246,9 @@ async function confirmarBaja() {
         estado_nuevo: nuevaDisponibilidad
       }]);
 
-    if (errorInsert) {
-      console.error("Error insert baja_mp:", errorInsert);
-      return Swal.fire("Error", "No se pudo registrar la baja en historial.", "error");
-    }
-
-    Swal.fire("Hecho", "La baja fue registrada correctamente.", "success");
+    Swal.fire("Hecho", "Baja registrada correctamente.", "success");
     cerrarModalBaja();
-    await cargarLotes();
+    cargarLotes();
   } catch (err) {
     console.error("Error confirmarBaja:", err);
     Swal.fire("Error", "Ocurrió un error al procesar la baja.", "error");
@@ -311,49 +257,27 @@ async function confirmarBaja() {
 
 /* ---------------------
    HISTORIAL DE BAJAS
-   --------------------- */
+--------------------- */
 async function verHistorial(idLote) {
   try {
     const { data: historial, error } = await supabaseClient
       .from("baja_mp")
-      .select(`
-        id_baja,
-        fecha_baja,
-        cantidad_baja,
-        motivo,
-        estado_anterior,
-        estado_nuevo,
-        usuarios ( id, name )
-      `)
+      .select(`id_baja, fecha_baja, cantidad_baja, motivo, estado_anterior, estado_nuevo, usuarios(id, name)`)
       .eq("id_lote", idLote)
       .order("fecha_baja", { ascending: false });
+    if (error) return Swal.fire("Error", "No se pudo obtener el historial.", "error");
 
-    if (error) {
-      console.error("Error al obtener historial:", error);
-      return Swal.fire("Error", "No se pudo obtener el historial del lote.", "error");
-    }
-
-    bodyHistorial.innerHTML = "";
-
-    if (!historial || historial.length === 0) {
-      bodyHistorial.innerHTML = `
-        <tr>
-          <td colspan="6" style="text-align:center; color:#aaa;">No hay registros de baja para este lote.</td>
-        </tr>`;
-    } else {
-      historial.forEach((reg) => {
-        const fila = document.createElement("tr");
-        fila.innerHTML = `
-          <td>${reg.fecha_baja ? new Date(reg.fecha_baja).toLocaleString() : ""}</td>
-          <td>${reg.usuarios?.name || "Desconocido"}</td>
-          <td>${reg.cantidad_baja}</td>
-          <td>${reg.motivo || "—"}</td>
-          <td>${reg.estado_anterior || "—"}</td>
-          <td>${reg.estado_nuevo || "—"}</td>
-        `;
-        bodyHistorial.appendChild(fila);
-      });
-    }
+    bodyHistorial.innerHTML = historial?.length
+      ? historial.map(reg => `
+          <tr>
+            <td>${reg.fecha_baja ? new Date(reg.fecha_baja).toLocaleString() : ""}</td>
+            <td>${reg.usuarios?.name || "Desconocido"}</td>
+            <td>${reg.cantidad_baja}</td>
+            <td>${reg.motivo || "—"}</td>
+            <td>${reg.estado_anterior || "—"}</td>
+            <td>${reg.estado_nuevo || "—"}</td>
+          </tr>`).join("")
+      : `<tr><td colspan="6" style="text-align:center; color:#aaa;">No hay registros de baja para este lote.</td></tr>`;
 
     document.getElementById("modalHistorial").style.display = "block";
   } catch (err) {
@@ -368,53 +292,32 @@ function cerrarHistorial() {
 
 /* ---------------------
    CIERRE DE MODALES AL HACER CLICK FUERA
-   --------------------- */
+--------------------- */
 window.addEventListener("click", (e) => {
-  const modals = ["modalNuevoLote", "modalBaja", "modalHistorial"];
-  for (const id of modals) {
+  ["modalNuevoLote", "modalBaja", "modalHistorial"].forEach(id => {
     const el = document.getElementById(id);
-    if (!el) continue;
-    if (e.target === el) el.style.display = "none";
-  }
+    if (el && e.target === el) el.style.display = "none";
+  });
 });
 
 /* ---------------------
-   INICIALIZACIÓN
-   --------------------- */
-document.addEventListener("DOMContentLoaded", () => {
-  cargarLotes();
-
-  const inputBuscador = document.getElementById("buscadorLotes");
-  if (inputBuscador) {
-    inputBuscador.addEventListener("input", (e) => {
-      filtrarLotes(e.target.value);
-    });
-  }
-});
-
-
+   BUSCADOR DE LOTES
+--------------------- */
 function filtrarLotes(termino) {
   const filtro = termino.toLowerCase();
-
-  // filtrar por nombre de material, código de lote o estado
   const lotesFiltrados = todosLosLotes.filter(lote => {
     const nombre = lote.materiales?.nombre?.toLowerCase() || "";
     const codigo = lote.lote?.toLowerCase() || "";
     const disponibilidad = lote.disponibilidad?.toLowerCase() || "";
-    return (
-      nombre.includes(filtro) ||
-      codigo.includes(filtro) ||
-      disponibilidad.includes(filtro)
-    );
+    return nombre.includes(filtro) || codigo.includes(filtro) || disponibilidad.includes(filtro);
   });
-
   mostrarLotesEnTabla(lotesFiltrados);
 }
 
 function mostrarLotesEnTabla(lista) {
   bodyLotes.innerHTML = "";
-  for (const lote of lista) {
-    const estadoInfo = calcularEstadoLote(lote);
+  lista.forEach(lote => {
+    const { text, class: clase } = calcularEstadoLote(lote);
     const fila = document.createElement("tr");
     fila.innerHTML = `
       <td>${lote.id_lote}</td>
@@ -424,12 +327,118 @@ function mostrarLotesEnTabla(lista) {
       <td>${lote.cantidad_disponible ?? 0}</td>
       <td>${lote.fecha_ingreso || ""}</td>
       <td>${lote.fecha_caducidad || ""}</td>
-      <td class="${estadoInfo.class}">${lote.disponibilidad || estadoInfo.text}</td>
+      <td class="${clase}">${lote.disponibilidad || text}</td>
       <td>
         <button class="btn-baja" onclick="abrirModalBaja(${lote.id_lote})">Dar baja</button>
         <button class="btn-historial" onclick="verHistorial(${lote.id_lote})">Historial</button>
       </td>
     `;
     bodyLotes.appendChild(fila);
+  });
+}
+
+/* ---------------------
+   ACTUALIZAR DISPONIBILIDAD LOTES
+--------------------- */
+async function actualizarDisponibilidadLotes() {
+  try {
+    const { data: lotes, error } = await supabaseClient
+      .from("lote_mp")
+      .select("id_lote, cantidad_disponible, fecha_caducidad, disponibilidad");
+
+    if (error) throw error;
+
+    for (const lote of lotes) {
+      const { text: nuevoEstado } = calcularEstadoLote(lote);
+      if (lote.disponibilidad !== nuevoEstado) {
+        await supabaseClient
+          .from("lote_mp")
+          .update({ disponibilidad: nuevoEstado })
+          .eq("id_lote", lote.id_lote);
+      }
+    }
+
+    // recargar tabla sin sobrecargar
+    await cargarLotes();
+  } catch (err) {
+    console.error("Error actualizando disponibilidad:", err);
   }
 }
+
+/* ---------------------
+   INICIALIZACIÓN
+--------------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  cargarLotes();
+
+  const inputBuscador = document.getElementById("buscadorLotes");
+  if (inputBuscador) inputBuscador.addEventListener("input", e => filtrarLotes(e.target.value));
+
+  // actualizar disponibilidad inicial y luego cada 5 minutos
+  actualizarDisponibilidadLotes();
+  setInterval(actualizarDisponibilidadLotes, 5 * 60 * 1000);
+});
+
+
+// --------------------------Notificador------------------------------------------------------------------
+// Mostrar/ocultar ventana al hacer click
+document.getElementById("btnNotificaciones").addEventListener("click", () => {
+  const ventana = document.getElementById("ventanaNotificaciones");
+  ventana.style.display = ventana.style.display === "block" ? "none" : "block";
+});
+
+// Función para actualizar notificaciones con vista mejorada
+async function actualizarNotificaciones() {
+  try {
+    const { data: lotes, error } = await supabaseClient
+      .from("lote_mp")
+      .select("id_lote, lote, materiales(nombre), fecha_caducidad, cantidad_disponible")
+      .order("fecha_caducidad", { ascending: true });
+
+    if (error) throw error;
+
+    const hoy = new Date();
+
+    // Filtrar lotes próximos a vencer y que tengan stock disponible
+    const proximosAVencer = lotes.filter(lote => {
+      if (!lote.fecha_caducidad) return false;
+      if ((lote.cantidad_disponible ?? 0) <= 0) return false; // ignorar no disponible
+      const diffDias = (new Date(lote.fecha_caducidad) - hoy) / (1000 * 60 * 60 * 24);
+      return diffDias <= 14 && diffDias >= 0;
+    });
+
+    // Actualizar contador
+    const contador = document.getElementById("contadorNotificaciones");
+    contador.textContent = proximosAVencer.length;
+    contador.style.display = proximosAVencer.length > 0 ? "inline-block" : "none";
+
+    // Actualizar lista con vista mejorada
+    const lista = document.getElementById("listaNotificaciones");
+    if (proximosAVencer.length === 0) {
+      lista.innerHTML = `<li>No hay notificaciones pendientes</li>`;
+    } else {
+      lista.innerHTML = proximosAVencer.map(lote => {
+        const fechaCad = new Date(lote.fecha_caducidad);
+        const diffDias = Math.floor((fechaCad - hoy) / (1000 * 60 * 60 * 24));
+        return `<li class="notif-item">
+          <strong>${lote.materiales?.nombre || '—'}</strong><br>
+          Lote: ${lote.lote}<br>
+          Próximo a vencer: ${diffDias} días<br>
+          Fecha. Venc: ${lote.fecha_caducidad}
+        </li>`;
+      }).join("");
+    }
+  } catch (err) {
+    console.error("Error actualizando notificaciones:", err);
+  }
+}
+
+
+
+
+// Inicializar al cargar la página
+document.addEventListener("DOMContentLoaded", actualizarNotificaciones);
+
+// Opcional: actualizar cada X minutos
+setInterval(actualizarNotificaciones, 5 * 60 * 1000); // cada 5 minutos
+

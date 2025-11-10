@@ -261,3 +261,119 @@ button {
   width: 250px;
   font-size: 14px;
 }
+
+/* --------------------------Notificador -----------------------*/
+/* Contenedor en esquina superior derecha */
+.notificaciones {
+  position: fixed;
+  top: 15px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.contador {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Botón icono */
+#btnNotificaciones {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  position: relative;
+}
+
+/* Ventana desplegable */
+.ventana-notificaciones {
+  display: none;
+  position: absolute;
+  top: 40px;
+  right: 0;
+  width: 250px;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  border-radius: 5px;
+  padding: 10px;
+}
+.ventana-notificaciones ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+/* Ventana de notificaciones mejorada */
+.ventana-notificaciones li {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-left: 4px solid #3498db; /* valor por defecto, se puede sobrescribir según estado */
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s, border-color 0.15s;
+  cursor: default;
+}
+
+.ventana-notificaciones li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  background-color: #fefefe;
+}
+
+/* Última notificación sin margen inferior */
+.ventana-notificaciones li:last-child {
+  margin-bottom: 0;
+}
+
+/* Nombre del lote */
+.notif-lote-nombre {
+  font-weight: 600;
+  color: #46502c;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+/* Código del lote */
+.notif-lote-codigo {
+  font-size: 12px;
+  color: #7f8c8d;
+  margin-bottom: 2px;
+}
+
+/* Fecha de caducidad y días restantes */
+.notif-lote-caducidad {
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+/* Próximo a vencer: naranja / amarillo */
+.notif-proximo {
+  color: #e67e22;
+  font-weight: bold;
+  border-left: 4px solid #e67e22; /* borde lateral naranja */
+}
+
+/* Vencido: rojo */
+.notif-vencido {
+  color: #c0392b;
+  font-weight: bold;
+  border-left: 4px solid #c0392b; /* borde lateral rojo */
+}
+
+/* Separador opcional entre notificaciones */
+.ventana-notificaciones li + li {
+  margin-top: 5px;
+}
