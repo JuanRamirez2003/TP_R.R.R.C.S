@@ -248,3 +248,16 @@ button {
   color: #ef4444;
   font-weight: bold;
 }
+
+.buscador-lotes {
+  margin-bottom: 1rem;
+  text-align: right;
+}
+
+#buscadorLotes {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 250px;
+  font-size: 14px;
+}

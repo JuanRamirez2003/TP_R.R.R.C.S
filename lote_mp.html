@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,9 +9,20 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+
 <body>
   <div class="container">
     <h1>Gestión de Lotes de Materia Prima</h1>
+
+    <div class="acciones">
+      <button class="btn-agregar" onclick="abrirModalNuevoLote()">➕ Nuevo Lote</button>
+      <button class="btn-volver" onclick="window.location.href='supervisor.html'">Volver</button>
+    </div>
+
+    <div class="buscador-lotes">
+      <input type="text" id="buscadorLotes" placeholder="Buscar por nombre, código de lote o estado..." />
+    </div>
+
     <table id="tablaLotes">
       <thead>
         <tr>
@@ -18,10 +30,10 @@
           <th>Materia Prima</th>
           <th>Lote</th>
           <th>Cantidad</th>
-          <th>Disponible</th>
+          <th>Cant. Disponible</th>
           <th>Fecha Ingreso</th>
           <th>Fecha Caducidad</th>
-          <th>Estado</th>
+          <th>Disponibilidad</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -29,7 +41,46 @@
     </table>
   </div>
 
-  <!-- Modal de baja -->
+  <!-- 🔹 Modal: Nuevo Lote -->
+  <div id="modalNuevoLote" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModalNuevoLote()">&times;</span>
+      <h2>Agregar Nuevo Lote</h2>
+
+      <div class="form-group">
+        <label for="nuevoIdMp">Materia Prima:</label>
+        <!-- id actualizado a "nuevoIdMp" para coincidir con el JS -->
+        <select id="nuevoIdMp"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="nuevoLote">Código de Lote:</label>
+        <input type="text" id="nuevoLote" placeholder="Se generará automáticamente" disabled />
+      </div>
+
+      <div class="form-group">
+        <label for="nuevoCantidad">Cantidad:</label>
+        <input type="number" id="nuevoCantidad" min="0" />
+      </div>
+
+      <div class="form-group">
+        <label for="nuevoFechaIngreso">Fecha de Ingreso:</label>
+        <input type="date" id="nuevoFechaIngreso" />
+      </div>
+
+      <div class="form-group">
+        <label for="nuevoFechaCaducidad">Fecha de Caducidad:</label>
+        <input type="date" id="nuevoFechaCaducidad" />
+      </div>
+
+      <div class="botones-modal">
+        <button class="btn-guardar" onclick="guardarNuevoLote()">Guardar Lote</button>
+        <button class="btn-cancelar" onclick="cerrarModalNuevoLote()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔹 Modal: Baja -->
   <div id="modalBaja" class="modal">
     <div class="modal-content">
       <span class="close" onclick="cerrarModalBaja()">&times;</span>
@@ -67,7 +118,7 @@
     </div>
   </div>
 
-  <!-- Modal de historial -->
+  <!-- 🔹 Modal: Historial -->
   <div id="modalHistorial" class="modal">
     <div class="modal-content">
       <span class="close" onclick="cerrarHistorial()">&times;</span>
@@ -95,5 +146,5 @@
 
   <script src="js/lote_mp.js" defer></script>
 </body>
+
 </html>
-    
