@@ -1201,7 +1201,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     .select("*, orden_produccion(numero_op, ver_orden, prioridad, id_orden_produccion)")
     .eq("id_linea", idLinea)
     .eq("dia", hoy);
-
+    
   if (error) {
     console.error("Error al traer planificacion:", error);
     return;
@@ -1214,7 +1214,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     lista.innerHTML = "<p>No hay OPs planificadas para hoy en esta línea.</p>";
     return;
   }
-  console.log("OPs planificadas:", data);
+ 
   calcularTiempoPlanificado(data);
   validarTiempoTotal();
   //console.log("||||||||||||", tiempoPlanificadoLinea);
@@ -1223,16 +1223,16 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
   const opItems = await Promise.all(data.map(async (item) => {
     const op = item.orden_produccion;
     const opItem = document.createElement("div");
-    opItem.classList.add("op-item");
 
+    opItem.classList.add("op-item");
+   // console.log(">>>>>>>>>", data);
     const prioridad = (op.prioridad || "normal").toLowerCase();
     opItem.classList.add(prioridad);
 
     opItem.draggable = true;
-
     opItem.dataset.origen_real = "linea-seleccionada";
     opItem.dataset.id = op.id_orden_produccion;
-    opItem.dataset.numero_op = op.numero_op;
+    opItem.dataset.numero_op = op.numero_op;//item.numero_op;//
     opItem.dataset.id_orden_produccion = op.id_orden_produccion;
 
     //console.log(" ✅ ✅ ✅ ",  opItem.dataset.id_orden_produccion);
@@ -1246,7 +1246,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     const cantidadOV = await cantOVRelacionadas(op.id_orden_produccion);
     //console.log("===============",opItem);
     opItem.innerHTML = `
-    <strong>${op.numero_op}</strong> - ${op.ver_orden?.[0]?.nombre || "Sin nombre"}<br>
+    <strong>${ item.numero_op}</strong> - ${op.ver_orden?.[0]?.nombre || "Sin nombre"}<br>
       <small>
       
         📦Lotes: <b>${cantidadLotes}</b> |
