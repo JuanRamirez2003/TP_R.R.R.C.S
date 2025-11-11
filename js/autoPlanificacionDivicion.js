@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 function calcularFechas() {
   fechasMostrar = [];
   const hoy = new Date();
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 5; i++) {
     const fecha = new Date();
     fecha.setDate(hoy.getDate() + i);
     fechasMostrar.push(fecha);
@@ -60,7 +60,7 @@ async function cargarLineas() {
 }
 
 // ---------------------- Renderizar agenda ----------------------
-/*async function renderAgendaDesdeSupabase() {
+async function renderAgendaDesdeSupabase() {
   const agenda = document.getElementById("agenda-semanal");
   const filtroLinea = document.getElementById("filtro-linea").value;
   const filtroPrioridad = document.getElementById("filtro-prioridad").value;
@@ -97,7 +97,7 @@ async function cargarLineas() {
       const pb = prioridadOrden[b.prioridad?.toLowerCase()] || 5;
       if (pa !== pb) return pa - pb;
       return horaToMinutos(a.hora_inicio) - horaToMinutos(b.hora_inicio);
-    })/FGFFGG
+    })*/
       //SOLO ORDENA POR HORA
       .sort((a, b) => horaToMinutos(a.hora_inicio) - horaToMinutos(b.hora_inicio))
 
@@ -183,114 +183,7 @@ async function cargarLineas() {
   });
 
   agenda.style.display = "flex";
-}*/
-async function renderAgendaDesdeSupabase() {
-  const agenda = document.getElementById("agenda-semanal");
-  const filtroLinea = document.getElementById("filtro-linea").value;
-  const filtroPrioridad = document.getElementById("filtro-prioridad").value;
-  const hoyStr = new Date().toISOString().split("T")[0];
-
-  // Trae todas las planificaciones desde hoy en adelante
-  const { data: planificaciones, error } = await supabaseClient
-    .from("planificacion_semanal")
-    .select("*")
-    .gte("dia", hoyStr)
-    .order("dia", { ascending: true });
-
-  if (error) return mostrarAviso("Error al cargar planificación: " + error.message);
-  agenda.innerHTML = "";
-
-  // Si no hay datos, mostrar mensaje
-  if (!planificaciones || planificaciones.length === 0) {
-    agenda.innerHTML = "<p>No hay planificaciones disponibles desde hoy.</p>";
-    return;
-  }
-
-  const prioridadOrden = { urgente: 1, alta: 2, normal: 3, baja: 4 };
-
-  // Obtener los días distintos con planificaciones
-  const diasConPlan = [...new Set(planificaciones.map(p => p.dia))];
-
-  // Crear una columna por cada día con planificación
-  fechasMostrar.forEach(diaStr => {
-
-    const diaNombre =  dias[diaStr.getDay()];
-    const fechaStr =  diaStr.toLocaleDateString("es-ES");
-    const columna = document.createElement("div");
-    columna.className = "agenda-dia";
-    columna.innerHTML = `<strong>${diaNombre} ${fechaStr}</strong><br>`;
-
-    // Filtrar planificaciones del día y aplicar filtros del front
-    const planDeDia = planificaciones
-      .filter(p =>
-        p.dia ===  diaStr.toISOString().split("T")[0] &&
-        (filtroLinea === "" || p.id_linea == filtroLinea) &&
-        (filtroPrioridad === "" || p.prioridad?.toLowerCase() === filtroPrioridad)
-      )
-      .sort((a, b) => horaToMinutos(a.hora_inicio) - horaToMinutos(b.hora_inicio));
-
-    // Renderizar cada bloque
-    planDeDia.forEach(p => {
-      const bloque = document.createElement("div");
-      const clasePrioridad = p.prioridad?.toLowerCase() || "normal";
-      bloque.className = "bloque-produccion " + clasePrioridad;
-
-      const pinActivo = p.fijada === true || p.fijada === "true";
-
-      bloque.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <div style="text-align:center; width:100%;">
-            <strong>Línea ${p.id_linea}</strong><br>
-            ${p.numero_op}<br>
-            ${p.hora_inicio} - ${p.hora_fin}
-          </div>
-          <button class="pin-btn ${pinActivo ? 'fijada' : ''}" 
-                  title="${pinActivo ? 'Desfijar' : 'Fijar'}">
-            ${pinActivo ? "🔒" : "📌"}
-          </button>
-        </div>
-      `;
-
-      // Abrir detalle al hacer clic
-      bloque.addEventListener("click", () => {
-        mostrarDetalleOP(p.id_op, p.id_linea);
-      });
-
-      columna.appendChild(bloque);
-    });
-
-    // Agregar la columna solo si tiene planificaciones (evita días vacíos)
-    if (planDeDia.length > 0) agenda.appendChild(columna);
-  });
-
-  // Configurar eventos para los botones de fijar/desfijar
-  document.querySelectorAll('.pin-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      const bloque = e.target.closest('.bloque-produccion');
-      const idLinea = bloque.querySelector('strong').textContent.replace('Línea ', '');
-
-      const plan = planificaciones.find(p =>
-        p.id_linea == idLinea &&
-        bloque.textContent.includes(p.numero_op)
-      );
-
-      if (!plan) return;
-
-      const fijadaActual = e.target.classList.contains('fijada');
-      const nuevoEstado = !fijadaActual;
-
-      await toggleFijada(plan.id_op, nuevoEstado, plan.dia);
-
-      e.target.classList.toggle('fijada', nuevoEstado);
-      e.target.textContent = nuevoEstado ? '🔒' : '📌';
-      e.target.title = nuevoEstado ? 'Desfijar' : 'Fijar';
-    });
-  });
-
-  agenda.style.display = "flex";
 }
-
 
 // ---------------------- Generar planificación ----------------------
 async function planificarSemana(modoAleatorio = false) {
@@ -1735,20 +1628,4 @@ closeAyuda.addEventListener("click", () => {
 
 window.addEventListener("click", (e) => {
   if (e.target === modalAyuda) modalAyuda.style.display = "none";
-});
-
-//|||||||||||||||||||INFO AYUDA EN PLANIFICACIÓN|||||||||||||||||||||
-
-document.getElementById("btnAyudaColores").addEventListener("click", () => {
-  document.getElementById("modalAyudaColores").style.display = "block";
-});
-
-document.getElementById("cerrarModalAyudaColores").addEventListener("click", () => {
-  document.getElementById("modalAyudaColores").style.display = "none";
-});
-
-window.addEventListener("click", (event) => {
-  if (event.target.id === "modalAyudaColores") {
-    document.getElementById("modalAyudaColores").style.display = "none";
-  }
 });
