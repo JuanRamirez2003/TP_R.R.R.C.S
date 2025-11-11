@@ -42,6 +42,7 @@ function calcularFechas() {
     const fecha = new Date();
     fecha.setDate(hoy.getDate() + i);
     fechasMostrar.push(fecha);
+    
   }
 }
 
@@ -196,12 +197,10 @@ async function renderAgendaDesdeSupabase() {
   // Obtener los días distintos con planificaciones
   const diasConPlan = [...new Set(planificaciones.map(p => p.dia))];
 
-  // Crear una columna por cada día con planificación
-  diasConPlan.forEach(diaStr => {
-    const fecha = new Date(diaStr);
-    const diaNombre = dias[fecha.getDay()];
-    const fechaStr = fecha.toLocaleDateString("es-ES");
+  fechasMostrar.forEach(diaStr => {
 
+    const diaNombre =  dias[diaStr.getDay()];
+    const fechaStr =  diaStr.toLocaleDateString("es-ES");
     const columna = document.createElement("div");
     columna.className = "agenda-dia";
     columna.innerHTML = `<strong>${diaNombre} ${fechaStr}</strong><br>`;
@@ -209,7 +208,7 @@ async function renderAgendaDesdeSupabase() {
     // Filtrar planificaciones del día y aplicar filtros del front
     const planDeDia = planificaciones
       .filter(p =>
-        p.dia === diaStr &&
+        p.dia === diaStr.toISOString().split("T")[0]  &&
         (filtroLinea === "" || p.id_linea == filtroLinea) &&
         (filtroPrioridad === "" || p.prioridad?.toLowerCase() === filtroPrioridad)
       )
@@ -284,7 +283,7 @@ async function planificarSemana(modoAleatorio = false) {
   window.tiempoRequeridoOPUrgente = 0;
 
   const hoyStr = new Date().toISOString().split("T")[0];
-
+ //console.log("FECHA HOY:", hoyStr);
   // Eliminar planificaciones no fijadas desde hoy en adelante
   await supabaseClient
     .from("planificacion_semanal")
