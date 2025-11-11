@@ -460,6 +460,74 @@
       font-size: 22px;
     }
 
+        .btn-coloresAyuda {
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .btn-coloresAyuda:hover {
+      background: #1976d2;
+    }
+
+    .leyenda-colores {
+      list-style: none;
+      padding-left: 0;
+      margin-top: 10px;
+    }
+
+    .leyenda-colores li {
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .color-box {
+      display: inline-block;
+      min-width: 70px;
+      text-align: center;
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    /* Colores según prioridad */
+    .color-box.urgente {
+      background: #ff0000;
+    }
+
+    .color-box.alta {
+      background: #ff8000;
+    }
+
+    .color-box.normal {
+      background: #ebeb08;
+      color: black;
+    }
+
+    .color-box.baja {
+      background: #00cc66;
+    }
+
+    .color-box.fijada {
+      background: #3399ff;
+    }
+
+    #modalAyudaColores small {
+      font-size: 1em;
+      /* mismo tamaño que el texto normal */
+    }
+
     .btn-ayuda {
       position: absolute;
       left: 10px;
@@ -517,8 +585,8 @@
     }
 
     .close {
-  z-index: 2000;
-}
+      z-index: 2000;
+    }
   </style>
 </head>
 
@@ -556,6 +624,8 @@
       <button id="btnCambiarPlanificacion">Cambiar Planificación</button>
 
       <button id="btnVolver">Volver</button>
+            <button id="btnAyudaColores" class="btn-coloresAyuda" title="Ver ayuda">❔ </button>
+
     </div>
 
     <div id="agenda-semanal" class="agenda-grid"></div>
@@ -683,14 +753,59 @@
 
         <p>🎨 <strong>Significado de colores: Prioridad de las OPs </strong></p>
         <ul>
-          <li><span style="color:#ff0000;">Rojo</span>: URGENTE (0 (cero) o menos dias para la entrega).</li>
-          <li><span style="color:#ff8000;">Naranja</span>: ALTA (falta 2 (dos) dias para la entrega).</li>
-          <li><span style="color:#ebeb08;">Amarillo</span>: NORMAL (falta 5 (cinco) dias para la entrega).</li>
-          <li><span style="color:#00cc66;">Verde</span>: BAJA (falta más de 5 (cinco) dias para la entrega).</li>
+                    <li>
+            <span class="color-box urgente">Urgente</span>
+            — Prioridad máxima, 0 (cero) o menos días para la entrega.
+          </li>
+          <li>
+            <span class="color-box alta">Alta</span>
+            — Alta prioridad, se planifica después de las urgentes, falta 2 (dos) días para la entrega.
+          </li>
+          <li>
+            <span class="color-box normal">Normal</span>
+            — Orden estándar sin urgencia especial, falta 5 (cinco) días para la entrega.
+          </li>
+          <li>
+            <span class="color-box baja">Baja</span>
+            — Se ejecuta cuando hay disponibilidad, falta más de 5 (cinco) días para la entrega.
+          </li>
+
         </ul>
       </div>
     </div>
+        <!-- Modal de Ayuda de Colores -->
+    <div id="modalAyudaColores" class="modal">
+      <div class="modal-content">
 
+        <span id="cerrarModalAyudaColores" class="cerrar">&times;</span>
+        <h2>Guía de Colores — Planificación de OP</h2>
+        <p>Los colores indican el estado o prioridad de cada orden de producción (OP):</p>
+
+        <ul class="leyenda-colores">
+          <li>
+            <span class="color-box urgente">Urgente</span>
+            — Prioridad máxima, 0 (cero) o menos días para la entrega.
+          </li>
+          <li>
+            <span class="color-box alta">Alta</span>
+            — Alta prioridad, se planifica después de las urgentes, falta 2 (dos) días para la entrega.
+          </li>
+          <li>
+            <span class="color-box normal">Normal</span>
+            — Orden estándar sin urgencia especial, falta 5 (cinco) días para la entrega.
+          </li>
+          <li>
+            <span class="color-box baja">Baja</span>
+            — Se ejecuta cuando hay disponibilidad, falta más de 5 (cinco) días para la entrega.
+          </li>
+          <li>
+            <span class="color-box fijada">📌 / 🔒</span>
+            — OP fijada en su línea y día (no se replanifica).
+            <br><small>📌 = no fijada | 🔒 = fijada</small>
+          </li>
+        </ul>
+      </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/autoPlanificacionDivicion.js"></script>
 </body>

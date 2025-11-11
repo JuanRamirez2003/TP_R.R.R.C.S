@@ -1629,3 +1629,18 @@ closeAyuda.addEventListener("click", () => {
 window.addEventListener("click", (e) => {
   if (e.target === modalAyuda) modalAyuda.style.display = "none";
 });
+//|||||||||||||||||||INFO AYUDA EN PLANIFICACIÓN|||||||||||||||||||||
+
+document.getElementById("btnAyudaColores").addEventListener("click", () => {
+  document.getElementById("modalAyudaColores").style.display = "block";
+});
+
+document.getElementById("cerrarModalAyudaColores").addEventListener("click", () => {
+  document.getElementById("modalAyudaColores").style.display = "none";
+});
+
+window.addEventListener("click", (event) => {
+  if (event.target.id === "modalAyudaColores") {
+    document.getElementById("modalAyudaColores").style.display = "none";
+  }
+});
