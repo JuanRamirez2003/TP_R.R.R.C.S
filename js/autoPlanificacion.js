@@ -42,7 +42,7 @@ function calcularFechas() {
     const fecha = new Date();
     fecha.setDate(hoy.getDate() + i);
     fechasMostrar.push(fecha);
-    
+
   }
 }
 
@@ -199,8 +199,8 @@ async function renderAgendaDesdeSupabase() {
 
   fechasMostrar.forEach(diaStr => {
 
-    const diaNombre =  dias[diaStr.getDay()];
-    const fechaStr =  diaStr.toLocaleDateString("es-ES");
+    const diaNombre = dias[diaStr.getDay()];
+    const fechaStr = diaStr.toLocaleDateString("es-ES");
     const columna = document.createElement("div");
     columna.className = "agenda-dia";
     columna.innerHTML = `<strong>${diaNombre} ${fechaStr}</strong><br>`;
@@ -208,7 +208,7 @@ async function renderAgendaDesdeSupabase() {
     // Filtrar planificaciones del día y aplicar filtros del front
     const planDeDia = planificaciones
       .filter(p =>
-        p.dia === diaStr.toISOString().split("T")[0]  &&
+        p.dia === diaStr.toISOString().split("T")[0] &&
         (filtroLinea === "" || p.id_linea == filtroLinea) &&
         (filtroPrioridad === "" || p.prioridad?.toLowerCase() === filtroPrioridad)
       )
@@ -283,7 +283,7 @@ async function planificarSemana(modoAleatorio = false) {
   window.tiempoRequeridoOPUrgente = 0;
 
   const hoyStr = new Date().toISOString().split("T")[0];
- //console.log("FECHA HOY:", hoyStr);
+  //console.log("FECHA HOY:", hoyStr);
   // Eliminar planificaciones no fijadas desde hoy en adelante
   await supabaseClient
     .from("planificacion_semanal")
@@ -367,16 +367,43 @@ async function planificarSemana(modoAleatorio = false) {
       (prioridadOrden[b.prioridad?.toLowerCase()] || 5)
   );*/
 
-  // --- Ordenar por fecha de entrega más próxima ---
-  ordenesFiltradas.sort((a, b) => {
-    const fechaA = new Date(a.fecha_entrega);
-    const fechaB = new Date(b.fecha_entrega);
-    return fechaA - fechaB; 
-  });
+  const grupos = { urgente: [], alta: [], normal: [], baja: [] };
+  for (const op of ordenesFiltradas) {
+    const key = op.prioridad?.toLowerCase() || "normal";
+    grupos[key].push(op);
+  }
 
-  // Si está activado el modo aleatorio, desordenar internamente dentro de cada prioridad
-  let ordenesParaPlanificar = ordenesFiltradas;
+
+
   if (modoAleatorio) {
+    grupos.urgente = shuffleArray(grupos.urgente);
+    grupos.alta= shuffleArray(grupos.alta );
+    grupos.normal = shuffleArray(grupos.normal );
+    grupos.baja = shuffleArray(grupos.baja );
+  }
+  // Si querés un array combinado por orden de prioridad:
+  const ordenadasPorGrupo = [
+    ...grupos.urgente,
+    ...grupos.alta,
+    ...grupos.normal,
+    ...grupos.baja
+  ];
+
+
+  if(!modoAleatorio){
+  ordenadasPorGrupo.urgente = ordenarPorFechaCercanaAHoy(grupos.urgente);
+  }
+  console.log("Órdenes URGENTES ordenadas por fecha:", ordenadasPorGrupo.urgente);
+
+  /*// --- Ordenar por fecha de entrega más próxima ---
+ ordenesFiltradas.sort((a, b) => {
+   const fechaA = new Date(a.fecha_entrega);
+   const fechaB = new Date(b.fecha_entrega);
+   return fechaA - fechaB; 
+ });*/
+  // Si está activado el modo aleatorio, desordenar internamente dentro de cada prioridad
+  let ordenesParaPlanificar = ordenadasPorGrupo;
+  /*if (modoAleatorio) {
     const grupos = { urgente: [], alta: [], normal: [], baja: [] };
     ordenesFiltradas.forEach(op => {
       const key = op.prioridad?.toLowerCase() || "normal";
@@ -396,57 +423,69 @@ async function planificarSemana(modoAleatorio = false) {
       ...grupos.normal,
       ...grupos.baja
     ];
-  }
+  }*/
+
 
   // Generar nuevas planificaciones
   const planificaciones = [];
 
-  for (const op of ordenesParaPlanificar) {
-    const cantidadLotes = Array.isArray(op.ver_orden)
-      ? op.ver_orden.reduce((t, i) => t + (i.cantidad || 0), 0)
-      : 1;
+  // Recorremos en orden de prioridad y fecha
+  for (const tipo of ["urgente", "alta", "normal", "baja"]) {
+    const lista = grupos[tipo];
+    if (!lista) continue;
 
-    const posibles = lineasProd.filter(v => v.id_producto === op.id_producto);
-    if (!posibles.length) continue;
+    for (const op of lista) {
+      console.log("Planificando OP:", op.numero_op, "Prioridad:", tipo);
 
-    posibles.sort((a, b) => a.duracion - b.duracion);
+      const cantidadLotes = Array.isArray(op.ver_orden)
+        ? op.ver_orden.reduce((t, i) => t + (i.cantidad || 0), 0)
+        : 1;
 
-    let mejorOpcion = null;
+      const posibles = lineasProd
+        .filter(v => v.id_producto === op.id_producto)
+        .sort((a, b) => a.duracion - b.duracion); // Más eficiente primero
 
-    for (const fecha of fechasMostrar) {
-      const fechaKey = fecha.toISOString().split("T")[0];
-      for (const cand of posibles) {
-        const minutosUsados = carga[cand.id_linea][fechaKey];
-        const capacidad =
-          lineas.find(l => l.id_linea === cand.id_linea)?.capacidad_diaria_min ??
-          480;
-        const duracionTotal = cand.duracion * cantidadLotes;
+      if (!posibles.length) continue;
 
-        if (minutosUsados + duracionTotal <= capacidad) {
-          const espacioLibre = capacidad - (minutosUsados + duracionTotal);
-          // Guarda la opción con más espacio sobrante o menor duración
-          if (!mejorOpcion || espacioLibre < mejorOpcion.espacioLibre) {
-            mejorOpcion = { cand, fechaKey, duracionTotal };
+      let planificada = false;
+
+      // Recorrer los días en orden
+      for (const fecha of fechasMostrar) {
+        const fechaKey = fecha.toISOString().split("T")[0];
+
+        // Recorremos las líneas por orden de eficiencia
+        for (const cand of posibles) {
+          const capacidad =
+            lineas.find(l => l.id_linea === cand.id_linea)?.capacidad_diaria_min ?? 480;
+
+          const minutosUsados = carga[cand.id_linea][fechaKey];
+          const duracionTotal = cand.duracion * cantidadLotes;
+
+          // Si hay espacio suficiente en esta línea y día
+          if (minutosUsados + duracionTotal <= capacidad) {
+            planificaciones.push({
+              id_op: op.id_orden_produccion,
+              numero_op: op.numero_op,
+              id_linea: cand.id_linea,
+              dia: fechaKey,
+              hora_inicio: minutosToHora(minutosUsados),
+              hora_fin: minutosToHora(minutosUsados + duracionTotal),
+              prioridad: tipo
+            });
+
+            // Actualizamos carga
+            carga[cand.id_linea][fechaKey] += duracionTotal;
+            planificada = true;
+            break; // ← deja de buscar líneas
           }
         }
+
+        if (planificada) break; // ← deja de buscar días
       }
-    }
 
-    if (mejorOpcion) {
-      const { cand, fechaKey, duracionTotal } = mejorOpcion;
-      const minutosUsados = carga[cand.id_linea][fechaKey];
-
-      planificaciones.push({
-        id_op: op.id_orden_produccion,
-        numero_op: op.numero_op,
-        id_linea: cand.id_linea,
-        dia: fechaKey,
-        hora_inicio: minutosToHora(minutosUsados),
-        hora_fin: minutosToHora(minutosUsados + duracionTotal),
-        prioridad: op.prioridad?.toLowerCase() || "normal"
-      });
-
-      carga[cand.id_linea][fechaKey] += duracionTotal;
+      if (!planificada) {
+        console.warn(`⚠️ No se pudo planificar la OP ${op.numero_op} (${tipo})`);
+      }
     }
   }
 
@@ -471,6 +510,21 @@ async function planificarSemana(modoAleatorio = false) {
   }
 }
 
+function ordenarPorFechaCercanaAHoy(arr) {
+  const hoy = new Date();
+  return arr.sort(
+    (a, b) =>
+      Math.abs(new Date(a.fecha_emision) - hoy) -
+      Math.abs(new Date(b.fecha_emision) - hoy)
+  );
+}
+
+function shuffleArray(array) {
+  return array
+    .map(value => ({ value, sort: Math.random() })) // asigna número aleatorio a cada elemento
+    .sort((a, b) => a.sort - b.sort)                // ordena por ese número
+    .map(({ value }) => value);                     // recupera el valor original
+}
 // ---------------------- Minutos a hora ----------------------
 function minutosToHora(min) {
   const totalMin = 8 * 60 + min; // inicio jornada 8:00
