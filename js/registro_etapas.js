@@ -363,6 +363,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 dia,
                 hora_inicio,
                 hora_fin,
+                cantidad_lotes,
                 orden:orden_produccion(
                     id_orden_produccion,
                     numero_op,
@@ -435,57 +436,131 @@ document.addEventListener('DOMContentLoaded', async () => {
         const planHoyLinea = planificacion.filter(p => p.id_linea === idLineaReal && p.orden);
         console.log(`📋 Planificación ${nombreLinea} (id_linea=${idLineaReal}):`, planHoyLinea);
 
-        planHoyLinea.forEach(p => {
-            const op = p.orden;
-            const card = document.createElement('span');
+    planHoyLinea.forEach(p => {
+    const op = p.orden;
+    const card = document.createElement('span');
 
-            // Asignar color según prioridad
-            let bgColor = '#2a2a2a';
-            switch (op.prioridad) {
-                case 'urgente': bgColor = '#ff0000'; break;
-                case 'alta': bgColor = '#ff8000'; break;
-                case 'normal': bgColor = '#ebeb08'; break;
-                case 'baja': bgColor = '#00cc66'; break;
+    // 🎨 Asignar color según prioridad
+    let bgColor = '#2a2a2a';
+    switch (op.prioridad) {
+        case 'urgente': bgColor = '#ff0000'; break;
+        case 'alta': bgColor = '#ff8000'; break;
+        case 'normal': bgColor = '#ebeb08'; break;
+        case 'baja': bgColor = '#00cc66'; break;
+    }
+
+    card.style.cssText = `
+        display:inline-block;
+        margin:2px;
+        padding:4px 8px;
+        border-radius:4px;
+        background:${bgColor};
+        font-size:0.9em;
+        font-weight:bold;
+        color:white;
+        cursor:pointer;
+        transition: background 0.2s;
+    `;
+
+    // 🧠 Texto del card según segmentación
+    let textoCard = ` ${op.numero_op}`;
+
+    if (p.cantidad_lotes) {
+        try {
+            const lotesInfo = JSON.parse(p.cantidad_lotes);
+            if (lotesInfo?.lotes_incluidos && lotesInfo?.lotes_total) {
+                const incluidos = lotesInfo.lotes_incluidos;
+
+                if (incluidos.length === 1) {
+                    // Ejemplo: {"lotes_incluidos":[3],"lotes_total":5}
+                    textoCard += ` (lote ${incluidos[0]} de ${lotesInfo.lotes_total})`;
+                } else {
+                    // Ejemplo: {"lotes_incluidos":[2,3,4],"lotes_total":10}
+                    const rango = `${Math.min(...incluidos)}-${Math.max(...incluidos)}`;
+                    textoCard += ` (lotes ${rango} de ${lotesInfo.lotes_total})`;
+                }
+            } else {
+                textoCard += ` (${op.cant_lote} lotes)`; // fallback
             }
+        } catch (e) {
+            console.warn("⚠️ Error al interpretar cantidad_lotes:", p.cantidad_lotes);
+            textoCard += ` (${op.cant_lote} lotes)`;
+        }
+    } else {
+        textoCard += ` (${op.cant_lote} lotes)`; // sin segmentación
+    }
 
-            card.style.cssText = `
-                display:inline-block;
-                margin:2px;
-                padding:4px 8px;
-                border-radius:4px;
-                background:${bgColor};
-                font-size:0.9em;
-                font-weight:bold;
-                color:white;
-                cursor:pointer;
-                transition: background 0.2s;
-            `;
-            card.textContent = `OP ${op.numero_op} (${op.cant_lote} lotes)`;
+    card.textContent = textoCard;
 
-            // Al hacer clic -> ver detalle
-            card.addEventListener('click', () => verDetalleOP(op, idLineaReal, i));
+    // 📋 Clic para ver detalle
+    card.addEventListener('click', () => verDetalleOP(op, idLineaReal, i));
 
-            planDiv.appendChild(card);
-        });
+    planDiv.appendChild(card);
+});
 
-        // Select de OPs
-        const opSelect = document.createElement('select');
-        opSelect.id = `opSelectLinea-${i}`;
+        // 🔹 Select de OPs (mostrar todas las planificaciones desde hoy en adelante)
+const opSelect = document.createElement('select');
+opSelect.id = `opSelectLinea-${i}`;
 
-        const optVacio = document.createElement('option');
-        optVacio.value = '';
-        optVacio.textContent = 'Seleccione una OP';
-        opSelect.appendChild(optVacio);
+const optVacio = document.createElement('option');
+optVacio.value = '';
+optVacio.textContent = 'Seleccione una OP';
+opSelect.appendChild(optVacio);
 
-        ordenes.forEach(op => {
-            const option = document.createElement('option');
-            option.value = op.id_orden_produccion;
-            option.textContent = `OP ${op.numero_op} (Cant: ${op.cant_lote})`;
-            option.dataset.cantidad = op.cant_lote;
-            if (opEnEjecucion.has(op.id_orden_produccion)) option.disabled = true;
-            opSelect.appendChild(option);
-        });
+// 🔹 Buscar todas las planificaciones desde hoy para esta línea
+const planificacionesLinea = planificacion.filter(
+    p => p.id_linea === idLineaReal && new Date(p.dia) >= new Date(hoy)
+);
 
+// 🔹 Generar opciones a partir de las planificaciones
+planificacionesLinea.forEach(p => {
+    const op = p.orden;
+    if (!op) return;
+
+    let texto = `OP ${op.numero_op}`;
+
+    // 🧠 Mostrar detalle de lotes segmentados
+    if (p.cantidad_lotes) {
+        try {
+            const lotesInfo = JSON.parse(p.cantidad_lotes);
+            if (lotesInfo?.lotes_incluidos && lotesInfo?.lotes_total) {
+                const incluidos = lotesInfo.lotes_incluidos;
+                if (incluidos.length === 1) {
+                    texto += ` (lote ${incluidos[0]} de ${lotesInfo.lotes_total})`;
+                } else {
+                    const rango = `${Math.min(...incluidos)}-${Math.max(...incluidos)}`;
+                    texto += ` (lotes ${rango} de ${lotesInfo.lotes_total})`;
+                }
+            } else {
+                texto += ` (${op.cant_lote} lotes)`;
+            }
+        } catch {
+            texto += ` (${op.cant_lote} lotes)`;
+        }
+    } else {
+        texto += ` (${op.cant_lote} lotes)`;
+    }
+
+    const option = document.createElement('option');
+    option.value = op.id_orden_produccion;
+    option.textContent = texto;
+    option.dataset.cantidad = op.cant_lote;
+
+    if (opEnEjecucion.has(op.id_orden_produccion)) option.disabled = true;
+    opSelect.appendChild(option);
+});
+
+// 🔹 Si no hay planificaciones futuras, mostrar OPs pendientes genéricas
+if (planificacionesLinea.length === 0) {
+    ordenes.forEach(op => {
+        const option = document.createElement('option');
+        option.value = op.id_orden_produccion;
+        option.textContent = `OP ${op.numero_op} (Cant: ${op.cant_lote})`;
+        option.dataset.cantidad = op.cant_lote;
+        if (opEnEjecucion.has(op.id_orden_produccion)) option.disabled = true;
+        opSelect.appendChild(option);
+    });
+}
         // Info OP, cinta y botón
         const opInfo = document.createElement('div');
         opInfo.id = `opInfo-${i}`;
