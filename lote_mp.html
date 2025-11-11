@@ -62,22 +62,33 @@
       <span class="close" onclick="cerrarModalNuevoLote()">&times;</span>
       <h2>Agregar Nuevo Lote</h2>
 
+      <!-- Materia Prima -->
       <div class="form-group">
         <label for="nuevoIdMp">Materia Prima:</label>
-        <!-- id actualizado a "nuevoIdMp" para coincidir con el JS -->
         <select id="nuevoIdMp"></select>
       </div>
 
+      <!-- Proveedor -->
+      <div class="form-group">
+        <label for="nuevoProveedor">Proveedor:</label>
+        <select id="nuevoProveedor">
+          <option value="">Seleccione un proveedor</option>
+        </select>
+      </div>
+
+      <!-- Código de Lote -->
       <div class="form-group">
         <label for="nuevoLote">Código de Lote:</label>
         <input type="text" id="nuevoLote" placeholder="Se generará automáticamente" disabled />
       </div>
 
+      <!-- Cantidad -->
       <div class="form-group">
         <label for="nuevoCantidad">Cantidad:</label>
         <input type="number" id="nuevoCantidad" min="0" />
       </div>
 
+      <!-- Fechas -->
       <div class="form-group">
         <label for="nuevoFechaIngreso">Fecha de Ingreso:</label>
         <input type="date" id="nuevoFechaIngreso" />
@@ -88,12 +99,14 @@
         <input type="date" id="nuevoFechaCaducidad" />
       </div>
 
+      <!-- Botones -->
       <div class="botones-modal">
         <button class="btn-guardar" onclick="guardarNuevoLote()">Guardar Lote</button>
         <button class="btn-cancelar" onclick="cerrarModalNuevoLote()">Cancelar</button>
       </div>
     </div>
   </div>
+
 
   <!-- 🔹 Modal: Baja -->
   <div id="modalBaja" class="modal">

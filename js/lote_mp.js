@@ -13,6 +13,46 @@ const bodyHistorial = document.getElementById("bodyHistorial");
 let loteSeleccionado = null;
 let todosLosLotes = []; // almacena todos los lotes cargados
 
+async function cargarProveedoresPorMaterial(id_mp) {
+  try {
+    // Primero obtenemos los IDs de proveedor principal y secundario
+    const { data: matData, error: matError } = await supabaseClient
+      .from("materiales")
+      .select("id_proveedor, id_proveedorsec")
+      .eq("id_mp", id_mp)
+      .single();
+
+    if (matError || !matData) throw matError || new Error("No se encontró la materia prima");
+
+    const idsProveedores = [matData.id_proveedor, matData.id_proveedorsec].filter(Boolean);
+    const selProveedor = document.getElementById("nuevoProveedor");
+
+    if (!idsProveedores.length) {
+      selProveedor.innerHTML = "<option value=''>No hay proveedores asociados</option>";
+      return;
+    }
+
+    // Ahora obtenemos los datos de esos proveedores
+    const { data: proveedores, error: provError } = await supabaseClient
+      .from("proveedor")
+      .select("id_proveedor, nombre")
+      .in("id_proveedor", idsProveedores);
+
+    if (provError || !proveedores?.length) {
+      selProveedor.innerHTML = "<option value=''>No se encontraron proveedores</option>";
+      console.error("Error cargando proveedores:", provError);
+      return;
+    }
+
+    selProveedor.innerHTML = `<option value="">-- Seleccionar proveedor --</option>` +
+      proveedores.map(p => `<option value="${p.id_proveedor}">${p.nombre}</option>`).join("");
+
+  } catch (err) {
+    console.error("Error en cargarProveedoresPorMaterial:", err);
+    document.getElementById("nuevoProveedor").innerHTML = "<option value=''>Error al cargar</option>";
+  }
+}
+
 /* ---------------------
    CARGA PRINCIPAL DE LOTES
 --------------------- */
@@ -26,7 +66,7 @@ async function cargarLotes() {
     if (error) throw error;
 
     todosLosLotes = lotes;
-    mostrarLotesEnTabla(lotes);    
+    mostrarLotesEnTabla(lotes);
   } catch (err) {
     console.error("Error al cargar lotes:", err);
     Swal.fire("Error", "❌ Error al cargar los lotes. Ver consola.", "error");
@@ -55,6 +95,7 @@ function calcularEstadoLote({ cantidad_disponible, fecha_caducidad }) {
 --------------------- */
 function abrirModalNuevoLote() {
   document.getElementById("nuevoIdMp").innerHTML = "<option value=''>Cargando...</option>";
+  document.getElementById("nuevoProveedor").innerHTML = "<option value=''>Seleccione un proveedor</option>";
   document.getElementById("nuevoLote").value = "";
   document.getElementById("nuevoCantidad").value = "";
   document.getElementById("nuevoFechaIngreso").value = "";
@@ -62,8 +103,16 @@ function abrirModalNuevoLote() {
 
   cargarMateriasParaSelect().then(() => {
     document.getElementById("modalNuevoLote").style.display = "block";
+
+    // Cada vez que cambie la materia prima, cargamos sus proveedores
+    document.getElementById("nuevoIdMp").addEventListener("change", (e) => {
+      const idMp = e.target.value;
+      if (idMp) cargarProveedoresPorMaterial(idMp);
+      else document.getElementById("nuevoProveedor").innerHTML = "<option value=''>Seleccione una materia prima primero</option>";
+    });
   });
 }
+
 
 function cerrarModalNuevoLote() {
   document.getElementById("modalNuevoLote").style.display = "none";
@@ -105,11 +154,12 @@ function generarCodigoLote(id_mp) {
 /* Guardar nuevo lote */
 async function guardarNuevoLote() {
   const id_mp = document.getElementById("nuevoIdMp").value;
+  const id_proveedor = document.getElementById("nuevoProveedor").value;
   const cantidad = parseFloat(document.getElementById("nuevoCantidad").value);
   const fecha_ingreso = document.getElementById("nuevoFechaIngreso").value;
   const fecha_caducidad = document.getElementById("nuevoFechaCaducidad").value;
 
-  if (!id_mp || !cantidad || !fecha_ingreso || !fecha_caducidad) {
+  if (!id_mp || !id_proveedor || !cantidad || !fecha_ingreso || !fecha_caducidad) {
     Swal.fire("Campos incompletos", "Completa todos los campos antes de guardar.", "warning");
     return;
   }
@@ -125,7 +175,6 @@ async function guardarNuevoLote() {
     const siguienteId = maxLoteData?.length ? maxLoteData[0].id_lote + 1 : 1;
     const codigoLote = `LOT-MP${id_mp}-${siguienteId}`;
 
-    // Calcular disponibilidad inicial según cantidad y fecha
     const { text: disponibilidad } = calcularEstadoLote({
       cantidad_disponible: cantidad,
       fecha_caducidad
@@ -133,6 +182,7 @@ async function guardarNuevoLote() {
 
     const nuevoLote = {
       id_mp: parseInt(id_mp),
+      id_proveedor: parseInt(id_proveedor),
       lote: codigoLote,
       cantidad,
       cantidad_disponible: cantidad,
@@ -157,6 +207,7 @@ async function guardarNuevoLote() {
     Swal.fire("Error", "No se pudo guardar el nuevo lote.", "error");
   }
 }
+
 
 /* ---------------------
    MODAL BAJA
