@@ -498,7 +498,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     planDiv.appendChild(card);
 });
 
-       // 🔹 Select de OPs (mostrar todas las planificaciones desde hoy en adelante)
+           // 🔹 Select de OPs (mostrar todas las planificaciones desde hoy en adelante)
 const opSelect = document.createElement('select');
 opSelect.id = `opSelectLinea-${i}`;
 
