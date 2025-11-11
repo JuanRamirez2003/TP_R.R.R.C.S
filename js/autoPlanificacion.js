@@ -361,12 +361,19 @@ async function planificarSemana(modoAleatorio = false) {
   const ordenesFiltradas = ordenes.filter(op => !idsFijadas.includes(op.id_orden_produccion));
   console.log("Órdenes a planificar:", ordenesFiltradas);
   // Ordenar por prioridad
-  const prioridadOrden = { urgente: 1, alta: 2, normal: 3, baja: 4 };
+  /*const prioridadOrden = { urgente: 1, alta: 2, normal: 3, baja: 4 };
   ordenesFiltradas.sort(
     (a, b) =>
       (prioridadOrden[a.prioridad?.toLowerCase()] || 5) -
       (prioridadOrden[b.prioridad?.toLowerCase()] || 5)
-  );
+  );*/
+
+  // --- Ordenar por fecha de entrega más próxima ---
+  ordenesFiltradas.sort((a, b) => {
+    const fechaA = new Date(a.fecha_entrega);
+    const fechaB = new Date(b.fecha_entrega);
+    return fechaA - fechaB; 
+  });
 
   // Si está activado el modo aleatorio, desordenar internamente dentro de cada prioridad
   let ordenesParaPlanificar = ordenesFiltradas;
@@ -1691,4 +1698,19 @@ closeAyuda.addEventListener("click", () => {
 
 window.addEventListener("click", (e) => {
   if (e.target === modalAyuda) modalAyuda.style.display = "none";
+});
+//|||||||||||||||||||INFO AYUDA EN PLANIFICACIÓN|||||||||||||||||||||
+
+document.getElementById("btnAyudaColores").addEventListener("click", () => {
+  document.getElementById("modalAyudaColores").style.display = "block";
+});
+
+document.getElementById("cerrarModalAyudaColores").addEventListener("click", () => {
+  document.getElementById("modalAyudaColores").style.display = "none";
+});
+
+window.addEventListener("click", (event) => {
+  if (event.target.id === "modalAyudaColores") {
+    document.getElementById("modalAyudaColores").style.display = "none";
+  }
 });
