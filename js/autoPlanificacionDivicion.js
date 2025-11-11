@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 function calcularFechas() {
   fechasMostrar = [];
   const hoy = new Date();
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 7; i++) {
     const fecha = new Date();
     fecha.setDate(hoy.getDate() + i);
     fechasMostrar.push(fecha);
