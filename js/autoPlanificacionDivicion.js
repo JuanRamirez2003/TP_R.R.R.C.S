@@ -717,17 +717,58 @@ function mostrarAviso(mensaje) {
 }
 // ---------------------- Fijar / Desfijar OP ----------------------
 async function toggleFijada(id_op, nuevoEstado, dia) {
-  const { error } = await supabaseClient
-    .from("planificacion_semanal")
-    .update({ fijada: nuevoEstado })
-    .eq("id_op", id_op)
-    .eq('dia', dia);;
+  try {
+    // Obtener todas las planificaciones de esa OP
+    const { data: planificaciones, error: errorFetch } = await supabaseClient
+      .from("planificacion_semanal")
+      .select("*")
+      .eq("id_op", id_op);
 
-  if (error) {
-    console.error("Error al actualizar fijada:", error);
-    mostrarAviso("No se pudo cambiar el estado de fijada");
+    if (errorFetch) {
+      console.error("Error al consultar la OP:", errorFetch);
+      mostrarAviso("No se pudo verificar si la OP está dividida");
+      return;
+    }
+
+    // Determinar si la OP está dividida
+    let opDividida = false;
+    if (planificaciones.length > 1) {
+      opDividida = true; // hay varias partes
+    } else if (planificaciones.length === 1) {
+      const cantidadLotes = JSON.parse(planificaciones[0].cantidad_lotes);
+      if (cantidadLotes.lotes_incluidos.length < cantidadLotes.lotes_total) {
+        opDividida = true;
+      }
+    }
+
+    // Si la OP está dividida, mostrar aviso diferente según el estado
+    if (opDividida) {
+      if (nuevoEstado) {
+        mostrarAviso("⚠️ Esta OP está dividida. Todas sus partes se fijarán donde estén (línea y dia).");
+      } else {
+        mostrarAviso("ℹ️ Esta OP está dividida. Todas sus partes se des-fijarán(línea y dia).");
+      }
+    }
+
+    // Actualizar todas las partes de la OP para el día indicado
+    const { error } = await supabaseClient
+      .from("planificacion_semanal")
+      .update({ fijada: nuevoEstado })
+      .eq("id_op", id_op)
+      .eq("dia", dia);
+
+    if (error) {
+      console.error("Error al actualizar fijada:", error);
+      mostrarAviso("No se pudo cambiar el estado de fijada");
+    }
+  } catch (err) {
+    console.error("Error en toggleFijada:", err);
+    mostrarAviso("Ocurrió un error inesperado");
   }
+  renderAgendaDesdeSupabase();
 }
+
+
 // ---------------------- Fijar / Desfijar OP ----------------------
 
 
@@ -1628,19 +1669,4 @@ closeAyuda.addEventListener("click", () => {
 
 window.addEventListener("click", (e) => {
   if (e.target === modalAyuda) modalAyuda.style.display = "none";
-});
-//|||||||||||||||||||INFO AYUDA EN PLANIFICACIÓN|||||||||||||||||||||
-
-document.getElementById("btnAyudaColores").addEventListener("click", () => {
-  document.getElementById("modalAyudaColores").style.display = "block";
-});
-
-document.getElementById("cerrarModalAyudaColores").addEventListener("click", () => {
-  document.getElementById("modalAyudaColores").style.display = "none";
-});
-
-window.addEventListener("click", (event) => {
-  if (event.target.id === "modalAyudaColores") {
-    document.getElementById("modalAyudaColores").style.display = "none";
-  }
 });

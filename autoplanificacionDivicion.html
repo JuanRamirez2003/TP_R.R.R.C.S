@@ -460,7 +460,7 @@
       font-size: 22px;
     }
 
-        .btn-coloresAyuda {
+    .btn-coloresAyuda {
       background: #2196f3;
       color: white;
       border: none;
@@ -624,7 +624,7 @@
       <button id="btnCambiarPlanificacion">Cambiar Planificación</button>
 
       <button id="btnVolver">Volver</button>
-            <button id="btnAyudaColores" class="btn-coloresAyuda" title="Ver ayuda">❔ </button>
+      <button id="btnAyudaColores" class="btn-coloresAyuda" title="Ver ayuda">❔ </button>
 
     </div>
 
@@ -745,15 +745,17 @@
         <ul>
           <li>Seleccioná la línea de producción desde el menú desplegable.</li>
           <li>Use el buscador para filtrar las OPs pendientes por número de OP o Producto.</li>
-          <li>Arrastre una OP desde “OP pendientes” hasta la “línea seleccionada” para agregar a la planificación de la línea elegida.</li>
-          <li>Arrastre una OP desde “línea seleccionada” hasta la “OP pendientes” para sacarla de la planificación de la línea elegida.</li>
+          <li>Arrastre una OP desde “OP pendientes” hasta la “línea seleccionada” para agregar a la planificación de la
+            línea elegida.</li>
+          <li>Arrastre una OP desde “línea seleccionada” hasta la “OP pendientes” para sacarla de la planificación de la
+            línea elegida.</li>
           <!--<li>Podés cambiar el orden para modificar la secuencia de trabajo.</li>-->
           <li>Use el botón Guardar la planificación actual.</li>
         </ul>
 
         <p>🎨 <strong>Significado de colores: Prioridad de las OPs </strong></p>
         <ul>
-                    <li>
+          <li>
             <span class="color-box urgente">Urgente</span>
             — Prioridad máxima, 0 (cero) o menos días para la entrega.
           </li>
@@ -773,7 +775,7 @@
         </ul>
       </div>
     </div>
-        <!-- Modal de Ayuda de Colores -->
+    <!-- Modal de Ayuda de Colores -->
     <div id="modalAyudaColores" class="modal">
       <div class="modal-content">
 
@@ -806,6 +808,22 @@
         </ul>
       </div>
     </div>
+    <script>
+      document.getElementById("btnAyudaColores").addEventListener("click", () => {
+        document.getElementById("modalAyudaColores").style.display = "block";
+      });
+
+      document.getElementById("cerrarModalAyudaColores").addEventListener("click", () => {
+        document.getElementById("modalAyudaColores").style.display = "none";
+      });
+
+      window.addEventListener("click", (event) => {
+        if (event.target.id === "modalAyudaColores") {
+          document.getElementById("modalAyudaColores").style.display = "none";
+        }
+      });
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/autoPlanificacionDivicion.js"></script>
 </body>
