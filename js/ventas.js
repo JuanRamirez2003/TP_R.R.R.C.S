@@ -616,8 +616,7 @@ async function listarOrdenes() {
   try {
     const { data, error } = await supabaseClient
       .from('orden_ventas')
-      .select('*, clientes(nombre), detalle_ordenes(id_producto, cantidad, productos(nombre, precio_unitario))');
-    if (error) throw error;
+      .select('*, clientes(nombre), detalle_ordenes(id_producto, cantidad, productos(nombre, precio_unitario))').order('id_orden', { ascending: false });
 
     const tbody = document.querySelector('#tablaOrdenes tbody');
     tbody.innerHTML = '';
