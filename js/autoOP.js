@@ -23,6 +23,7 @@ const tolerancia = 0.1;    // 10% de tolerancia
 let detallesExcedidosPorProducto = new Map();
 let cantTotalCajasOP = 0;
 let materialesFaltantesPorProducto = new Map();
+let opCreadas = [];
 
 async function generarOrdenesProduccionAutomatica() {
     try {
@@ -130,8 +131,8 @@ function agruparOVsPorProducto(listaOVs) {
 
 async function crearOrdenesProduccion() {
     console.log("⚙️ Creando OP por producto...");
-
-    const opCreadas = []; // inicializar al inicio de la función
+    //const detallesQueQuedaron =[];
+    opCreadas = []; // inicializar al inicio de la función
 
 
     detallesExcedidosPorProducto = new Map();
@@ -169,7 +170,7 @@ async function crearOrdenesProduccion() {
                     cajasOP += det.cantidad;
                 }
             }
-//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+            //[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
             const minCajasOP = minLotesProduccion * cantCajasLote;
             if (cajasOP < minCajasOP * (1 - tolerancia)) {
                 console.warn(
@@ -193,7 +194,7 @@ async function crearOrdenesProduccion() {
                 }
             }
 
-//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+            //[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
 
             const cantidadLotesOP = Math.ceil(cajasOP / cantCajasLote);
             const materialesNecesarios = await detalleMateriales(detallesOP[0].id_producto, cantidadLotesOP);
@@ -239,7 +240,7 @@ async function crearOrdenesProduccion() {
                     detalle_materiales: materialesNecesarios,
                     fecha_emision: fecha,
                     estado: 'Pendiente',
-                    fecha_estimada_entrega:obtenerFechaEntregaMasCercana(detallesOP),
+                    fecha_estimada_entrega: obtenerFechaEntregaMasCercana(detallesOP),
                     prioridad: calcularPrioridad(new Date(obtenerFechaEntregaMasCercana(detallesOP)))
                 }])
                 .select();
@@ -288,8 +289,34 @@ async function crearOrdenesProduccion() {
 
 
         }
+
     }
 
+    ovPendientes = [];
+    ovPendientes = await obtenerOVsDisponibles();
+
+    const aa = agruparOVsPorProducto(ovPendientes);
+    //console.log("###############", ovPorProducto)
+    // Segunda pasada: crear OP para detalles que sí cumplen solos
+    for (const [producto, detallesArray] of ovPorProducto.entries()) {
+        for (const det of detallesArray) {
+
+            const minCajasOP = minLotesProduccion * cantCajasLote;
+            const maxCajasOP = minLotesProduccion * cantCajasLote;
+
+            if (det.cantidad >= minCajasOP * (1 - tolerancia) &&
+                det.cantidad <= maxCajasOP) {
+
+                console.log(`♻️ Segunda pasada: creando OP individual para ${det.producto} (${det.id_detalle})`);
+
+                await crearOPdesdeDetallesIndividuales(det);
+            }
+        }
+    }
+
+    await procesarPasadaFinalRestos();
+
+    //console.log("DETALLE DE OV QUE QUEDARON FUERA ",detallesQueQuedaron);
     console.log("🎯 Todas las OP creadas correctamente.");
     console.log("📌 Detalles que necesitan OP especial/manual:", detallesExcedidosPorProducto);
     console.log("📦 Materiales faltantes para OP (para generar OC):", materialesFaltantesPorProducto);
@@ -608,32 +635,424 @@ function mostrarOPenPantalla(opCreadas, opExcedidas) {
 }
 
 function obtenerFechaEntregaMasCercana(detallesOP) {
-  if (!Array.isArray(detallesOP) || detallesOP.length === 0) return null;
+    if (!Array.isArray(detallesOP) || detallesOP.length === 0) return null;
 
-  const fechaMasCercana = detallesOP
-    .map(d => new Date(d.fecha_est))
-    .filter(f => !isNaN(f)) // descarta fechas inválidas
-    .sort((a, b) => a - b)[0]; // ordena y toma la menor
+    const fechaMasCercana = detallesOP
+        .map(d => new Date(d.fecha_est))
+        .filter(f => !isNaN(f)) // descarta fechas inválidas
+        .sort((a, b) => a - b)[0]; // ordena y toma la menor
     //console.log("OOPP y FECHA",fechaMasCercana);
-  return fechaMasCercana
-    ? fechaMasCercana.toISOString().split('T')[0]
-    : null;
+    return fechaMasCercana
+        ? fechaMasCercana.toISOString().split('T')[0]
+        : null;
 }
 
 function calcularPrioridad(fechaEntrega) {
-  const hoy = new Date();
-  
-  const diasRestantes = Math.ceil((fechaEntrega - hoy) / (1000 * 60 * 60 * 24));
+    const hoy = new Date();
 
-  let prioridad;
-  if (diasRestantes <= 0) prioridad = 'urgente';     // ya vencida
-  else if (diasRestantes <= 2) prioridad = 'alta';
-  else if (diasRestantes <= 5) prioridad = 'normal';
-  else prioridad = 'baja';
+    const diasRestantes = Math.ceil((fechaEntrega - hoy) / (1000 * 60 * 60 * 24));
 
-  return prioridad;
+    let prioridad;
+    if (diasRestantes <= 0) prioridad = 'urgente';     // ya vencida
+    else if (diasRestantes <= 2) prioridad = 'alta';
+    else if (diasRestantes <= 5) prioridad = 'normal';
+    else prioridad = 'baja';
+
+    return prioridad;
 }
+
+async function crearOPdesdeDetallesIndividuales(det) {
+
+    console.log(`🔍 Intentando crear OP individual para ${det.producto} (detalle ${det.id_detalle})`);
+
+    const minCajasOP = minLotesProduccion * cantCajasLote;
+    const maxCajasOP = minLotesProduccion * cantCajasLote;
+
+    // ✔ Validamos que SOLO este detalle cumple los requisitos
+    if (det.cantidad < minCajasOP * (1 - tolerancia)) {
+        console.warn(`❌ El detalle ${det.id_detalle} NO alcanza el mínimo. No se crea OP individual.`);
+        return false;
+    }
+
+    if (det.cantidad > maxCajasOP) {
+        console.warn(`❌ El detalle ${det.id_detalle} supera el máximo permitido para una OP.`);
+        return false;
+    }
+
+    // ✔ Calcular cuántos lotes se necesitan
+    const cantidadLotesOP = Math.ceil(det.cantidad / cantCajasLote);
+
+    // ✔ Obtener materiales necesarios
+    const materialesNecesarios = await detalleMateriales(det.id_producto, cantidadLotesOP);
+
+    const { ok, faltantes } = await verificarStockSuficiente(materialesNecesarios);
+    if (!ok) {
+        console.warn(`🚫 Materiales insuficientes para OP individual de ${det.producto}.`);
+        console.warn("Faltantes:", faltantes);
+
+        if (!materialesFaltantesPorProducto.has(det.producto)) {
+            materialesFaltantesPorProducto.set(det.producto, []);
+        }
+        const lista = materialesFaltantesPorProducto.get(det.producto);
+        faltantes.forEach(mat => {
+            if (!lista.some(m => m.id_mp === mat.id_mp)) lista.push(mat);
+        });
+
+        return false;
+    }
+
+    // ✔ Crear número de OP
+    const numeroOP = await generarNumeroOP();
+    const fecha = new Date().toISOString();
+    const idReceta = materialesNecesarios[0].id_receta;
+
+    // ✔ Objeto para ver_orden
+    const verOrdenOP = [{
+        nombre: det.producto,
+        cantidad: minLotesProduccion
+    }];
+   // console.log("WWWWWWWWWWWWWWWWWW",det);
+    // ✔ Insertar OP en base de datos
+    const { data: opData, error: opError } = await supabaseClient
+        .from('orden_produccion')
+        .insert([{
+            numero_op: numeroOP,
+            ver_orden: verOrdenOP,
+            id_producto: det.id_producto,
+            cant_lote: cantidadLotesOP,
+            id_receta: idReceta,
+            detalle_materiales: materialesNecesarios,
+            fecha_emision: fecha,
+            estado: 'Pendiente',
+            fecha_estimada_entrega:det.fecha_est,
+            prioridad: calcularPrioridad(new Date(det.fecha_entrega))
+        }])
+        .select();
+
+    if (opError || !opData || opData.length === 0) {
+        console.error("❌ Error al crear la OP individual:", opError);
+        return false;
+    }
+
+    const idOrden = opData[0].id_orden_produccion;
+
+    // ✔ Guardar relación OV ↔ OP
+    await guardarOVsEnOPAutomatica(idOrden, [det]);
+
+    // ✔ Reservar lotes FEFO
+    for (const mat of materialesNecesarios) {
+        const reservado = await reservarLotes(idOrden, mat.id_mp, mat.cantidad_total);
+        if (!reservado) {
+            console.warn(`⚠️ No se pudo reservar material ${mat.nombre_material} para OP individual.`);
+        }
+    }
+
+    console.log(`✅ OP individual creada para ${det.producto} con ${det.cantidad} cajas → OP ${numeroOP}`);
+
+    opCreadas.push({
+        numero_op: numeroOP,
+        producto: det.producto,
+        cant_lote: cantidadLotesOP
+    });
+
+    return {
+        numero_op: numeroOP,
+        producto: det.producto,
+        cant_lote: cantidadLotesOP
+    };
+}
+
+/**
+ 
+
+async function crearOPSUrg(det, superUrgente) {
+
+
+    console.log(`🔍 Crear OP individual para ${det.producto} | modo: ${modo}`);
+
+    const minCajasOP = minLotesProduccion * cantCajasLote;
+    const maxCajasOP = minLotesProduccion * cantCajasLote;
+
+    // ⭐ MODO SUPER URGENTE:
+    if (!superUrgente) {
+        retunr
+    }
+
+    console.log("🚨 MODO SUPER URGENTE — se omiten validaciones de rango");
+    // NO revisa mínimo NI máximo
+
+    const cantidadLotesOP = Math.ceil(det.cantidad / cantCajasLote);
+
+    const materialesNecesarios = await detalleMateriales(det.id_producto, cantidadLotesOP);
+
+    const { ok, faltantes } = await verificarStockSuficiente(materialesNecesarios);
+    if (!ok) {
+        console.warn(`🚫 Materiales insuficientes para OP individual de ${det.producto}.`);
+
+        if (!materialesFaltantesPorProducto.has(det.producto)) {
+            materialesFaltantesPorProducto.set(det.producto, []);
+        }
+        const lista = materialesFaltantesPorProducto.get(det.producto);
+        faltantes.forEach(mat => {
+            if (!lista.some(m => m.id_mp === mat.id_mp)) lista.push(mat);
+        });
+
+        return false;
+    }
+
+    // ===========================================================
+    const numeroOP = await generarNumeroOP();
+    const fecha = new Date().toISOString();
+    const idReceta = materialesNecesarios[0].id_receta;
+
+    const verOrdenOP = [{
+        nombre: det.producto,
+        cantidad: minLotesProduccion
+    }];
+
+    const { data: opData, error: opError } = await supabaseClient
+        .from('orden_produccion')
+        .insert([{
+            numero_op: numeroOP,
+            ver_orden: verOrdenOP,
+            id_producto: det.id_producto,
+            cant_lote: cantidadLotesOP,
+            id_receta: idReceta,
+            detalle_materiales: materialesNecesarios,
+            fecha_emision: fecha,
+            estado: 'Pendiente',
+            fecha_estimada_entrega: det.fecha_est,
+            prioridad: calcularPrioridad(new Date(det.fecha_entrega)),
+            super_urgente: (modo === "superUrgente") // nueva columna opcional
+        }])
+        .select();
+
+    if (opError || !opData || opData.length === 0) {
+        console.error("❌ Error creando OP individual:", opError);
+        return false;
+    }
+
+    const idOrden = opData[0].id_orden_produccion;
+
+    await guardarOVsEnOPAutomatica(idOrden, [det]);
+
+    for (const mat of materialesNecesarios) {
+        const reservado = await reservarLotes(idOrden, mat.id_mp, mat.cantidad_total);
+        if (!reservado) {
+            console.warn(`⚠️ No se pudo reservar material ${mat.nombre_material}.`);
+        }
+    }
+
+    console.log(`✅ OP individual creada para ${det.producto} → OP ${numeroOP}`);
+
+    opCreadas.push({
+        numero_op: numeroOP,
+        producto: det.producto,
+        cant_lote: cantidadLotesOP,
+        modo
+    });
+
+    return {
+        numero_op: numeroOP,
+        producto: det.producto,
+        cant_lote: cantidadLotesOP,
+        modo
+    };
+}
+
+
+
+ */
+
+
+async function procesarPasadaFinalRestos() {
+    console.log("♻️ Pasada final: creando OP para restos por producto...");
+
+    // recargar OV pendientes
+    ovPendientes = await obtenerOVsDisponibles();
+
+    // reagrupar por producto
+    agruparOVsPorProducto(ovPendientes);
+
+    const UMBRAL_OP_INDIVIDUAL = 50;
+
+    for (const [producto, detallesArray] of ovPorProducto.entries()) {
+        if (!detallesArray || detallesArray.length === 0) continue;
+
+        const pequeños = [];
+
+        for (const det of detallesArray) {
+            const esMultiploLote = (det.cantidad % cantCajasLote === 0);
+            const esGrande = (det.cantidad > UMBRAL_OP_INDIVIDUAL);
+
+            if (esMultiploLote || esGrande) {
+                console.log(`📦 OP individual (regla) para ${det.producto} det:${det.id_detalle} → ${det.cantidad} cajas`);
+
+                const creada = await crearOPdesdeDetallesIndividuales22(det);
+                if (!creada) {
+                    console.warn(`⚠️ No se pudo crear OP individual para det ${det.id_detalle}`);
+                }
+            } else {
+                pequeños.push(det);
+            }
+        }
+
+        // OP final
+        if (pequeños.length > 0) {
+            const totalCajas = pequeños.reduce((s, d) => s + d.cantidad, 0);
+            if (totalCajas <= 0) continue;
+
+            const cantidadLotes = Math.ceil(totalCajas / cantCajasLote);
+            console.log(`🟨 OP FINAL (${producto}) → ${totalCajas} cajas → ${cantidadLotes} lotes`);
+
+            const materiales = await detalleMateriales(pequeños[0].id_producto, cantidadLotes);
+            const { ok, faltantes } = await verificarStockSuficiente(materiales);
+
+            if (!ok) {
+                console.warn(`⚠️ No hay stock para OP final de ${producto}`);
+                continue;
+            }
+
+            // crear OP final
+            const numeroOP = await generarNumeroOP();
+            const fecha = new Date().toISOString();
+            const idReceta = materiales[0]?.id_receta || null;
+            const verOrdenOP = [{ nombre: producto, cantidad: cantidadLotes }];
+
+            const { data: opData, error } = await supabaseClient
+                .from('orden_produccion')
+                .insert([{
+                    numero_op: numeroOP,
+                    ver_orden: verOrdenOP,
+                    id_producto: pequeños[0].id_producto,
+                    cant_lote: cantidadLotes,
+                    id_receta: idReceta,
+                    detalle_materiales: materiales,
+                    fecha_emision: fecha,
+                    estado: 'Pendiente',
+                    fecha_estimada_entrega: obtenerFechaEntregaMasCercana(pequeños),
+                    prioridad: calcularPrioridad(new Date(obtenerFechaEntregaMasCercana(pequeños)))
+                }])
+                .select();
+
+            if (!error && opData?.length) {
+                const idOrden = opData[0].id_orden_produccion;
+
+                for (const mat of materiales) {
+                    await reservarLotes(idOrden, mat.id_mp, mat.cantidad_total);
+                }
+
+                await guardarOVsEnOPAutomatica(idOrden, pequeños);
+
+                opCreadas.push({
+                    numero_op: numeroOP,
+                    producto,
+                    cant_lote: cantidadLotes
+                });
+
+                console.log(`✅ OP FINAL creada: OP ${numeroOP}`);
+            }
+        }
+    }
+
+    console.log("♻️ Pasada final completada.");
+}
+
+
 
 document.addEventListener("DOMContentLoaded", () => {
     window.generarOrdenesProduccionAutomatica = generarOrdenesProduccionAutomatica;
 });
+
+
+async function crearOPdesdeDetallesIndividuales22(det) {
+
+    console.log(`🔍 Intentando crear OP individual para ${det.producto} (detalle ${det.id_detalle})`);
+
+    const minCajasOP = minLotesProduccion * cantCajasLote;
+    const maxCajasOP = minLotesProduccion * cantCajasLote;
+
+
+
+    // ✔ Calcular cuántos lotes se necesitan
+    const cantidadLotesOP = Math.ceil(det.cantidad / cantCajasLote);
+
+    // ✔ Obtener materiales necesarios
+    const materialesNecesarios = await detalleMateriales(det.id_producto, cantidadLotesOP);
+
+    const { ok, faltantes } = await verificarStockSuficiente(materialesNecesarios);
+    if (!ok) {
+        console.warn(`🚫 Materiales insuficientes para OP individual de ${det.producto}.`);
+        console.warn("Faltantes:", faltantes);
+
+        if (!materialesFaltantesPorProducto.has(det.producto)) {
+            materialesFaltantesPorProducto.set(det.producto, []);
+        }
+        const lista = materialesFaltantesPorProducto.get(det.producto);
+        faltantes.forEach(mat => {
+            if (!lista.some(m => m.id_mp === mat.id_mp)) lista.push(mat);
+        });
+
+        return false;
+    }
+
+    // ✔ Crear número de OP
+    const numeroOP = await generarNumeroOP();
+    const fecha = new Date().toISOString();
+    const idReceta = materialesNecesarios[0].id_receta;
+
+    // ✔ Objeto para ver_orden
+    const verOrdenOP = [{
+        nombre: det.producto,
+        cantidad: cantidadLotesOP
+    }];
+   // console.log("WWWWWWWWWWWWWWWWWW",det);
+    // ✔ Insertar OP en base de datos
+    const { data: opData, error: opError } = await supabaseClient
+        .from('orden_produccion')
+        .insert([{
+            numero_op: numeroOP,
+            ver_orden: verOrdenOP,
+            id_producto: det.id_producto,
+            cant_lote: cantidadLotesOP,
+            id_receta: idReceta,
+            detalle_materiales: materialesNecesarios,
+            fecha_emision: fecha,
+            estado: 'Pendiente',
+            fecha_estimada_entrega:det.fecha_est,
+            prioridad: calcularPrioridad(new Date(det.fecha_entrega))
+        }])
+        .select();
+
+    if (opError || !opData || opData.length === 0) {
+        console.error("❌ Error al crear la OP individual:", opError);
+        return false;
+    }
+
+    const idOrden = opData[0].id_orden_produccion;
+
+    // ✔ Guardar relación OV ↔ OP
+    await guardarOVsEnOPAutomatica(idOrden, [det]);
+
+    // ✔ Reservar lotes FEFO
+    for (const mat of materialesNecesarios) {
+        const reservado = await reservarLotes(idOrden, mat.id_mp, mat.cantidad_total);
+        if (!reservado) {
+            console.warn(`⚠️ No se pudo reservar material ${mat.nombre_material} para OP individual.`);
+        }
+    }
+
+    console.log(`✅ OP individual creada para ${det.producto} con ${det.cantidad} cajas → OP ${numeroOP}`);
+
+    opCreadas.push({
+        numero_op: numeroOP,
+        producto: det.producto,
+        cant_lote: cantidadLotesOP
+    });
+
+    return {
+        numero_op: numeroOP,
+        producto: det.producto,
+        cant_lote: cantidadLotesOP
+    };
+}
