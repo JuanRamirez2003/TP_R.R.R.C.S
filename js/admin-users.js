@@ -7,11 +7,11 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // Restaurar ID de operario en el backend
 (async () => {
- const userId = localStorage.getItem("currentUserId");
-if (userId) {
-  const { error } = await supabaseClient.rpc("set_app_user_id", { value: userId });
-  if (error) console.error("Error al restaurar ID de operario:", error);
-}
+  const userId = localStorage.getItem("currentUserId");
+  if (userId) {
+    const { error } = await supabaseClient.rpc("set_app_user_id", { value: userId });
+    if (error) console.error("Error al restaurar ID de operario:", error);
+  }
 })();
 
 // ================== FUNCIONES ==================
@@ -37,26 +37,27 @@ function abrirModal(usuario) {
 function cerrarModal() {
   document.getElementById('modalEditar').style.display = 'none';
 }
-const messageBox = document.getElementById('messageBox');
+const messageBox = document.getElementById('messageBox')
+
 
 function showMessage(text, type = "info") {
-    messageBox.textContent = text;
+  messageBox.textContent = text;
 
-    // Cambiar colores según tipo
-    switch(type) {
-        case "success": messageBox.style.background = "green"; break;
-        case "error": messageBox.style.background = "red"; break;
-        case "warning": messageBox.style.background = "orange"; break;
-        default: messageBox.style.background = "blue";
-    }
+  // Cambiar colores según tipo
+  switch (type) {
+    case "success": messageBox.style.background = "green"; break;
+    case "error": messageBox.style.background = "red"; break;
+    case "warning": messageBox.style.background = "orange"; break;
+    default: messageBox.style.background = "blue";
+  }
 
-    messageBox.style.display = "block";
-    messageBox.style.opacity = 1;
+  messageBox.style.display = "block";
+  messageBox.style.opacity = 1;
 
-    setTimeout(() => {
-        messageBox.style.opacity = 0;
-        setTimeout(() => messageBox.style.display = "none", 500);
-    }, 3000);
+  setTimeout(() => {
+    messageBox.style.opacity = 0;
+    setTimeout(() => messageBox.style.display = "none", 500);
+  }, 3000);
 }
 
 // ================== EDITAR USUARIO (abre modal) ==================
@@ -100,7 +101,7 @@ async function guardarEdicion() {
       return;
     }
 
-    const areasValidas = ["Ventas","Recursos Humanos","TI","Operario","Supervisor","Gerente General"];
+    const areasValidas = ["Ventas", "Recursos Humanos", "TI", "Operario", "Supervisor", "Gerente General"];
     if (!areasValidas.includes(area)) {
       mensajeModal.textContent = 'Área de trabajo inválida';
       return;
@@ -130,9 +131,9 @@ async function guardarEdicion() {
     mensajeModal.style.color = 'green';
     mensajeModal.textContent = 'Usuario actualizado correctamente';
     setTimeout(() => {
-        cerrarModal();
-        cargarUsuarios();
-        mensajeModal.textContent = '';
+      cerrarModal();
+      cargarUsuarios();
+      mensajeModal.textContent = '';
     }, 1500);
 
   } catch (err) {
@@ -220,15 +221,37 @@ async function eliminarUsuario(e) {
   const tr = e.target.closest('tr');
   const id = tr.dataset.id;
 
-  // Confirmación opcional con HTML en lugar de confirm()
   if (!id) return;
 
   try {
-    const { error } = await supabaseClient.from('usuarios').delete().eq('id', id);
-    if (error) {
+    // Verificar el estado actual del usuario
+    const { data, error: fetchError } = await supabaseClient
+      .from('usuarios')
+      .select('estado')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) {
+      showMessage('Error al verificar el estado del usuario', 'error');
+      return;
+    }
+
+    if (data.estado === 'Inactivo') {
+      showMessage('El usuario ya está inactivo y no se puede eliminar nuevamente', 'error');
+      return;
+    }
+
+    // Actualizar estado a 'Inactivo'
+    const { error: updateError } = await supabaseClient
+      .from('usuarios')
+      .update({ estado: 'Inactivo' })
+      .eq('id', id);
+
+    if (updateError) {
       showMessage('Error al eliminar usuario', 'error');
       return;
     }
+
     showMessage('Usuario eliminado correctamente', 'success');
     cargarUsuarios();
   } catch (err) {
@@ -238,8 +261,9 @@ async function eliminarUsuario(e) {
 }
 
 
+
 // ================== EVENT DELEGATION ==================
-document.querySelector('#tablaUsuarios tbody').addEventListener('click', function(e) {
+document.querySelector('#tablaUsuarios tbody').addEventListener('click', function (e) {
   if (e.target.classList.contains('btn-edit')) {
     editarUsuario(e);
   } else if (e.target.classList.contains('btn-delete')) {
@@ -260,6 +284,30 @@ function filtrarTabla(inputId, tablaId) {
     tr.style.display = textoFila.includes(filtro) ? '' : 'none';
   });
 }
+
+/*function mostrarAviso(mensaje) {
+  try {
+    const modal = document.getElementById('modalAviso');
+    const mensajeP = document.getElementById('mensajeAvisoTexto');
+    const btnCerrar = document.getElementById('btnCerrarAviso');
+
+    if (!modal || !mensajeP || !btnCerrar) {
+      console.error("⚠️ No se encontró el modal de aviso");
+      return alert(mensaje);
+    }
+
+    mensajeP.innerHTML = mensaje;
+    modal.classList.add('mostrar');
+
+    btnCerrar.onclick = () => modal.classList.remove('mostrar');
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.classList.remove('mostrar');
+    };
+  } catch (err) {
+    console.error("❌ Error al mostrar el aviso:", err);
+    alert(mensaje); // fallback visual si el modal falla
+  }
+}*/
 
 
 // Event listeners de los inputs
