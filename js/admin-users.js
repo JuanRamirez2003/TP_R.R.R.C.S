@@ -166,7 +166,7 @@ async function cargarUsuarios() {
         <td>${u.name}</td>
         <td>${u.estado}</td>
         <td>${u.area}</td>
-        <td>${u.created_at}</td>
+        <td>${u.created_at.split('T')[0]}</td>
         <td>
           <button class="btn-edit">Editar</button>
           <button class="btn-delete">Eliminar</button>

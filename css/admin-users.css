@@ -87,11 +87,15 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 50px; /* deja espacio para el botón */
+
     }
     th, td {
       border: 1px solid #333;
       padding: 8px;
       text-align: left;
+      text-align: center;
+      vertical-align: middle;
+
     }
     th {
       background: #2a2a2a;
