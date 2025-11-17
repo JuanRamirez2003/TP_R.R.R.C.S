@@ -99,6 +99,10 @@ async function prepararNuevaOP() {
   await generarNumeroOP().then(numeroOP => {
     console.log("Número OP generado:", numeroOP);
     document.getElementById('opNumero').value = numeroOP;
+
+    boton.disabled = true;
+    boton.textContent = 'Crear OP';
+    creandoOP = false;
   });
 }
 
@@ -143,6 +147,13 @@ function cancelarOP() {
 // Crear OP y guardar en Supabase
 document.getElementById('opForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  await crearOPSupaBase()
+});
+
+
+async function crearOPSupaBase() {
+
+
   const productos = Array.from(document.querySelectorAll('.producto-item')).map(p => ({
     nombre: p.querySelector('select').value,
     cantidad: parseInt(p.querySelector('input').value, 10)
@@ -208,14 +219,14 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
       return;
     }
   }
-  console.log(idOrden)  
+  console.log(idOrden)
   mostrarMensajeExito(idOrden);
 
   /*
     cancelarOP();
     mostrarSeccion('seguimientoOP');
     cargarOP();*/
-});
+}
 
 async function obtnerIdProducto(nombreProducto, limpiar) {
   const { data, error } = await supabaseClient
@@ -832,8 +843,8 @@ async function mostrarMensajeExito(idOrden) {
     console.log("ESTA ACCCCCAAA");
     console.log(data.ver_orden);
     const productosHtml = data.ver_orden
-    .map(p => `<p>${p.nombre.toUpperCase()}</p>  <p>Cantidad de Lote/s: ${p.cantidad}</p> <p>Cantidad de Cajas Estimadas: ${p.cantidad * cantidadPorLote}</p>`)
-    .join('');
+      .map(p => `<p>${p.nombre.toUpperCase()}</p>  <p>Cantidad de Lote/s: ${p.cantidad}</p> <p>Cantidad de Cajas Estimadas: ${p.cantidad * cantidadPorLote}</p>`)
+      .join('');
 
     const { data: detalleLotes, error: errorLotes } = await supabaseClient
       .from('detalle_lote_op')
@@ -971,7 +982,7 @@ async function mostrarMensajeExito(idOrden) {
 
 
   } catch (err) {
-    console.error("Error en mostrarMensajeExito:", err); 
+    console.error("Error en mostrarMensajeExito:", err);
   }
 }
 
@@ -1249,7 +1260,7 @@ async function editarOP(id_orden_produccion) {
 // Dar de baja una OP y devolver materias primas reservadas a los lotes
 async function eliminarOP(id_orden_produccion) {
   const confirmado = await mostrarConfirmacion("¿Dar de baja esta OP y devolver las materias primas reservadas?");
-if (!confirmado) return;
+  if (!confirmado) return;
 
   console.log("🟢 Dando de baja OP:", id_orden_produccion);
 
@@ -1475,8 +1486,8 @@ async function verDetalleLote(idLote) {
       <p><strong>Fecha Caducidad:</strong> ${lote.fecha_caducidad ? new Date(lote.fecha_caducidad).toLocaleDateString() : '-'}</p>
       <p><strong>Estado:</strong> ${lote.estado}</p>
     `;
-  //<p><strong>Lote:</strong> ${lote.lote}</p>
-  //<p><strong>Cantidad Consumida:</strong> ${lote.cantidad_consumida}</p>
+    //<p><strong>Lote:</strong> ${lote.lote}</p>
+    //<p><strong>Cantidad Consumida:</strong> ${lote.cantidad_consumida}</p>
     modal.style.display = 'flex';
 
   } catch (err) {
@@ -1628,3 +1639,23 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+//----------IMPIDE EL DOBEL CLIKC DE creaOP
+const boton = document.getElementById('btnCrearOP');
+let creandoOP = false;
+
+boton.addEventListener('click', async () => {
+  if (creandoOP || boton.disabled) return;
+  creandoOP = true;
+  boton.disabled = true;
+  boton.textContent = 'Creando...';
+
+  try {
+    await crearOPSupaBase();
+  } catch (err) {
+    console.error(err);
+    mostrarAviso("❌ Error al crear la OP.");
+    boton.disabled = false;
+    boton.textContent = 'Crear OP';
+    creandoOP = false;
+  }
+});
