@@ -153,6 +153,17 @@ document.getElementById('opForm').addEventListener('submit', async (e) => {
 
 async function crearOPSupaBase() {
 
+  const cantidadValida = await validarCantidadOVs();
+  if (!cantidadValida) {
+    mostrarAviso("❌ No se puede crear la OP: las cajas OV exceden la cantidad de cajas a producir.");
+    boton.disabled = true;
+    boton.textContent = 'Crear OP';
+    creandoOP = false;
+    actualizarDetalleMateriales();
+    return;
+  }
+
+
 
   const productos = Array.from(document.querySelectorAll('.producto-item')).map(p => ({
     nombre: p.querySelector('select').value,
@@ -759,15 +770,15 @@ async function validarCantidadOVs() {
 
   } catch (err) {
     console.error("Error general validando cantidades de OV:", err);
-    mostrarAviso("❌ Ocurrió un error al validar las cantidades de OV. Revisa la consola.");//alert VER
+    mostrarAviso("❌ Ocurrió un error al validar las cantidades de OV.");//alert VER
     return false;
   }
 }
 
 async function guardarOVsEnOP(idOP) {
   try {
-    const cantidadValida = await validarCantidadOVs();
-    if (!cantidadValida) return;
+    //const cantidadValida = await validarCantidadOVs();
+    //if (!cantidadValida) return;
 
     console.log("SE ESTA RESERVANDOOOOOO OV");
     const ovItems = document.querySelectorAll('.ov-item');
@@ -840,8 +851,8 @@ async function mostrarMensajeExito(idOrden) {
       console.error("Error al obtener datos de OP:", error);
       return;
     }
-    console.log("ESTA ACCCCCAAA");
-    console.log(data.ver_orden);
+    //console.log("ESTA ACCCCCAAA");
+    //console.log(data.ver_orden);
     const productosHtml = data.ver_orden
       .map(p => `<p>${p.nombre.toUpperCase()}</p>  <p>Cantidad de Lote/s: ${p.cantidad}</p> <p>Cantidad de Cajas Estimadas: ${p.cantidad * cantidadPorLote}</p>`)
       .join('');
