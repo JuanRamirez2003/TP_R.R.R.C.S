@@ -274,3 +274,111 @@
 #logoEmpresa:hover {
   transform: scale(1.05);
 }
+
+
+
+
+
+/* Modal EDITAR DATOS USUARIO -> */
+.modal-editar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(18, 18, 18, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content-editar {
+  background: #1e1e1e;
+  padding: 30px 25px;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+  color: #e0e0e0;
+}
+
+.modal-content-editar h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #55a630;
+  text-align: center;
+}
+
+.modal-content-editar label {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 4px;
+  font-weight: bold;
+  color: #ccc;
+}
+
+.modal-content-editar input[type="text"],
+.modal-content-editar select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: #e0e0e0;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.modal-content-editar input[type="text"]:focus,
+.modal-content-editar select:focus {
+  outline: none;
+  border-color: #55a630;
+}
+
+.modal-content-editar .btn-edit,
+.modal-content-editar .btn-delete {
+  width: 48%;
+  margin-top: 20px;
+}
+
+.modal-content-editar .botones-modal {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Botón Guardar (verde) */
+.modal-content-editar .btn-edit {
+  background-color: #55a630;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.modal-content-editar .btn-edit:hover {
+  background-color: #6cc644;
+  color: #000;
+}
+
+/* Botón Cancelar (rojo) */
+.modal-content-editar .btn-delete {
+  background-color: #e74c3c;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.modal-content-editar .btn-delete:hover {
+  background-color: #ff6b5c;
+  color: #000;
+}
+
+/* Modal EDITAR DATOS USUARIO */
