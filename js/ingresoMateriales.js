@@ -4,9 +4,9 @@ let materialData = [];
 // Utilidades
 // ============================
 function habilitarMaterial(habilitar = true) {
-        const el = document.getElementById('Id_Material');
-        if (el) el.disabled = !habilitar;
-        cargarMateriales();
+    const el = document.getElementById('Id_Material');
+    if (el) el.disabled = !habilitar;
+    cargarMateriales();
 }
 
 function habilitarCampos(campos, habilitar = true) {
@@ -30,18 +30,18 @@ function mostrarSeccion(seccionId) {
     try {
         document.querySelectorAll('.seccion').forEach(sec => {
             sec.style.display = 'none';
-            if(sec.id === 'IngresoMateriales') {
+            if (sec.id === 'IngresoMateriales') {
                 const form = sec.querySelector('form');
-                if(form) form.reset();
-                habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
+                if (form) form.reset();
+                habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMaterial'], false);
                 resetSelect('provMaterial');
             }
         });
 
         const target = document.getElementById(seccionId);
-        if(target) target.style.display = 'block';
-        if(seccionId === 'VistaMateriales') cargarMaterial();
-    } catch(err) {
+        if (target) target.style.display = 'block';
+        if (seccionId === 'VistaMateriales') cargarMaterial();
+    } catch (err) {
         console.error("Error mostrando sección:", err);
     }
 }
@@ -68,7 +68,7 @@ async function cargarMateriales() {
                 select.appendChild(option);
             });
         }
-    } catch(err) {
+    } catch (err) {
         console.error("Error cargando material:", err);
     }
 }
@@ -125,7 +125,7 @@ async function mostrarDatosMaterial() {
         const fechaIngreso = document.getElementById('fecha_ingreso');
         const fechaCad = document.getElementById('fecha_cad');
         const hoy = new Date();
-        const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+        const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
         fechaIngreso.setAttribute('min', hoyStr);
         fechaIngreso.setAttribute('max', hoyStr);
         fechaCad.setAttribute('min', hoyStr);
@@ -134,7 +134,7 @@ async function mostrarDatosMaterial() {
             fechaCad.setAttribute('min', fechaIngreso.value);
         });
 
-    } catch(err) {
+    } catch (err) {
         console.error("Error mostrando datos Material:", err);
     }
 }
@@ -147,7 +147,7 @@ document.getElementById('btnCancelar')?.addEventListener('click', () => {
     form.reset();
     form.style.display = 'grid';
     document.getElementById('mensajeExito').style.display = 'none';
-    habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
+    habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMaterial'], false);
     resetSelect('provMaterial');
     mostrarSeccion('vistaMateriales');
 });
@@ -157,7 +157,7 @@ document.getElementById('btnOtroLote')?.addEventListener('click', () => {
     form.reset();
     form.style.display = 'grid';
     document.getElementById('mensajeExito').style.display = 'none';
-    habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado',  'provMaterial'], false);
+    habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMaterial'], false);
     resetSelect('provMaterial');
 });
 
@@ -171,6 +171,11 @@ document.getElementById('btnVolverPrincipal')?.addEventListener('click', () => {
 // ============================
 document.getElementById('MaterialesForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // 🔹 Deshabilitar el botón inmediatamente
+    const btnSubmit = document.querySelector('.btn-submit');
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "Guardando...";
     try {
         const nuevoLote = {
             id_mp: parseInt(document.getElementById('Id_Material').value),
@@ -184,15 +189,20 @@ document.getElementById('MaterialesForm')?.addEventListener('submit', async (e) 
         const { error } = await supabaseClient.from('lote_mp').insert([nuevoLote]);
         if (error) throw error;
 
+        // ▶ Form y mensaje de éxito
         const form = document.getElementById('MaterialesForm');
         form.style.display = 'none';
         const mensajeExito = document.getElementById('mensajeExito');
         document.getElementById('textoExito').textContent = "Lote registrado correctamente";
         mensajeExito.style.display = 'block';
 
-    } catch(err) {
+    } catch (err) {
         console.error("Error insertando lote:", err);
         document.getElementById('mensaje').textContent = "Error al registrar el lote";
+
+        // 🔹 Volver a habilitar el botón en caso de error
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "Registrar Lote";
     }
 });
 
@@ -209,9 +219,9 @@ async function cargarMaterial() {
         tbody.innerHTML = '';
 
         materias.forEach(material => {
-            const stock = material.lote_mp?.reduce((acc,l)=> acc+l.cantidad_disponible,0) || 0;
-            const nombreProv = proveedores.find(p=>p.id_proveedor===material.id_proveedor)?.nombre || '';
-            const nombreProvSec = proveedores.find(p=>p.id_proveedor===material.id_proveedorsec)?.nombre || '';
+            const stock = material.lote_mp?.reduce((acc, l) => acc + l.cantidad_disponible, 0) || 0;
+            const nombreProv = proveedores.find(p => p.id_proveedor === material.id_proveedor)?.nombre || '';
+            const nombreProvSec = proveedores.find(p => p.id_proveedor === material.id_proveedorsec)?.nombre || '';
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -227,7 +237,7 @@ async function cargarMaterial() {
             tbody.appendChild(tr);
         });
 
-    } catch(err) {
+    } catch (err) {
         console.error("Error cargando tabla Material:", err);
     }
 }
@@ -238,21 +248,21 @@ async function cargarMaterial() {
 async function verLotes(idMaterial) {
     try {
         mostrarSeccion('vistaLotes');
-        const material = materialData.find(m=>m.id_mp==idMaterial);
+        const material = materialData.find(m => m.id_mp == idMaterial);
         document.getElementById('tituloLotes').textContent = `Lotes de ${material?.nombre || 'Material'}`;
 
         const { data: lotes, error: errorLotes } = await supabaseClient.from('lote_mp').select('*').eq('id_mp', idMaterial);
-        if(errorLotes) throw errorLotes;
+        if (errorLotes) throw errorLotes;
 
-        const idsProveedores = [...new Set(lotes.map(l=>l.id_proveedor))];
+        const idsProveedores = [...new Set(lotes.map(l => l.id_proveedor))];
         const { data: proveedores, error: errorProv } = await supabaseClient.from('proveedor').select('id_proveedor,nombre').in('id_proveedor', idsProveedores);
-        if(errorProv) throw errorProv;
+        if (errorProv) throw errorProv;
 
         const tbody = document.querySelector('#tablaLotes tbody');
         tbody.innerHTML = '';
 
         lotes.forEach(lote => {
-            const nomProveedor = proveedores.find(p=>p.id_proveedor===lote.id_proveedor)?.nombre || '';
+            const nomProveedor = proveedores.find(p => p.id_proveedor === lote.id_proveedor)?.nombre || '';
             const tr = document.createElement('tr');
             tr.innerHTML = `   
                 <td data-label="ID Lote">${lote.id_lote}</td>
@@ -269,7 +279,7 @@ async function verLotes(idMaterial) {
             tbody.appendChild(tr);
         });
 
-    } catch(err) {
+    } catch (err) {
         console.error("Error mostrando lotes:", err);
     }
 }
