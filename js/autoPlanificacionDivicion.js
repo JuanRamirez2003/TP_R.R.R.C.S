@@ -185,7 +185,7 @@ async function renderAgendaDesdeSupabase() {
   agenda.style.display = "flex";
 }
 
-// ---------------------- Generar planificación ----------------------
+
 // ---------------------- Generar planificación ----------------------
 async function planificarSemana(modoAleatorio = false) {
 

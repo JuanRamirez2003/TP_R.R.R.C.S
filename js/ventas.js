@@ -526,48 +526,55 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
     }
 
     // === Crear orden de productos con stock (facturable) ===
-    let ordenFacturable = null;
-    if (productosConStock.length > 0) {
-      const { data: ordenData, error: ordenError } = await supabaseClient
-        .from('orden_ventas')
-        .insert([{
-          id_cliente: parseInt(cliente),
-          fecha: new Date().toISOString(),
-          estado: 'completada'
-        }])
-        .select()
-        .single();
+let ordenFacturable = null;
+if (productosConStock.length > 0) {
 
-      if (ordenError) throw ordenError;
-      ordenFacturable = ordenData;
+  // 🔹 FECHA ESTIMADA = HOY
+  const hoyStr = new Date().toISOString().split('T')[0];
 
-      for (const p of productosConStock) {
-        await supabaseClient
-          .from('detalle_ordenes')
-          .insert([{
-            id_orden: ordenData.id_orden,
-            id_producto: p.id_producto,
-            cantidad: p.cantidad,
-            estado_detalle_ov: 'facturado' // <-- se agrega aquí
-          }]);
+  const { data: ordenData, error: ordenError } = await supabaseClient
+    .from('orden_ventas')
+    .insert([{
+      id_cliente: parseInt(cliente),
+      fecha: new Date().toISOString(),
+      estado: 'completada',
+      fecha_estimada_entrega: hoyStr // <-- AGREGADO AQUÍ
+    }])
+    .select()
+    .single();
 
-        await supabaseClient
-          .from('productos')
-          .update({ stock: p.stock_actual - p.cantidad })
-          .eq('id_producto', p.id_producto);
-      }
+  if (ordenError) throw ordenError;
+  ordenFacturable = ordenData;
 
-      // Crear factura
-      const totalFactura = productosConStock.reduce((sum, p) => sum + p.cantidad * p.precio_unitario, 0);
-      await supabaseClient
-        .from('factura')
-        .insert([{
-          id_orden: ordenData.id_orden,
-          id_cliente: parseInt(cliente),
-          fecha: new Date().toISOString(),
-          total: totalFactura
-        }]);
-    }
+  // Guardar los detalles facturados con fecha estimada HOY
+  for (const p of productosConStock) {
+    await supabaseClient
+      .from('detalle_ordenes')
+      .insert([{
+        id_orden: ordenData.id_orden,
+        id_producto: p.id_producto,
+        cantidad: p.cantidad,
+        estado_detalle_ov: 'facturado',
+        fecha_estimada_entrega: hoyStr // <-- AGREGADO AQUÍ TAMBIÉN
+      }]);
+
+    await supabaseClient
+      .from('productos')
+      .update({ stock: p.stock_actual - p.cantidad })
+      .eq('id_producto', p.id_producto);
+  }
+
+  // Crear factura
+  const totalFactura = productosConStock.reduce((sum, p) => sum + p.cantidad * p.precio_unitario, 0);
+  await supabaseClient
+    .from('factura')
+    .insert([{
+      id_orden: ordenData.id_orden,
+      id_cliente: parseInt(cliente),
+      fecha: new Date().toISOString(),
+      total: totalFactura
+    }]);
+}
 
     // === Crear orden pendiente para productos sin stock ===
     let ordenPendiente = null;
