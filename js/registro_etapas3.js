@@ -217,8 +217,9 @@ function iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, est
     actualizarContador();
 }
 
-// ------------------- Finalizar línea (versión robusta y con logs) ---------------------
+// ------------------- Finalizar línea ---------------------
 async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null) {
+
     const cinta = document.getElementById(`cinta${n}`);
     const btn = document.getElementById(`btn-linea-${n}`);
     const estadoCont = document.getElementById(`estadoCont-${n}`);
@@ -226,300 +227,284 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
     const opInfo = document.getElementById(`opInfo-${n}`);
 
     try {
-        console.log(`\n▶ finalizarLinea inicio - linea:${n} opId:${opId} opTexto:${opTexto} cant:${cant} plan:${idPlanificacion}`);
-
-        // Detener animaciones / timers si existen
-        try { cancelAnimationFrame(animaciones[n]); } catch(e) {}
-        try { clearTimeout(timers[n]); } catch(e) {}
-        try { estados[n] = false; } catch(e) {}
+        // detener animaciones
+        cancelAnimationFrame(animaciones[n]);
+        clearTimeout(timers[n]);
+        estados[n] = false;
 
         if (cinta) cinta.classList.add('stop');
         if (estadoText) estadoText.textContent = 'Finalizada';
+
         if (estadoCont) {
             estadoCont.classList.remove('estado-en-marcha');
             estadoCont.classList.add('estado-finalizada');
         }
-        if (opInfo) opInfo.textContent = `✅ OP ${opTexto} completada (subparte).`;
 
-        // 1) Obtener OP con id_producto
+        opInfo.textContent = `✅ OP ${opTexto} completada (subparte).`;
+
+        // -------------------------------
+        // 1) OBTENER OP (CON id_producto)
+        // -------------------------------
         const { data: opData, error: opError } = await supabaseClient
             .from('orden_produccion')
             .select('cant_lote, lotes_terminados, id_producto')
             .eq('id_orden_produccion', opId)
             .single();
 
-        if (opError) {
-            console.error('Error leyendo orden_produccion:', opError);
-            throw opError;
-        }
-        if (!opData) {
-            console.error('No se encontró orden_produccion para id:', opId);
-            throw new Error('OP no encontrada');
-        }
+        if (opError) throw opError;
 
-        console.log('opData:', opData);
+        const prevTerminados = opData.lotes_terminados || 0;
+        const totalLotes = opData.cant_lote || 1;
+        const nuevosTerminados = prevTerminados + cant;
 
-        const prevTerminados = Number(opData.lotes_terminados || 0);
-        const totalLotes = Number(opData.cant_lote || 1);
-        const nuevosTerminados = prevTerminados + Number(cant || 0);
-
-        // actualizar lotes_terminados
-        const { error: updLotesErr } = await supabaseClient
+        // actualizar lotes terminados
+        await supabaseClient
             .from('orden_produccion')
             .update({ lotes_terminados: nuevosTerminados })
             .eq('id_orden_produccion', opId);
 
-        if (updLotesErr) console.warn('Warning: no se pudo actualizar lotes_terminados:', updLotesErr);
-        else console.log(`lotes_terminados: ${prevTerminados} -> ${nuevosTerminados}`);
+        eliminarEstadoLinea(n);
 
-        // eliminar estado de linea si existe la función
-        if (typeof eliminarEstadoLinea === 'function') eliminarEstadoLinea(n);
-
-        // 2) Marcar planificación (si viene)
+        // -------------------------------
+        // 2) MARCAR PLANIFICACIÓN FINALIZADA
+        // -------------------------------
         if (idPlanificacion) {
-            const { error: planErr } = await supabaseClient
+            await supabaseClient
                 .from('planificacion_semanal')
                 .update({ estado: 'finalizada' })
                 .eq('id', idPlanificacion);
-
-            if (planErr) console.warn('No se pudo actualizar planificacion_semanal:', planErr);
-            else console.log('Planificacion marcada finalizada:', idPlanificacion);
         }
 
-        // 3) Comprobar si toda la OP terminó
+        // -------------------------------
+        // 3) COMPROBAR SI TODA LA OP TERMINÓ
+        // -------------------------------
         let todasFinalizadas = false;
-        const { data: partes = [], error: partesErr } = await supabaseClient
+
+        const { data: partes } = await supabaseClient
             .from('planificacion_semanal')
             .select('estado')
             .eq('id_op', opId);
 
-        if (partesErr) console.warn('Error trayendo planificaciones:', partesErr);
         if (!partes || partes.length === 0) {
             todasFinalizadas = true;
         } else {
             todasFinalizadas = partes.every(p => p.estado === 'finalizada');
         }
 
-        const opCompletada = todasFinalizadas || nuevosTerminados >= totalLotes;
-        console.log('opCompletada?', opCompletada, { todasFinalizadas, nuevosTerminados, totalLotes });
+        const opCompletada =
+            todasFinalizadas || nuevosTerminados >= totalLotes;
 
-        // 4) Si OP completada -> marcar + stock/facturar
+        // -------------------------------
+        // 4) SI OP COMPLETADA: MARCAR + STOCK
+        // -------------------------------
         if (opCompletada) {
-            const { error: updEstadoErr } = await supabaseClient
+
+            await supabaseClient
                 .from('orden_produccion')
                 .update({ estado: 'finalizada' })
                 .eq('id_orden_produccion', opId);
 
-            if (updEstadoErr) console.warn('No se pudo marcar OP finalizada:', updEstadoErr);
-            else console.log('OP marcada finalizada en DB:', opId);
-
-            // calcular total producidos (intenta usar planificacion si existe)
+            // Calcular lotes producidos reales
             let totalProducidos = 0;
-            const { data: planes = [], error: planesErr } = await supabaseClient
+
+            const { data: planes } = await supabaseClient
                 .from('planificacion_semanal')
                 .select('cantidad_lotes')
                 .eq('id_op', opId);
 
-            if (planesErr) console.warn('Error trayendo planes:', planesErr);
-            else {
+            if (planes && planes.length > 0) {
                 for (const p of planes) {
                     try {
-                        const info = typeof p.cantidad_lotes === 'string' ? JSON.parse(p.cantidad_lotes) : p.cantidad_lotes;
-                        if (Array.isArray(info?.lotes_incluidos)) totalProducidos += info.lotes_incluidos.length;
-                        else if (info?.lotes_total) totalProducidos += Number(info.lotes_total);
-                    } catch (e) {
-                        // ignorar parse errors
-                    }
+                        const info = typeof p.cantidad_lotes === "string"
+                            ? JSON.parse(p.cantidad_lotes)
+                            : p.cantidad_lotes;
+
+                        if (Array.isArray(info?.lotes_incluidos))
+                            totalProducidos += info.lotes_incluidos.length;
+                        else if (info?.lotes_total)
+                            totalProducidos += Number(info.lotes_total);
+
+                    } catch { }
                 }
             }
-            if (totalProducidos === 0) totalProducidos = Number(opData.cant_lote || 1);
-            console.log('totalProducidos:', totalProducidos);
 
-            // 4A) verificar op_ov (si no tiene, actualizar stock)
-            const { data: opsOV = [], error: opsOvErr } = await supabaseClient
+            if (totalProducidos === 0)
+                totalProducidos = opData.cant_lote;
+
+            // -------------------------------
+            // 4A) NO TIENE OV → ACTUALIZAR STOCK + MARCAR OP FINALIZADO
+            // -------------------------------
+            const { data: opsOV } = await supabaseClient
                 .from('op_ov')
                 .select('id_detalle_ov')
                 .eq('id_op', opId);
 
-            if (opsOvErr) console.warn('Error trayendo op_ov:', opsOvErr);
-            console.log('op_ov rows encontradas para OP:', (opsOV || []).length);
-
             if (!opsOV || opsOV.length === 0) {
-                // aumentar stock del producto
+
+                console.log(`OP ${opId} sin OV asociadas → actualizar stock y marcar como FINALIZADO`);
+
+                // A) Actualizar stock
                 if (opData.id_producto) {
-                    const { data: prod, error: prodErr } = await supabaseClient
+
+                    const { data: prod } = await supabaseClient
                         .from('productos')
                         .select('stock')
                         .eq('id_producto', opData.id_producto)
                         .single();
 
-                    if (prodErr || !prod) {
-                        console.warn('No se pudo leer producto para stock:', prodErr);
-                    } else {
+                    if (prod) {
+
                         const cantidadASumar = totalProducidos * 10;
-                        const { error: updStockErr } = await supabaseClient
+
+                        await supabaseClient
                             .from('productos')
                             .update({ stock: prod.stock + cantidadASumar })
                             .eq('id_producto', opData.id_producto);
 
-                        if (updStockErr) console.warn('Error actualizando stock:', updStockErr);
-                        else console.log(`📦 Stock actualizado producto ${opData.id_producto} +${cantidadASumar}`);
+                        console.log(`📦 Stock actualizado +${cantidadASumar}`);
                     }
-                } else {
-                    console.log('OP sin id_producto, no se actualiza stock.');
                 }
-            } else {
-                // 4B) Tiene OV: procesar OV únicas vinculadas a esta OP
-                const detalleOvIds = [...new Set(opsOV.map(r => r.id_detalle_ov).filter(Boolean))];
-                console.log('detalleOvIds únicos:', detalleOvIds);
 
-                // Obtener id_orden (OV) asociados a esos detalles
-                const idOrdenSet = new Set();
-                for (const idDet of detalleOvIds) {
-                    const { data: detRow, error: detErr } = await supabaseClient
-                        .from('detalle_ordenes')
-                        .select('id_orden')
-                        .eq('id_detalle', idDet)
+                // B) Marcar OP finalizada
+                await supabaseClient
+                    .from('orden_produccion')
+                    .update({ estado: 'finalizado' })
+                    .eq('id_orden_produccion', opId);
+
+                console.log(`✔ OP ${opId} marcada como FINALIZADO (sin OV)`);
+
+                return; // terminado
+            }
+
+            // -------------------------------
+            // 4B) TIENE OV → REVISAR COMPLETAS Y FACTURAR
+            // -------------------------------
+            for (const op of opsOV) {
+
+                if (!op.id_detalle_ov) continue;
+
+                const { data: det } = await supabaseClient
+                    .from('detalle_ordenes')
+                    .select('id_orden')
+                    .eq('id_detalle', op.id_detalle_ov)
+                    .single();
+
+                if (!det) continue;
+
+                const idOrden = det.id_orden;
+
+                // Todos los detalles de esa OV
+                const { data: detalles } = await supabaseClient
+                    .from('detalle_ordenes')
+                    .select('id_detalle')
+                    .eq('id_orden', idOrden);
+
+                // Todas las OP asociadas
+                const { data: otrasOP } = await supabaseClient
+                    .from('op_ov')
+                    .select('id_op')
+                    .in(
+                        'id_detalle_ov',
+                        detalles.map(d => d.id_detalle)
+                    );
+
+                const opUnicas = [...new Set(otrasOP.map(o => o.id_op))];
+
+                let pendientes = 0;
+
+                for (const idOPx of opUnicas) {
+                    const { data: opC } = await supabaseClient
+                        .from('orden_produccion')
+                        .select('estado')
+                        .eq('id_orden_produccion', idOPx)
                         .single();
 
-                    if (detErr || !detRow) {
-                        console.warn('detalle_ordenes no encontrado para id_detalle:', idDet, detErr);
-                        continue;
-                    }
-                    idOrdenSet.add(detRow.id_orden);
+                    if (opC.estado !== 'finalizada')
+                        pendientes++;
                 }
 
-                const idOrdenList = [...idOrdenSet];
-                console.log('OV únicas a procesar:', idOrdenList);
+                // Si no quedan pendientes → OV completa → facturar
+                if (pendientes === 0) {
 
-                for (const idOrden of idOrdenList) {
-                    // obtener todos los detalles de la OV
-                    const { data: detalles = [], error: detallesErr } = await supabaseClient
-                        .from('detalle_ordenes')
-                        .select('id_detalle')
+                    await supabaseClient
+                        .from('orden_ventas')
+                        .update({ estado: 'completada' })
                         .eq('id_orden', idOrden);
 
-                    if (detallesErr) {
-                        console.warn('Error trayendo detalles OV', idOrden, detallesErr);
-                        continue;
-                    }
-                    const detalleIds = detalles.map(d => d.id_detalle).filter(Boolean);
-                    if (detalleIds.length === 0) {
-                        console.warn('OV sin detalles:', idOrden);
-                        continue;
-                    }
+                    const { data: ovData } = await supabaseClient
+                        .from('orden_ventas')
+                        .select('id_cliente')
+                        .eq('id_orden', idOrden)
+                        .single();
 
-                    // obtener todas las OP asociadas a esos detalles
-                    const { data: otrasOP = [], error: otrasOpErr } = await supabaseClient
-                        .from('op_ov')
-                        .select('id_op')
-                        .in('id_detalle_ov', detalleIds);
+                    const { error: factErr } = await supabaseClient
+                        .from('factura')
+                        .insert([{
+                            id_orden: idOrden,
+                            id_cliente: ovData.id_cliente,
+                            fecha: new Date()
+                        }]);
 
-                    if (otrasOpErr) {
-                        console.warn('Error trayendo op_ov para detalles OV', idOrden, otrasOpErr);
-                        continue;
-                    }
+                    if (!factErr) {
+                        console.log(`📄 Factura generada para la Orden de Venta #${idOrden}`);
 
-                    const opUnicas = [...new Set(otrasOP.map(o => o.id_op).filter(Boolean))];
-                    console.log(`OV ${idOrden} -> OP únicas:`, opUnicas);
-
-                    // verificar estados de cada OP única
-                    let pendientes = 0;
-                    for (const idOPx of opUnicas) {
-                        const { data: opC, error: opCErr } = await supabaseClient
-                            .from('orden_produccion')
-                            .select('estado')
-                            .eq('id_orden_produccion', idOPx)
-                            .single();
-
-                        if (opCErr || !opC) {
-                            console.warn('No se pudo leer estado de OP', idOPx, opCErr);
-                            pendientes++; // en duda, marcar pendiente para evitar facturar por error
-                            continue;
-                        }
-                        if (opC.estado !== 'finalizada') pendientes++;
-                    }
-
-                    console.log(`OV ${idOrden} -> pendientes OP: ${pendientes}`);
-
-                    if (pendientes === 0) {
-                        // marcar orden_ventas completada
-                        const { error: updOvErr } = await supabaseClient
-                            .from('orden_ventas')
-                            .update({ estado: 'completada' })
+                        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                        // MARCAR DETALLES DE LA OV COMO FACTURADOS
+                        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                        await supabaseClient
+                            .from('detalle_ordenes')
+                            .update({ estado_detalle_ov: 'facturado' })
                             .eq('id_orden', idOrden);
 
-                        if (updOvErr) console.warn('No se pudo marcar orden_ventas completada:', updOvErr);
-                        else console.log('orden_ventas marcada completada:', idOrden);
-
-                        // obtener cliente (necesario para factura)
-                        const { data: ovData, error: ovDataErr } = await supabaseClient
-                            .from('orden_ventas')
-                            .select('id_cliente')
-                            .eq('id_orden', idOrden)
-                            .single();
-
-                        if (ovDataErr || !ovData) {
-                            console.warn('No se pudo leer orden_ventas para facturar:', idOrden, ovDataErr);
-                            continue;
-                        }
-
-                        // insertar factura
-                        const { error: factErr } = await supabaseClient
-                            .from('factura')
-                            .insert([{ id_orden: idOrden, id_cliente: ovData.id_cliente, fecha: new Date() }]);
-
-                        if (factErr) {
-                            console.warn('Error insertando factura para OV', idOrden, factErr);
-                        } else {
-                            console.log(`📄 Factura generada para la Orden de Venta #${idOrden}`);
-                        }
-                    } else {
-                        console.log(`OV ${idOrden} NO facturada (quedan ${pendientes} OP pendientes).`);
+                        console.log(`🧾 Detalles de OV #${idOrden} marcados como 'facturado'`);
+                        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                     }
-                } // fin for idOrdenList
-            } // fin else opsOV.length>0
-        } // fin if opCompletada
+                }
+            }
+        }
 
-        // 5) Actualizar UI
-        if (typeof mostrarOPFinalizada === 'function') mostrarOPFinalizada(opId, opTexto, n);
+        // -------------------------------
+        // 5) ACTUALIZAR UI
+        // -------------------------------
+        mostrarOPFinalizada(opId, opTexto, n);
 
         const opSelect = document.getElementById(`opSelectLinea-${n}`);
+
         if (opSelect) {
+
             if (idPlanificacion) {
                 [...opSelect.options].forEach(opt => {
-                    if (opt.dataset.planId == idPlanificacion && opt.value == opId) opt.remove();
+                    if (opt.dataset.planId == idPlanificacion && opt.value == opId)
+                        opt.remove();
                 });
             } else {
                 const opt = opSelect.querySelector(`option[value="${opId}"]`);
                 if (opt) opt.remove();
             }
+
             if (opSelect.options.length <= 1) {
                 opSelect.innerHTML = '<option disabled>No hay OP disponibles</option>';
                 opSelect.disabled = true;
             }
         }
 
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = 'Iniciar';
-        }
+        btn.disabled = false;
+        btn.textContent = 'Iniciar';
+
         const stopBtn = document.getElementById(`stop-linea-${n}`);
         if (stopBtn) stopBtn.remove();
 
-        try {
-            opEnEjecucion.forEach(k => {
-                if (k.startsWith(String(opId))) opEnEjecucion.delete(k);
-            });
-        } catch (e) {}
+        opEnEjecucion.forEach(k => {
+            if (k.startsWith(String(opId))) opEnEjecucion.delete(k);
+        });
 
-        if (typeof actualizarSelectsOP === 'function') actualizarSelectsOP();
+        actualizarSelectsOP();
 
-        console.log('✔ finalizarLinea completada para OP', opId);
     } catch (err) {
         console.error("❌ Error finalizando OP:", err);
     }
 }
+
 
 // ---------------- Recuperar estado al recargar ----------------
 function recuperarEstadoLinea(n, opSelect, cinta, btn, estadoCont, estadoText, opInfo) {
