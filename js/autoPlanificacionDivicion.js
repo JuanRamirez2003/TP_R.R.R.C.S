@@ -186,6 +186,7 @@ async function renderAgendaDesdeSupabase() {
 }
 
 // ---------------------- Generar planificación ----------------------
+// ---------------------- Generar planificación ----------------------
 async function planificarSemana(modoAleatorio = false) {
 
     window.tiempoPlanificadoLinea = 0;
@@ -216,7 +217,7 @@ async function planificarSemana(modoAleatorio = false) {
     if (!ordenes?.length)
         return mostrarAviso("No hay órdenes pendientes");
 
-    // Cálculo real de lotes pendientes (cant_lote - terminados)
+    // Cálculo real de lotes pendientes
     const ordenesAPlanificar = ordenes
         .map(op => {
             const terminados = op.lotes_terminados || 0;
@@ -233,6 +234,20 @@ async function planificarSemana(modoAleatorio = false) {
         supabaseClient.from("linea_productos").select("*"),
         supabaseClient.from("linea_produccion").select("*")
     ]);
+
+    // 🔥 4.1 Calcular la mayor horas_jornada por cada línea
+    const horasPorLinea = {};
+
+    lineasProd.forEach(lp => {
+        if (!horasPorLinea[lp.id_linea]) {
+            horasPorLinea[lp.id_linea] = lp.horas_jornada || 0;
+        } else {
+            horasPorLinea[lp.id_linea] = Math.max(
+                horasPorLinea[lp.id_linea],
+                lp.horas_jornada || 0
+            );
+        }
+    });
 
     // 5️⃣ Inicializar carga diaria
     const carga = {};
@@ -273,7 +288,7 @@ async function planificarSemana(modoAleatorio = false) {
         }
     }
 
-    // Aplicar actualización de horas fijadas en BD
+    // Guardar horas reajustadas
     await Promise.all(
         fijadas.map(f =>
             supabaseClient
@@ -304,7 +319,6 @@ async function planificarSemana(modoAleatorio = false) {
                 (prioridadOrden[b.prioridad?.toLowerCase()] || 5)
         );
 
-    // Aleatorio manteniendo prioridad
     if (modoAleatorio) {
         const grupos = { urgente: [], alta: [], normal: [], baja: [] };
         ordenesParaPlanificar.forEach(op => {
@@ -326,7 +340,7 @@ async function planificarSemana(modoAleatorio = false) {
 
     for (const op of ordenesParaPlanificar) {
 
-        const cantidadLotes = op.lotes_pendientes; // 🔥 solo pendientes
+        const cantidadLotes = op.lotes_pendientes;
 
         const posibles = lineasProd.filter(
             v => v.id_producto === op.id_producto
@@ -338,7 +352,7 @@ async function planificarSemana(modoAleatorio = false) {
 
         let lotesRestantes = cantidadLotes;
 
-        // 🔥 Numeración REAL del primer lote pendiente
+        // 🔥 Primer lote pendiente real
         let siguienteLote = (op.lotes_terminados || 0) + 1;
 
         for (const fecha of fechasMostrar) {
@@ -349,9 +363,8 @@ async function planificarSemana(modoAleatorio = false) {
             for (const cand of posibles) {
                 if (lotesRestantes <= 0) break;
 
-                const capacidad =
-                    lineas.find(l => l.id_linea === cand.id_linea)
-                        ?.capacidad_diaria_min ?? 480;
+                // 🔥 Capacidad real usando la mayor horas_jornada encontrada
+                const capacidad = (horasPorLinea[cand.id_linea] ?? 8) * 60;
 
                 const minutosUsados = carga[cand.id_linea][fechaKey];
                 const espacioLibre = capacidad - minutosUsados;
@@ -368,7 +381,7 @@ async function planificarSemana(modoAleatorio = false) {
 
                 const duracionTotal = lotesPosibles * duracionPorLote;
 
-                // 🔥 Numeración correcta de lotes pendientes
+                // 🔥 Rango correcto de lotes incluidos
                 const inicio = siguienteLote;
                 const fin = inicio + lotesPosibles - 1;
 
@@ -377,11 +390,11 @@ async function planificarSemana(modoAleatorio = false) {
                     (_, i) => inicio + i
                 );
 
-                siguienteLote = fin + 1; // avanzar numeración
+                siguienteLote = fin + 1;
 
                 const cantidadLotesJSON = {
                     lotes_incluidos: lotesAsignados,
-                    lotes_total: cantidadLotes // 🔥 ya NO incluye terminados
+                    lotes_total: cantidadLotes
                 };
 
                 planificaciones.push({
@@ -407,7 +420,7 @@ async function planificarSemana(modoAleatorio = false) {
         }
     }
 
-    // 9️⃣ Guardar planificación en BD
+    // 9️⃣ Guardar planificación
     if (planificaciones.length) {
         const planificacionesConJSON = planificaciones.map(p => ({
             ...p,
@@ -432,16 +445,18 @@ async function planificarSemana(modoAleatorio = false) {
         mostrarAviso("⚠️ No se pudo generar planificación");
     }
 }
+
 // ---------------------- Minutos a hora ----------------------
 function minutosToHora(min) {
-  const totalMin = 8 * 60 + min; // inicio jornada 8:00
+  const totalMin = 8 * 60 + min; // siempre empieza 8:00
   const h = String(Math.floor(totalMin / 60)).padStart(2, "0");
   const m = String(totalMin % 60).padStart(2, "0");
   return `${h}:${m}:00`;
 }
+
 function horaToMinutos(hora) {
   const [h, m] = hora.split(":").map(Number);
-  return h * 60 + m - 480; // 480 min desde 8:00
+  return h * 60 + m - 480; // 480 minutos desde 08:00
 }
 // ---------------------- Mostrar detalle OP ----------------------
 async function mostrarDetalleOP(id_op, id_linea) {
