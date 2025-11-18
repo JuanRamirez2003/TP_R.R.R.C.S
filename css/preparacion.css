@@ -1,0 +1,247 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+/* Dashboard */
+.dashboard {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    padding: 20px;
+    border-right: 1px solid #333;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #55a630;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    margin-bottom: 15px;
+}
+
+.sidebar ul li button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.sidebar ul li button:hover {
+    background-color: #55a630;
+    color: #000;
+}
+
+
+.sidebar-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 15px;
+    transition: 0.3s;
+}
+
+/* Botón cerrar sesión especial */
+.btn-logout {
+    width: 100%;
+    padding: 10px;
+    margin-top: 20px;
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.btn-logout:hover {
+    background-color: #a71d2a;
+}
+
+/* Main */
+.main-content {
+    flex: 1;
+    padding: 30px;
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .dashboard {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border-right: none;
+        border-bottom: 1px solid #333;
+    }
+
+    .sidebar ul {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        padding: 0;
+    }
+
+.sidebar ul li button {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+}
+
+
+    .main-content {
+        padding: 20px;
+    }
+}
+#logoEmpresa {
+  position: fixed;
+  top: 15px;
+  right: 20px;
+  width: 100px;
+  height: auto;
+  background-color: white;      /* Fondo claro detrás */
+  border-radius: 12px;          /* Esquinas redondeadas */
+  padding: 6px;                 /* Espaciado interno */
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+  z-index: 10000;
+  transition: transform 0.2s ease-in-out;
+}
+
+#logoEmpresa:hover {
+  transform: scale(1.05);
+}
+
+
+#preparacionPedido {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 30px;
+    background-color: #121212;
+    color: #e0e0e0;
+    margin-left: flex; /* espacio para el sidebar */
+}
+
+#preparacionPedido h2 {
+    color: #55a630;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+/* Tabla de preparación de pedidos */
+#tablaPreparacionPedido {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+
+#tablaPreparacionPedido thead {
+    background-color: #2a2a2a;
+}
+
+#tablaPreparacionPedido thead th {
+    padding: 12px;
+    text-align: center; /* centrado horizontal */
+    vertical-align: middle; /* centrado vertical */
+    color: #55a630;
+    font-size: 16px;
+    border-bottom: 1px solid #333;
+
+}
+
+#tablaPreparacionPedido tbody td {
+    padding: 10px 12px;
+    text-align: center; /* centrado horizontal */
+    vertical-align: middle; /* centrado vertical */
+    border-bottom: 1px solid #333;
+    font-size: 15px;
+
+}
+
+#tablaPreparacionPedido tbody tr:hover {
+    background-color: #2f2f2f;
+    transition: background-color 0.2s ease-in-out;
+}
+.contenedorTablaResponsive {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+/*ESTILO DE SELECT ESTADO DE DETALLE -*/
+.selectEstado {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 15px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    transition: background-color 0.2s ease-in-out, border-color 0.2s;
+    cursor: pointer;
+}
+
+.selectEstado:disabled {
+    background-color: #3a3a3a;
+    color: #888;
+    cursor: not-allowed;
+    border-color: #555;
+}
+
+.selectEstado:hover:not(:disabled) {
+    background-color: #333;
+    border-color: #55a630;
+}
+
+.selectEstado:focus {
+    outline: none;
+    border-color: #55a630;
+    box-shadow: 0 0 0 2px rgba(85, 166, 48, 0.5);
+}
+
+.logo-sidebar {
+  display: block;
+  margin: 0 auto 15px auto;
+  max-width: 160px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
