@@ -1,0 +1,947 @@
+// ---------------------- Configuración ----------------------
+const productos = {
+    1: "▣ ▣ ▣ ▣ ▣ ▣ ▣ ▣ ▣ ▣ ▣ ▣ ▣ ▣",
+    2: "▢ ▢ ▢ ▢ ▢ ▢ ▢ ▢ ▢ ▢ ▢ ▢ ▢ ▢",
+    3: "■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■",
+    4: "□ □ □ □ □ □ □ □ □ □ □ □ □ □",
+    5: "▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪"
+};
+
+const estados = { 1: false, 2: false, 3: false, 4: false, 5: false };
+const timers = {};
+const animaciones = {};
+const etapas = ["Preparación", "Cocción", "Empaquetado"];
+const opEnEjecucion = new Set();
+
+// ---------------- Modal moderno global ----------------
+const modal = document.createElement('div');
+modal.id = 'modalDetalleOP';
+modal.style.cssText = `
+    position: fixed; top: 0; left: 0; right:0; bottom:0;
+    background: rgba(0,0,0,0.5);
+    display: none; justify-content: center; align-items: center;
+    z-index: 1000; transition: opacity 0.3s ease;
+`;
+const modalContent = document.createElement('div');
+modalContent.style.cssText = `
+    background: #fff; padding: 20px; border-radius: 10px;
+    max-width: 400px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    position: relative; text-align: left;
+`;
+const modalClose = document.createElement('span');
+modalClose.textContent = '✖';
+modalClose.style.cssText = `
+    position: absolute; top: 8px; right: 12px;
+    cursor: pointer; font-size: 1.2em; color: #333;
+`;
+modalClose.addEventListener('click', () => { modal.style.display = 'none'; });
+const modalBody = document.createElement('div');
+modalContent.appendChild(modalClose);
+modalContent.appendChild(modalBody);
+modal.appendChild(modalContent);
+document.body.appendChild(modal);
+
+// ---------------- Persistencia ----------------
+// ahora guardamos también planId y cantidad de la subparte
+function guardarEstadoLinea(n, opId, tiempoRestante, etapaIndex, planId = null, cantidad = 1) {
+    localStorage.setItem(`linea_${n}`, JSON.stringify({ opId, tiempoRestante, etapaIndex, planId, cantidad, timestamp: Date.now() }));
+}
+
+function eliminarEstadoLinea(n) {
+    const saved = localStorage.getItem(`linea_${n}`);
+    if (saved) {
+        const data = JSON.parse(saved);
+        opEnEjecucion.delete(String(data.opId));
+    }
+    localStorage.removeItem(`linea_${n}`);
+    actualizarSelectsOP();
+}
+
+// ---------------- Mostrar OP finalizadas ----------------
+function mostrarOPFinalizada(id, texto, linea) {
+    const tbody = document.querySelector("#registroTable tbody");
+    if (!tbody) return;
+    const fila = document.createElement('tr');
+    fila.innerHTML = `<td>${id}</td><td>${texto}</td><td>${linea}</td><td>Finalizada</td><td>Operario ${linea}</td><td>${new Date().toLocaleTimeString()}</td><td>-</td><td>-</td><td>-</td>`;
+    tbody.appendChild(fila);
+    opEnEjecucion.delete(String(id));
+    actualizarSelectsOP();
+}
+
+// ---------------- Bloquear OP en ejecución ----------------
+function actualizarSelectsOP() {
+    document.querySelectorAll('select[id^="opSelectLinea"]').forEach(sel => {
+        [...sel.options].forEach(opt => {
+            if (opt.value && opEnEjecucion.has(String(opt.value))) opt.disabled = true;
+            else opt.disabled = false;
+        });
+    });
+}
+
+// --------------------- Toggle línea ---------------------
+async function toggleLinea(n) {
+    const opSelect = document.getElementById(`opSelectLinea-${n}`);
+    if (!opSelect) return mostrarError("No se encontró el selector de OP.");
+    const selected = opSelect.selectedOptions[0];
+    if (!selected || !selected.value) return mostrarError("Seleccione una OP para iniciar la linea.");
+
+    const opId = selected.value;
+    const planId = selected.dataset.planId || null;
+    let cant = Number(selected.dataset.cantidad || 1);
+    if (isNaN(cant) || cant <= 0) cant = 1;
+
+    if (opEnEjecucion.has(String(opId) + (planId ? `_${planId}` : ''))) {
+        return mostrarError("Esta subparte de OP ya está en ejecución, seleccione otra.");
+    }
+
+    // marcamos la combinación op-plan para bloquear duplicados si existe la misma op en otra línea
+    opEnEjecucion.add(String(opId) + (planId ? `_${planId}` : ''));
+    actualizarSelectsOP();
+
+    const opTexto = selected.textContent;
+
+    let duracionLinea = 60; // default
+
+    try {
+        // Obtener id_producto de la OP
+        const { data: opData, error: opError } = await supabaseClient
+            .from('orden_produccion')
+            .select('id_producto')
+            .eq('id_orden_produccion', opId)
+            .single();
+        if (opError) throw opError;
+
+        // Obtener duración real de la línea
+        const idLineaReal = Number(document.querySelector(`.linea-produccion[data-linea="${n}"]`).dataset.idLinea);
+        const { data: lineaProd } = await supabaseClient
+            .from('linea_produccion')
+            .select('duracion')
+            .eq('id_producto', opData.id_producto)
+            .eq('id_linea', idLineaReal)
+            .single();
+        if (lineaProd?.duracion) duracionLinea = Number(lineaProd.duracion);
+
+        console.log("Duración encontrada:", duracionLinea, "minutos");
+
+    } catch (err) { console.error("Error obteniendo duración:", err); }
+
+    // tiempoTotal según cantidad de lotes de la subparte (cant)
+    const tiempoTotal = duracionLinea * cant * 60; // segundos según cantidad de lotes
+
+    // Marcar OP (parcial) como en elaboración: actualizamos planificacion_semanal.estado = 'en elaboracion' si hay planId
+    try {
+        if (planId) {
+            const { error: updErr } = await supabaseClient
+                .from('planificacion_semanal')
+                .update({ estado: 'en elaboracion' })
+                .eq('id', planId);
+            if (updErr) console.warn("No se pudo marcar planificacion en elaboracion:", updErr);
+        } else {
+            // si no hay planId, marcamos la orden directamente (esto cubre ejecución sin planificación)
+            await supabaseClient
+                .from('orden_produccion')
+                .update({ estado: 'en elaboracion' })
+                .eq('id_orden_produccion', opId);
+        }
+    } catch (err) { console.error("Error marcando en elaboración:", err); }
+
+    const cinta = document.getElementById(`cinta${n}`);
+    const btn = document.getElementById(`btn-linea-${n}`);
+    const estadoCont = document.getElementById(`estadoCont-${n}`);
+    const estadoText = document.getElementById(`estado-linea-${n}`);
+    const opInfo = document.getElementById(`opInfo-${n}`);
+    const registroTable = document.querySelector("#registroTable tbody");
+
+    iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, estadoText, opInfo, registroTable, 4, null, 0, cant, planId);
+}
+
+// --------------------- Iniciar línea ---------------------
+// añadí planId y cantidad al guardado/recuperación
+function iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, estadoText, opInfo, registroTable, velocidad = 4, tiempoRestante = null, etapaIndex = 0, cant = 1, planId = null) {
+    estados[n] = true;
+    cinta.classList.remove('stop');
+    btn.textContent = 'En marcha...';
+    btn.disabled = true;
+    estadoText.textContent = 'En marcha';
+    estadoCont.classList.remove('estado-detenida');
+    estadoCont.classList.add('estado-en-marcha');
+
+    if (tiempoRestante === null) tiempoRestante = tiempoTotal;
+
+    // Animación de cinta
+    let x = 0;
+    function moverCinta() {
+        x -= velocidad;
+        const inner = cinta.querySelector('.cinta-items');
+        if (inner) inner.style.transform = `translateX(${x}px)`;
+        animaciones[n] = requestAnimationFrame(moverCinta);
+    }
+    moverCinta();
+
+    // Botón Finalizar dinámico
+    let stopBtn = document.getElementById(`stop-linea-${n}`);
+    if (!stopBtn) {
+        stopBtn = document.createElement('button');
+        stopBtn.id = `stop-linea-${n}`;
+        stopBtn.textContent = 'Finalizar';
+        stopBtn.style.marginLeft = '5px';
+        stopBtn.addEventListener('click', () => finalizarLinea(n, opId, opTexto, cant, planId));
+        btn.parentNode.appendChild(stopBtn);
+    }
+
+    // Registro en tabla
+    const fila = document.createElement('tr');
+    fila.innerHTML = `<td></td><td>${opTexto}</td><td>${etapas[etapaIndex]}</td>
+                      <td style="background-color:lightyellow">En progreso</td>
+                      <td>Operario ${n}</td><td>${new Date().toLocaleTimeString()}</td>
+                      <td></td><td></td><td></td>`;
+    registroTable.appendChild(fila);
+    const tdEtapa = fila.children[2], tdEstado = fila.children[3];
+    const etapaTiempo = tiempoTotal / etapas.length;
+
+    // Contador
+    function actualizarContador() {
+        tiempoRestante -= 1;
+        const etapaActual = Math.min(Math.floor((tiempoTotal - tiempoRestante) / etapaTiempo), etapas.length - 1);
+        if (etapaActual !== etapaIndex) {
+            etapaIndex = etapaActual;
+            tdEtapa.textContent = etapas[etapaIndex];
+            tdEstado.style.backgroundColor = "lightblue";
+        }
+        opInfo.textContent = `Procesando ${opTexto}. Etapa: ${etapas[etapaIndex]}. Tiempo restante: ${Math.ceil(tiempoRestante / 60)} min`;
+        guardarEstadoLinea(n, opId, tiempoRestante, etapaIndex, planId, cant);
+
+        if (tiempoRestante > 0) timers[n] = setTimeout(actualizarContador, 1000);
+        else finalizarLinea(n, opId, opTexto, cant, planId); // Finaliza según cantidad de lotes de la subparte
+    }
+    actualizarContador();
+}
+
+// ------------------- Finalizar línea (versión robusta y con logs) ---------------------
+async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null) {
+    const cinta = document.getElementById(`cinta${n}`);
+    const btn = document.getElementById(`btn-linea-${n}`);
+    const estadoCont = document.getElementById(`estadoCont-${n}`);
+    const estadoText = document.getElementById(`estado-linea-${n}`);
+    const opInfo = document.getElementById(`opInfo-${n}`);
+
+    try {
+        console.log(`\n▶ finalizarLinea inicio - linea:${n} opId:${opId} opTexto:${opTexto} cant:${cant} plan:${idPlanificacion}`);
+
+        // Detener animaciones / timers si existen
+        try { cancelAnimationFrame(animaciones[n]); } catch(e) {}
+        try { clearTimeout(timers[n]); } catch(e) {}
+        try { estados[n] = false; } catch(e) {}
+
+        if (cinta) cinta.classList.add('stop');
+        if (estadoText) estadoText.textContent = 'Finalizada';
+        if (estadoCont) {
+            estadoCont.classList.remove('estado-en-marcha');
+            estadoCont.classList.add('estado-finalizada');
+        }
+        if (opInfo) opInfo.textContent = `✅ OP ${opTexto} completada (subparte).`;
+
+        // 1) Obtener OP con id_producto
+        const { data: opData, error: opError } = await supabaseClient
+            .from('orden_produccion')
+            .select('cant_lote, lotes_terminados, id_producto')
+            .eq('id_orden_produccion', opId)
+            .single();
+
+        if (opError) {
+            console.error('Error leyendo orden_produccion:', opError);
+            throw opError;
+        }
+        if (!opData) {
+            console.error('No se encontró orden_produccion para id:', opId);
+            throw new Error('OP no encontrada');
+        }
+
+        console.log('opData:', opData);
+
+        const prevTerminados = Number(opData.lotes_terminados || 0);
+        const totalLotes = Number(opData.cant_lote || 1);
+        const nuevosTerminados = prevTerminados + Number(cant || 0);
+
+        // actualizar lotes_terminados
+        const { error: updLotesErr } = await supabaseClient
+            .from('orden_produccion')
+            .update({ lotes_terminados: nuevosTerminados })
+            .eq('id_orden_produccion', opId);
+
+        if (updLotesErr) console.warn('Warning: no se pudo actualizar lotes_terminados:', updLotesErr);
+        else console.log(`lotes_terminados: ${prevTerminados} -> ${nuevosTerminados}`);
+
+        // eliminar estado de linea si existe la función
+        if (typeof eliminarEstadoLinea === 'function') eliminarEstadoLinea(n);
+
+        // 2) Marcar planificación (si viene)
+        if (idPlanificacion) {
+            const { error: planErr } = await supabaseClient
+                .from('planificacion_semanal')
+                .update({ estado: 'finalizada' })
+                .eq('id', idPlanificacion);
+
+            if (planErr) console.warn('No se pudo actualizar planificacion_semanal:', planErr);
+            else console.log('Planificacion marcada finalizada:', idPlanificacion);
+        }
+
+        // 3) Comprobar si toda la OP terminó
+        let todasFinalizadas = false;
+        const { data: partes = [], error: partesErr } = await supabaseClient
+            .from('planificacion_semanal')
+            .select('estado')
+            .eq('id_op', opId);
+
+        if (partesErr) console.warn('Error trayendo planificaciones:', partesErr);
+        if (!partes || partes.length === 0) {
+            todasFinalizadas = true;
+        } else {
+            todasFinalizadas = partes.every(p => p.estado === 'finalizada');
+        }
+
+        const opCompletada = todasFinalizadas || nuevosTerminados >= totalLotes;
+        console.log('opCompletada?', opCompletada, { todasFinalizadas, nuevosTerminados, totalLotes });
+
+        // 4) Si OP completada -> marcar + stock/facturar
+        if (opCompletada) {
+            const { error: updEstadoErr } = await supabaseClient
+                .from('orden_produccion')
+                .update({ estado: 'finalizada' })
+                .eq('id_orden_produccion', opId);
+
+            if (updEstadoErr) console.warn('No se pudo marcar OP finalizada:', updEstadoErr);
+            else console.log('OP marcada finalizada en DB:', opId);
+
+            // calcular total producidos (intenta usar planificacion si existe)
+            let totalProducidos = 0;
+            const { data: planes = [], error: planesErr } = await supabaseClient
+                .from('planificacion_semanal')
+                .select('cantidad_lotes')
+                .eq('id_op', opId);
+
+            if (planesErr) console.warn('Error trayendo planes:', planesErr);
+            else {
+                for (const p of planes) {
+                    try {
+                        const info = typeof p.cantidad_lotes === 'string' ? JSON.parse(p.cantidad_lotes) : p.cantidad_lotes;
+                        if (Array.isArray(info?.lotes_incluidos)) totalProducidos += info.lotes_incluidos.length;
+                        else if (info?.lotes_total) totalProducidos += Number(info.lotes_total);
+                    } catch (e) {
+                        // ignorar parse errors
+                    }
+                }
+            }
+            if (totalProducidos === 0) totalProducidos = Number(opData.cant_lote || 1);
+            console.log('totalProducidos:', totalProducidos);
+
+            // 4A) verificar op_ov (si no tiene, actualizar stock)
+            const { data: opsOV = [], error: opsOvErr } = await supabaseClient
+                .from('op_ov')
+                .select('id_detalle_ov')
+                .eq('id_op', opId);
+
+            if (opsOvErr) console.warn('Error trayendo op_ov:', opsOvErr);
+            console.log('op_ov rows encontradas para OP:', (opsOV || []).length);
+
+            if (!opsOV || opsOV.length === 0) {
+                // aumentar stock del producto
+                if (opData.id_producto) {
+                    const { data: prod, error: prodErr } = await supabaseClient
+                        .from('productos')
+                        .select('stock')
+                        .eq('id_producto', opData.id_producto)
+                        .single();
+
+                    if (prodErr || !prod) {
+                        console.warn('No se pudo leer producto para stock:', prodErr);
+                    } else {
+                        const cantidadASumar = totalProducidos * 10;
+                        const { error: updStockErr } = await supabaseClient
+                            .from('productos')
+                            .update({ stock: prod.stock + cantidadASumar })
+                            .eq('id_producto', opData.id_producto);
+
+                        if (updStockErr) console.warn('Error actualizando stock:', updStockErr);
+                        else console.log(`📦 Stock actualizado producto ${opData.id_producto} +${cantidadASumar}`);
+                    }
+                } else {
+                    console.log('OP sin id_producto, no se actualiza stock.');
+                }
+            } else {
+                // 4B) Tiene OV: procesar OV únicas vinculadas a esta OP
+                const detalleOvIds = [...new Set(opsOV.map(r => r.id_detalle_ov).filter(Boolean))];
+                console.log('detalleOvIds únicos:', detalleOvIds);
+
+                // Obtener id_orden (OV) asociados a esos detalles
+                const idOrdenSet = new Set();
+                for (const idDet of detalleOvIds) {
+                    const { data: detRow, error: detErr } = await supabaseClient
+                        .from('detalle_ordenes')
+                        .select('id_orden')
+                        .eq('id_detalle', idDet)
+                        .single();
+
+                    if (detErr || !detRow) {
+                        console.warn('detalle_ordenes no encontrado para id_detalle:', idDet, detErr);
+                        continue;
+                    }
+                    idOrdenSet.add(detRow.id_orden);
+                }
+
+                const idOrdenList = [...idOrdenSet];
+                console.log('OV únicas a procesar:', idOrdenList);
+
+                for (const idOrden of idOrdenList) {
+                    // obtener todos los detalles de la OV
+                    const { data: detalles = [], error: detallesErr } = await supabaseClient
+                        .from('detalle_ordenes')
+                        .select('id_detalle')
+                        .eq('id_orden', idOrden);
+
+                    if (detallesErr) {
+                        console.warn('Error trayendo detalles OV', idOrden, detallesErr);
+                        continue;
+                    }
+                    const detalleIds = detalles.map(d => d.id_detalle).filter(Boolean);
+                    if (detalleIds.length === 0) {
+                        console.warn('OV sin detalles:', idOrden);
+                        continue;
+                    }
+
+                    // obtener todas las OP asociadas a esos detalles
+                    const { data: otrasOP = [], error: otrasOpErr } = await supabaseClient
+                        .from('op_ov')
+                        .select('id_op')
+                        .in('id_detalle_ov', detalleIds);
+
+                    if (otrasOpErr) {
+                        console.warn('Error trayendo op_ov para detalles OV', idOrden, otrasOpErr);
+                        continue;
+                    }
+
+                    const opUnicas = [...new Set(otrasOP.map(o => o.id_op).filter(Boolean))];
+                    console.log(`OV ${idOrden} -> OP únicas:`, opUnicas);
+
+                    // verificar estados de cada OP única
+                    let pendientes = 0;
+                    for (const idOPx of opUnicas) {
+                        const { data: opC, error: opCErr } = await supabaseClient
+                            .from('orden_produccion')
+                            .select('estado')
+                            .eq('id_orden_produccion', idOPx)
+                            .single();
+
+                        if (opCErr || !opC) {
+                            console.warn('No se pudo leer estado de OP', idOPx, opCErr);
+                            pendientes++; // en duda, marcar pendiente para evitar facturar por error
+                            continue;
+                        }
+                        if (opC.estado !== 'finalizada') pendientes++;
+                    }
+
+                    console.log(`OV ${idOrden} -> pendientes OP: ${pendientes}`);
+
+                    if (pendientes === 0) {
+                        // marcar orden_ventas completada
+                        const { error: updOvErr } = await supabaseClient
+                            .from('orden_ventas')
+                            .update({ estado: 'completada' })
+                            .eq('id_orden', idOrden);
+
+                        if (updOvErr) console.warn('No se pudo marcar orden_ventas completada:', updOvErr);
+                        else console.log('orden_ventas marcada completada:', idOrden);
+
+                        // obtener cliente (necesario para factura)
+                        const { data: ovData, error: ovDataErr } = await supabaseClient
+                            .from('orden_ventas')
+                            .select('id_cliente')
+                            .eq('id_orden', idOrden)
+                            .single();
+
+                        if (ovDataErr || !ovData) {
+                            console.warn('No se pudo leer orden_ventas para facturar:', idOrden, ovDataErr);
+                            continue;
+                        }
+
+                        // insertar factura
+                        const { error: factErr } = await supabaseClient
+                            .from('factura')
+                            .insert([{ id_orden: idOrden, id_cliente: ovData.id_cliente, fecha: new Date() }]);
+
+                        if (factErr) {
+                            console.warn('Error insertando factura para OV', idOrden, factErr);
+                        } else {
+                            console.log(`📄 Factura generada para la Orden de Venta #${idOrden}`);
+                        }
+                    } else {
+                        console.log(`OV ${idOrden} NO facturada (quedan ${pendientes} OP pendientes).`);
+                    }
+                } // fin for idOrdenList
+            } // fin else opsOV.length>0
+        } // fin if opCompletada
+
+        // 5) Actualizar UI
+        if (typeof mostrarOPFinalizada === 'function') mostrarOPFinalizada(opId, opTexto, n);
+
+        const opSelect = document.getElementById(`opSelectLinea-${n}`);
+        if (opSelect) {
+            if (idPlanificacion) {
+                [...opSelect.options].forEach(opt => {
+                    if (opt.dataset.planId == idPlanificacion && opt.value == opId) opt.remove();
+                });
+            } else {
+                const opt = opSelect.querySelector(`option[value="${opId}"]`);
+                if (opt) opt.remove();
+            }
+            if (opSelect.options.length <= 1) {
+                opSelect.innerHTML = '<option disabled>No hay OP disponibles</option>';
+                opSelect.disabled = true;
+            }
+        }
+
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Iniciar';
+        }
+        const stopBtn = document.getElementById(`stop-linea-${n}`);
+        if (stopBtn) stopBtn.remove();
+
+        try {
+            opEnEjecucion.forEach(k => {
+                if (k.startsWith(String(opId))) opEnEjecucion.delete(k);
+            });
+        } catch (e) {}
+
+        if (typeof actualizarSelectsOP === 'function') actualizarSelectsOP();
+
+        console.log('✔ finalizarLinea completada para OP', opId);
+    } catch (err) {
+        console.error("❌ Error finalizando OP:", err);
+    }
+}
+
+// ---------------- Recuperar estado al recargar ----------------
+function recuperarEstadoLinea(n, opSelect, cinta, btn, estadoCont, estadoText, opInfo) {
+    const saved = localStorage.getItem(`linea_${n}`);
+    if (!saved) return;
+    const data = JSON.parse(saved);
+    const tiempoTranscurrido = Math.floor((Date.now() - data.timestamp) / 1000);
+    const tiempoRestante = data.tiempoRestante - tiempoTranscurrido;
+    if (tiempoRestante <= 0) { eliminarEstadoLinea(n); return; }
+    const opId = data.opId;
+    const planId = data.planId || null;
+    const option = opSelect.querySelector(`option[value="${opId}"]${planId ? `[data-plan-id="${planId}"]` : ''}`);
+    if (option) option.selected = true;
+
+    // marcar en ejecucion (por key op_plan si hay planId)
+    opEnEjecucion.add(String(opId) + (planId ? `_${planId}` : ''));
+    actualizarSelectsOP();
+    iniciarLinea(n, opId, option ? option.textContent : 'OP', tiempoRestante, document.getElementById(`cinta${n}`), document.getElementById(`btn-linea-${n}`), document.getElementById(`estadoCont-${n}`), document.getElementById(`estado-linea-${n}`), document.getElementById(`opInfo-${n}`), document.querySelector("#registroTable tbody"), 4, tiempoRestante, data.etapaIndex, data.cantidad || 1, planId);
+}
+
+// ---------------- Cargar líneas y planificación ----------------
+document.addEventListener('DOMContentLoaded', async () => {
+    const contenedor = document.getElementById('lineasContainer');
+    if (!contenedor) return;
+
+    const nombres = { 1: 'Línea 1', 2: 'Línea 2', 3: 'Línea 3', 4: 'Línea 4', 5: 'Línea 5' };
+    const hoy = new Date().toISOString().split('T')[0];
+
+    // Traer planificación y OPs pendientes
+    const [{ data: planificacion }, { data: ordenes }] = await Promise.all([
+        supabaseClient.from('planificacion_semanal')
+            .select(`
+                id,
+                id_op,
+                id_linea,
+                dia,
+                hora_inicio,
+                hora_fin,
+                cantidad_lotes,
+                estado,
+                orden:orden_produccion(
+                    id_orden_produccion,
+                    numero_op,
+                    cant_lote,
+                    id_producto,
+                    estado,
+                    prioridad,
+                    ver_orden
+                )
+            `)
+            .gte('dia', hoy) // traemos desde hoy en adelante
+            .order('dia', { ascending: true })
+            .order('hora_inicio', { ascending: true }),
+        supabaseClient.from('orden_produccion')
+            .select('id_orden_produccion, numero_op, id_producto, cant_lote, estado')
+            .eq('estado', 'Pendiente')
+    ]);
+    console.log("📅 Planificación (desde hoy):", planificacion);
+
+    // Traer todas las líneas de producción ordenadas por ID
+    const { data: lineasDB } = await supabaseClient
+        .from('linea_productos')
+        .select('*')
+        .order('id_linea', { ascending: true });
+
+    // Verificar que existan líneas
+    if (!lineasDB || lineasDB.length === 0) {
+        console.error("❌ No se encontraron líneas de producción en la base de datos.");
+        return;
+    }
+
+    // Crear visualmente cada línea
+    for (let i = 1; i <= 5; i++) {
+        const linea = document.createElement('div');
+        linea.className = 'linea-produccion';
+        linea.dataset.linea = i;
+
+        const nombreLinea = nombres[i];
+        const lineaDB = lineasDB.find(l => l.nombre_linea === nombreLinea);
+        const idLineaReal = lineaDB?.id_linea || i; // fallback si no se encuentra
+
+        linea.dataset.idLinea = idLineaReal;
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'linea-header';
+
+        const titulo = document.createElement('h4');
+        titulo.textContent = nombreLinea;
+
+        const estadoCont = document.createElement('div');
+        estadoCont.className = 'estado-linea estado-detenida';
+        estadoCont.id = `estadoCont-${i}`;
+
+        const led = document.createElement('span');
+        led.className = 'estado-led';
+
+        const estadoText = document.createElement('span');
+        estadoText.id = `estado-linea-${i}`;
+        estadoText.textContent = 'Detenida';
+
+        estadoCont.append(led, estadoText);
+        header.append(titulo, estadoCont);
+
+        // Planificación del día (solo para esa línea y con orden)
+        const planDiv = document.createElement('div');
+        planDiv.className = 'planificacion-diaria';
+        planDiv.innerHTML = '<b style="color:black;">Planificación del día / próximas:</b>';
+
+        const planHoyLinea = (planificacion || []).filter(p => p.id_linea === idLineaReal && p.orden);
+        console.log(`📋 Planificación ${nombreLinea} (id_linea=${idLineaReal}):`, planHoyLinea);
+
+        planHoyLinea.forEach(p => {
+            const op = p.orden;
+            const card = document.createElement('span');
+
+            // Asignar color según prioridad
+            let bgColor = '#2a2a2a';
+            switch (op.prioridad) {
+                case 'urgente': bgColor = '#ff0000'; break;
+                case 'alta': bgColor = '#ff8000'; break;
+                case 'normal': bgColor = '#ebeb08'; break;
+                case 'baja': bgColor = '#00cc66'; break;
+            }
+
+            card.style.cssText = `
+                display:inline-block;
+                margin:2px;
+                padding:4px 8px;
+                border-radius:4px;
+                background:${bgColor};
+                font-size:0.9em;
+                font-weight:bold;
+                color:white;
+                cursor:pointer;
+                transition: background 0.2s;
+            `;
+
+            // Texto del card según segmentación
+            let textoCard = `OP ${op.numero_op}`;
+            if (p.cantidad_lotes) {
+                try {
+                    const lotesInfo = typeof p.cantidad_lotes === 'string' ? JSON.parse(p.cantidad_lotes) : p.cantidad_lotes;
+                    if (Array.isArray(lotesInfo.lotes_incluidos) && lotesInfo.lotes_total) {
+                        const incluidos = lotesInfo.lotes_incluidos;
+                        if (incluidos.length === 1) {
+                            textoCard += ` (lote ${incluidos[0]} de ${lotesInfo.lotes_total})`;
+                        } else {
+                            const rango = `${Math.min(...incluidos)}-${Math.max(...incluidos)}`;
+                            textoCard += ` (lotes ${rango} de ${lotesInfo.lotes_total})`;
+                        }
+                    } else if (lotesInfo.lotes_total) {
+                        textoCard += ` (${lotesInfo.lotes_total} lotes)`;
+                    } else {
+                        textoCard += ` (${op.cant_lote} lotes)`;
+                    }
+                } catch (e) {
+                    console.warn("⚠️ Error al interpretar cantidad_lotes:", p.cantidad_lotes);
+                    textoCard += ` (${op.cant_lote} lotes)`;
+                }
+            } else {
+                textoCard += ` (${op.cant_lote} lotes)`;
+            }
+
+            card.textContent = textoCard;
+
+            // clic -> ver detalle
+            card.addEventListener('click', () => verDetalleOP(op, idLineaReal, i));
+
+            planDiv.appendChild(card);
+        });
+
+        // Select de OPs
+        const opSelect = document.createElement('select');
+        opSelect.id = `opSelectLinea-${i}`;
+
+        const optVacio = document.createElement('option');
+        optVacio.value = '';
+        optVacio.textContent = 'Seleccione una OP';
+        opSelect.appendChild(optVacio);
+
+        // buscar todas las planificaciones desde hoy para esta línea
+        const planificacionesLinea = (planificacion || []).filter(p => p.id_linea === idLineaReal && new Date(p.dia) >= new Date(hoy));
+
+        // generar opciones a partir de las planificaciones (cada opción representará una fila de planificacion_semanal cuando exista)
+        planificacionesLinea.forEach(p => {
+            const op = p.orden;
+            if (!op) return;
+
+            let texto = `OP ${op.numero_op}`;
+
+            // calcular cantidad de lotes de la subparte
+            let cantidadSubparte = op.cant_lote || 1;
+            if (p.cantidad_lotes) {
+                try {
+                    const info = typeof p.cantidad_lotes === 'string' ? JSON.parse(p.cantidad_lotes) : p.cantidad_lotes;
+                    if (Array.isArray(info.lotes_incluidos)) cantidadSubparte = info.lotes_incluidos.length;
+                    else if (info.lotes_total) cantidadSubparte = Number(info.lotes_total);
+                } catch {
+                    // fallback: op.cant_lote
+                }
+            }
+
+            if (p.cantidad_lotes) {
+                try {
+                    const info = typeof p.cantidad_lotes === 'string' ? JSON.parse(p.cantidad_lotes) : p.cantidad_lotes;
+                    if (Array.isArray(info.lotes_incluidos) && info.lotes_total) {
+                        const incluidos = info.lotes_incluidos;
+                        if (incluidos.length === 1) texto += ` (lote ${incluidos[0]} de ${info.lotes_total})`;
+                        else texto += ` (lotes ${Math.min(...incluidos)}-${Math.max(...incluidos)} de ${info.lotes_total})`;
+                    } else if (info.lotes_total) {
+                        texto += ` (${info.lotes_total} lotes)`;
+                    } else {
+                        texto += ` (${cantidadSubparte} lotes)`;
+                    }
+                } catch {
+                    texto += ` (${cantidadSubparte} lotes)`;
+                }
+            } else {
+                texto += ` (${cantidadSubparte} lotes)`;
+            }
+
+            const option = document.createElement('option');
+            option.value = op.id_orden_produccion;
+            option.textContent = texto;
+            option.dataset.cantidad = cantidadSubparte;
+            option.dataset.planId = p.id; // guardamos el id de planificacion
+
+            // si esa planificacion ya está en ejecución, la deshabilitamos
+            if (p.estado === 'en elaboracion' || p.estado === 'finalizada') option.disabled = true;
+
+            opSelect.appendChild(option);
+        });
+
+        // Si no hay planificaciones para la línea, mostrar OPs pendientes genéricas
+        if (planificacionesLinea.length === 0) {
+            ordenes.forEach(op => {
+                const option = document.createElement('option');
+                option.value = op.id_orden_produccion;
+                option.textContent = `OP ${op.numero_op} (Cant: ${op.cant_lote})`;
+                option.dataset.cantidad = op.cant_lote;
+                // no planId
+                if (opEnEjecucion.has(op.id_orden_produccion)) option.disabled = true;
+                opSelect.appendChild(option);
+            });
+        }
+
+        // Info OP, cinta y botón
+        const opInfo = document.createElement('div');
+        opInfo.id = `opInfo-${i}`;
+        opInfo.style.margin = '5px 0';
+
+        const cinta = document.createElement('div');
+        cinta.className = 'cinta-wrapper stop';
+        cinta.id = `cinta${i}`;
+
+        const items = document.createElement('div');
+        items.className = 'cinta-items';
+        items.textContent = `${productos[i]} ${productos[i]}`;
+        cinta.appendChild(items);
+
+        const actions = document.createElement('div');
+        actions.className = 'linea-actions';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = `btn-linea-${i}`;
+        btn.textContent = 'Iniciar';
+        btn.addEventListener('click', () => toggleLinea(i));
+
+        actions.appendChild(btn);
+
+        // Estructura final
+        linea.append(header, planDiv, opSelect, opInfo, cinta, actions);
+        contenedor.appendChild(linea);
+
+        // Recuperar estado previo
+        recuperarEstadoLinea(i, opSelect, cinta, btn, estadoCont, estadoText, opInfo);
+    }
+});
+
+
+// ---------------- Detalle OP / materiales ----------------
+async function verDetalleOP(op, idLineaReal, i) {
+    let duracion = 0;
+    try {
+        const { data: lineaData } = await supabaseClient
+            .from('linea_produccion')
+            .select('duracion')
+            .eq('id_linea', idLineaReal)
+            .eq('id_producto', op.id_producto)
+            .single();
+        if (lineaData?.duracion) duracion = lineaData.duracion;
+    } catch (err) { console.error(err); }
+    modalBody.innerHTML = `
+                    <h3>Detalle de ${op.numero_op}</h3>
+                    <p><b>Línea:</b> ${i}</p>
+                    <p><b>Producto:</b> ${op.ver_orden.map(item => `
+                                            ${item.nombre}
+                                            `).join('')}</p>
+                    <p><b>Cantidad de lotes:</b> ${op.cant_lote}</p>
+                    <p><b>Duración estimada por lote:</b> ${duracion} minutos</p>
+                    <p><b>Tiempo total estimado:</b> ${duracion * op.cant_lote} minutos</p>
+                    <p><b>Estado:</b> ${op.estado || 'Pendiente'}</p>
+
+                    <h3 style="text-align:center;">Lotes / Materiales reservados:</h3>
+                    <h4 style="text-align:center; font-weight: normal;">Ver detalle de Lote (clic en una fila para más info)</h4>
+
+                   <div id="detalleMateriales" style="margin-top:10px;">Cargando...</div>
+                `;
+    modal.style.display = 'flex';
+    const contMateriales = document.getElementById("detalleMateriales");
+
+    const { data: detalleLotes, error: errorLotes } = await supabaseClient
+        .from('detalle_lote_op')
+        .select('*')
+        .eq('id_orden_produccion', op.id_orden_produccion);
+
+    if (errorLotes) {
+        contMateriales.innerHTML = `<p>Error al cargar materiales: ${errorLotes.message}</p>`;
+    } else if (detalleLotes.length > 0) {
+        let lotesHtml = '';
+        for (const d of detalleLotes) {
+            const { data: lote } = await supabaseClient
+                .from('lote_mp')
+                .select('id_lote, id_mp, fecha_caducidad')
+                .eq('id_lote', d.id_lote)
+                .single();
+
+            const { data: mat } = await supabaseClient
+                .from('materiales')
+                .select('nombre')
+                .eq('id_mp', lote.id_mp)
+                .single();
+
+            lotesHtml += `
+        <tr data-id-lote="${lote.id_lote}" onclick="verDetalleLote('${lote.id_lote}')" style="cursor:pointer;">
+          <td>${mat ? mat.nombre : 'Desconocido'}</td>
+          <td>${lote.id_lote}</td>
+          <td>${d.cantidad_lote}</td>
+          <td>${lote.fecha_caducidad ? new Date(lote.fecha_caducidad).toLocaleDateString() : '-'}</td>
+        </tr>`;
+        }
+
+        contMateriales.innerHTML = `
+      <table border="1" style="width:100%; margin-top:10px;">
+        <thead><tr><th>Material</th><th>Lote</th><th>Cant. reservada</th><th>Fecha caducidad</th></tr></thead>
+        <tbody>${lotesHtml}</tbody>
+      </table>`;
+    } else {
+        contMateriales.innerHTML = '<p>No hay lotes reservados para esta OP.</p>';
+    }
+    // no hace falta añadir el event listener global aquí porque cada fila ya tiene onclick inline
+}
+
+//==============VER DETALLE DE LOTE RESERVADOS ==================
+async function verDetalleLote(idLote) {
+    try {
+        const { data: lote, error: errorLote } = await supabaseClient
+            .from('lote_mp')
+            .select('*')
+            .eq('id_lote', idLote)
+            .single();
+        if (errorLote || !lote) throw errorLote || 'Lote no encontrado';
+
+        const { data: proveedor, error: errorProv } = await supabaseClient
+            .from('proveedor')
+            .select('nombre')
+            .eq('id_proveedor', lote.id_proveedor)
+            .single();
+        if (errorProv) throw errorProv;
+
+        const { data: material, error: errorMat } = await supabaseClient
+            .from('materiales')
+            .select('nombre')
+            .eq('id_mp', lote.id_mp)
+            .single();
+        if (errorMat) throw errorMat;
+
+        const modal = document.getElementById('modalDetalleLote');
+        const contenido = document.getElementById('contenidoModalDetalleLote');
+
+        if (!modal || !contenido) {
+            // crear modal simple si no existe en la página
+            alert(`ID Lote: ${idLote}\nMaterial: ${material?.nombre || lote.id_mp}\nProveedor: ${proveedor?.nombre || '-'}`);
+            return;
+        }
+
+        contenido.innerHTML = `
+      <p><strong>ID Lote:</strong> ${lote.id_lote}</p>
+      <p><strong>Material:</strong> ${material?.nombre.toUpperCase() || lote.id_mp}</p>
+      <p><strong>Nombre Proveedor:</strong> ${proveedor?.nombre || '-'}</p>
+      <p><strong>Cantidad Disponible:</strong> ${lote.cantidad_disponible}</p>
+      <p><strong>Fecha Ingreso:</strong> ${lote.fecha_ingreso ? new Date(lote.fecha_ingreso).toLocaleDateString() : '-'}</p>
+      <p><strong>Fecha Caducidad:</strong> ${lote.fecha_caducidad ? new Date(lote.fecha_caducidad).toLocaleDateString() : '-'}</p>
+      <p><strong>Estado:</strong> ${lote.estado}</p>
+    `;
+        modal.style.display = 'flex';
+
+    } catch (err) {
+        console.error("Error mostrando detalle del lote:", err);
+        mostrarError("No se pudo mostrar el detalle del lote.");
+    }
+}
+
+function mostrarError(mensaje) {
+    const modal = document.getElementById('modalError');
+    const mensajeP = document.getElementById('mensajeErrorTexto');
+    const btnCerrar = document.getElementById('btnCerrarError');
+
+    if (!modal || !mensajeP || !btnCerrar) {
+        console.error("⚠️ No se encontró el modal de error, usando alert()");
+        return alert(mensaje);
+    }
+
+    mensajeP.textContent = mensaje;
+    modal.classList.add('mostrar');
+
+    btnCerrar.onclick = () => modal.classList.remove('mostrar');
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove('mostrar');
+    };
+}
+
+window.toggleLinea = toggleLinea;
