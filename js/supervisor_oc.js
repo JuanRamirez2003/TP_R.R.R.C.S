@@ -11,7 +11,7 @@ let proveedorData = [];
 
 // ================== Inicialización EmailJS ==================
 if (typeof emailjs !== 'undefined') {
-    emailjs.init("SJ34lI1ytF8WPEMSi"); // Tu Public Key
+    emailjs.init("-HiKvbHc9IPjCjerU"); // Tu Public Key
 } else {
     console.warn("EmailJS no cargado. Revisa tu <script> en HTML.");
 }
@@ -126,7 +126,7 @@ if (typeof emailjs !== 'undefined') {
     const confirmLink = `https://juanramirez2003.github.io/TP_R.R.R.C.S/confirmar_recibido.html?id=${idPedido}`;
 
     // Enviar variables a la plantilla de EmailJS
-    emailjs.send('service_fi08iwj', 'template_w9ormn4', {
+    emailjs.send('service_fppicy9', 'template_cahwe0g', {
         materia_prima: materia,
         proveedor: proveedor,
         cantidad: cantidad,
