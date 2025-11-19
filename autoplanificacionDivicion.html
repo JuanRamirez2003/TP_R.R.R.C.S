@@ -391,6 +391,27 @@
       max-height: 60vh;
       padding-right: 6px;
     }
+    #lineasDividirModal {
+  max-height: 400px;      /* permite scroll si hay muchas líneas */
+  overflow-y: auto;
+  padding: 10px;
+}
+
+#lineaCardContainer .linea-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px;
+  margin: 4px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+}
+
+#lineaCardContainer .linea-card input.input-lotes-linea {
+  width: 60px;
+  text-align: right;
+}
 
     /* ===== OP items ===== */
     .op-item {

@@ -1703,167 +1703,292 @@ function resetearModalPlanificacion() {
 const modalAyuda = document.getElementById("modalAyuda");
 const btnAyuda = document.getElementById("btnAyuda");
 const closeAyuda = document.querySelector(".close-ayuda");
-// ==================== ABRIR MODAL Y CARGAR OPS ====================
+/* ==================== ABRIR MODAL Y CARGAR OPS ==================== */
 document.getElementById("btnDividirOP").addEventListener("click", async () => {
-    const selectOP = document.getElementById("selectOPDividir");
-    selectOP.innerHTML = '<option value="">Cargando...</option>';
+  const selectOP = document.getElementById("selectOPDividir");
+  selectOP.innerHTML = '<option value="">Cargando...</option>';
 
-    const { data: ops, error } = await supabaseClient
-        .from("orden_produccion")
-        .select("id_orden_produccion, numero_op, cant_lote, lotes_terminados, prioridad, id_producto")
-        .eq("estado", "Pendiente");
+  const { data: ops, error } = await supabaseClient
+    .from("orden_produccion")
+    .select("id_orden_produccion, numero_op, cant_lote, lotes_terminados, prioridad, id_producto")
+    .eq("estado", "Pendiente");
 
-    if (error || !ops) return mostrarAviso("Error al cargar OPs");
+  if (error || !ops) return mostrarAviso("Error al cargar OPs");
 
-    const opsPendientes = [];
+  const opsPendientes = ops.filter(op => (op.cant_lote || 0) - (op.lotes_terminados || 0) > 0);
 
-    for (const op of ops) {
-        // Traer lotes ya planificados de esta OP
-        const { data: planificaciones } = await supabaseClient
-            .from("planificacion_semanal")
-            .select("*")
-            .eq("id_op", op.id_orden_produccion);
+  if (!opsPendientes.length) {
+    selectOP.innerHTML = '<option value="">No hay OPs pendientes</option>';
+    return;
+  }
 
-        const lotesAsignados = planificaciones?.reduce((sum, p) => {
-            const info = JSON.parse(p.cantidad_lotes || '{}');
-            return sum + (info.lotes_total || 0);
-        }, 0) || 0;
+  selectOP.innerHTML = '<option value="">-- Seleccionar OP --</option>';
+  opsPendientes.forEach(op => {
+    const libres = (op.cant_lote || 0) - (op.lotes_terminados || 0);
+    selectOP.innerHTML += `<option value="${op.id_orden_produccion}" 
+        data-lotes="${libres}" 
+        data-numero="${op.numero_op}" 
+        data-prioridad="${op.prioridad}" 
+        data-producto="${op.id_producto}">
+        ${op.numero_op} - Lotes pendientes: ${libres}
+    </option>`;
+  });
 
-        const libres = (op.cant_lote || 0) - lotesAsignados;
-        if (libres > 0) opsPendientes.push({ ...op, lotesPendientes: libres });
-    }
-
-    if (!opsPendientes.length) {
-        selectOP.innerHTML = '<option value="">No hay OPs pendientes</option>';
-        return;
-    }
-
-    selectOP.innerHTML = '<option value="">-- Seleccionar OP --</option>';
-    opsPendientes.forEach(op => {
-        selectOP.innerHTML += `<option value="${op.id_orden_produccion}" 
-            data-lotes="${op.lotesPendientes}" 
-            data-numero="${op.numero_op}" 
-            data-prioridad="${op.prioridad}" 
-            data-producto="${op.id_producto}">
-            ${op.numero_op} - Lotes pendientes: ${op.lotesPendientes}
-        </option>`;
-    });
-
-    document.getElementById("modalDividirOP").style.display = "flex";
+  document.getElementById("modalDividirOP").style.display = "flex";
 });
 
-// ==================== CARGAR LINEAS Y ASIGNACION ====================
+/* ==================== CARGAR LINEAS Y ASIGNACION ==================== */
 document.getElementById("selectOPDividir").addEventListener("change", async (e) => {
-    const idOP = e.target.value;
-    const cont = document.getElementById("asignacionesLotesDividir");
-    cont.innerHTML = "";
-    if (!idOP) return;
+  const idOP = e.target.value;
+  const cont = document.getElementById("asignacionesLotesDividir");
+  cont.innerHTML = "";
+  if (!idOP) return;
 
-    const lotesTotales = parseInt(e.target.selectedOptions[0].getAttribute("data-lotes"));
+  const lotesTotales = parseInt(e.target.selectedOptions[0].getAttribute("data-lotes"));
+  
+  const { data: lineas, error } = await supabaseClient
+    .from("linea_productos")
+    .select("id_linea, descripcion");
+  if (error) return mostrarAviso("Error al cargar líneas");
 
-    const { data: lineas, error } = await supabaseClient.from("linea_productos").select("*");
-    if (error) return mostrarAviso("Error al cargar líneas");
+  let html = `<p><b>Lotes totales:</b> ${lotesTotales}</p>
+              <p>Asignar lotes entre líneas:</p>
+              <div id="listaLineasDividir" style="display:flex; flex-direction:column; gap:6px;">`;
 
-    let html = `<p><b>Lotes totales:</b> ${lotesTotales}</p><p>Asignar lotes entre líneas:</p><div id="listaLineasDividir">`;
+  lineas.forEach((l, i) => {
+    const nombreLinea = l.descripcion?.trim() || "Línea " + (i + 1);
+    html += `<div class="linea-card" draggable="true" data-id="${l.id_linea}" 
+                 style="padding:6px; border:1px solid #ccc; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+               <span>${nombreLinea}</span>
+               <input type="number" min="0" max="${lotesTotales}" value="0" 
+                      class="input-lotes-linea" style="width:60px; text-align:right;"/>
+             </div>`;
+  });
 
-    lineas.forEach((l, i) => {
-        html += `<div class="linea-card" draggable="true" data-id="${l.id_linea}" 
-                    style="padding:6px; margin:4px 0; border:1px solid #ccc; border-radius:6px;">
-                    <span>${l.descripcion || "Línea " + (i + 1)}</span>
-                    <input type="number" min="0" max="${lotesTotales}" value="0" 
-                        class="input-lotes-linea" style="float:right; width:60px;"/>
-                 </div>`;
-    });
+  html += `</div>`;
+  cont.innerHTML = html;
 
-    html += `</div>`;
-    cont.innerHTML = html;
-
-    activarDragLineasDividir();
-    activarControlSumaDividir(lotesTotales);
+  activarDragLineasDividir();
+  activarControlSumaDividir(lotesTotales);
 });
 
-// ==================== GUARDAR DIVISION CORREGIDO ====================
+/* ==================== DRAG & DROP ==================== */
+function activarDragLineasDividir() {
+  const cards = document.querySelectorAll("#listaLineasDividir .linea-card");
+  const lista = document.getElementById("listaLineasDividir");
+
+  cards.forEach(card => {
+    card.addEventListener("dragstart", () => card.classList.add("dragging"));
+    card.addEventListener("dragend", () => card.classList.remove("dragging"));
+  });
+
+  lista.addEventListener("dragover", e => {
+    e.preventDefault();
+    const dragging = document.querySelector(".dragging");
+    const afterElement = getDragAfterElement(lista, e.clientY);
+    if (!afterElement) lista.appendChild(dragging);
+    else lista.insertBefore(dragging, afterElement);
+  });
+
+  function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll(".linea-card:not(.dragging)")];
+    return draggableElements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) return { offset, element: child };
+      else return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+}
+
+/* ==================== CONTROL DE SUMA DE LOTES ==================== */
+function activarControlSumaDividir(maxLotes) {
+  const inputs = document.querySelectorAll("#listaLineasDividir .input-lotes-linea");
+  const aviso = document.getElementById("avisoDividir");
+
+  inputs.forEach(input => {
+    input.addEventListener("input", () => {
+      let total = 0;
+      inputs.forEach(i => total += Number(i.value) || 0);
+      if (total > maxLotes) {
+        input.value = Math.max(0, input.value - (total - maxLotes));
+        aviso.textContent = `⚠ No podés asignar más de ${maxLotes} lotes`;
+      } else aviso.textContent = "";
+    });
+  });
+}
+
+/* ==================== GUARDAR DIVISION FIJADA ==================== */
 document.getElementById("btnGuardarDividir").addEventListener("click", async () => {
-    const idOP = document.getElementById("selectOPDividir").value;
-    if (!idOP) return mostrarAviso("Seleccione una OP");
+  const idOP = Number(document.getElementById("selectOPDividir").value);
+  if (!idOP) return mostrarAviso("Seleccione una OP");
 
-    const dia = document.getElementById("inputDiaDividir").value;
-    if (!dia) return mostrarAviso("Seleccione un día");
+  const dia = document.getElementById("inputDiaDividir").value;
+  if (!dia) return mostrarAviso("Seleccione un día");
 
-    const { data: opOriginal } = await supabaseClient.from("orden_produccion").select("*").eq("id_orden_produccion", idOP).single();
-    if (!opOriginal) return mostrarAviso("No se encontró la OP");
+  try {
+    // Obtener OP original
+    const { data: opOriginal, error: opError } = await supabaseClient
+      .from("orden_produccion")
+      .select("*")
+      .eq("id_orden_produccion", idOP)
+      .single();
 
-    // Traer lotes ya planificados
-    const { data: planificacionesExistentes } = await supabaseClient.from("planificacion_semanal").select("*").eq("id_op", idOP);
+    if (opError || !opOriginal) {
+      console.error("Error al obtener OP original:", opError);
+      return mostrarAviso("No se encontró la OP");
+    }
 
-    const lotesAsignados = planificacionesExistentes?.reduce((sum, p) => {
-        const info = JSON.parse(p.cantidad_lotes || '{}');
-        return sum + (info.lotes_total || 0);
-    }, 0) || 0;
-
-    const lotesTotales = (opOriginal.cant_lote || 0) - lotesAsignados;
-    if (lotesTotales <= 0) return mostrarAviso("Esta OP ya tiene todos sus lotes planificados");
-
+    const lotesTotales = parseInt(document.querySelector(`#selectOPDividir option[value="${idOP}"]`).getAttribute("data-lotes"));
     const inputs = document.querySelectorAll("#listaLineasDividir .input-lotes-linea");
+
     let totalAsignado = 0;
-    let siguienteLote = lotesAsignados + 1;
+    let siguienteLote = Number(opOriginal.lotes_terminados || 0) + 1;
     const asignaciones = [];
 
     inputs.forEach(input => {
-        const card = input.closest(".linea-card");
-        const idLinea = card.dataset.id;
-        const lotes = Number(input.value) || 0;
-        if (lotes > 0) {
-            const lotesIncluidos = Array.from({ length: lotes }, (_, i) => siguienteLote + i);
-            siguienteLote += lotes;
-            totalAsignado += lotes;
-            asignaciones.push({ id_linea: idLinea, lotes, lotesIncluidos });
-        }
+      const card = input.closest(".linea-card");
+      const idLinea = Number(card.dataset.id);
+      const lotes = Number(input.value) || 0;
+      if (lotes > 0) {
+        const lotesIncluidos = Array.from({ length: lotes }, (_, i) => siguienteLote + i);
+        siguienteLote += lotes;
+        totalAsignado += lotes;
+        asignaciones.push({ id_linea: idLinea, lotes, lotesIncluidos });
+      }
     });
 
-    if (totalAsignado !== lotesTotales) return mostrarAviso(`La suma debe ser ${lotesTotales}, actual: ${totalAsignado}`);
+    if (totalAsignado !== lotesTotales) {
+      return mostrarAviso(`La suma debe ser ${lotesTotales}, actual: ${totalAsignado}`);
+    }
 
-    // Cargar planificaciones existentes del día para calcular hora_inicio / hora_fin
-    const { data: planificacionesDia } = await supabaseClient.from("planificacion_semanal").select("*").eq("dia", dia);
-    const carga = {};
-    planificacionesDia.forEach(p => {
-        carga[p.id_linea] = carga[p.id_linea] || 0;
-        carga[p.id_linea] += horaToMinutos(p.hora_fin) - horaToMinutos(p.hora_inicio);
-    });
+    const hoyISO = new Date(dia).toISOString().split("T")[0];
+    const horaInicioFija = "08:00";
 
     for (const a of asignaciones) {
-        const { data: lpData } = await supabaseClient.from("linea_produccion").select("*").eq("id_linea", a.id_linea).limit(1);
-        const duracionPorLote = lpData?.[0]?.duracion || 60;
+      try {
+        // Consultar planificación existente
+        const { data: planExistente, error: planError } = await supabaseClient
+          .from("planificacion_semanal")
+          .select("*")
+          .eq("id_op", idOP)
+          .eq("id_linea", a.id_linea)
+          .eq("dia", hoyISO);
 
-        const minutosUsados = carga[a.id_linea] || 0;
+        if (planError) {
+          console.error("Error al verificar planificación existente:", planError);
+          return mostrarAviso("Error al verificar planificación existente");
+        }
+
+        // Consultar duración de la línea
+        const { data: lineaData, error: lineaError } = await supabaseClient
+          .from("linea_produccion")
+          .select("duracion")
+          .eq("id_linea", a.id_linea)
+          .limit(1)
+          .single();
+
+        if (lineaError || !lineaData) {
+          console.error("Error al obtener duración de la línea:", lineaError);
+          return mostrarAviso("No se pudo calcular la duración de la línea");
+        }
+
+        const duracionPorLote = Number(lineaData.duracion) || 60; // minutos
         const duracionTotal = duracionPorLote * a.lotes;
-        const hora_inicio = minutosToHora(minutosUsados);
-        const hora_fin = minutosToHora(minutosUsados + duracionTotal);
-        carga[a.id_linea] = minutosUsados + duracionTotal;
+        
 
-        await supabaseClient.from("planificacion_semanal").insert({
-            id_op: opOriginal.id_orden_produccion,
-            numero_op: opOriginal.numero_op + (totalAsignado < (opOriginal.cant_lote || 0) ? " 🧩" : ""),
-            id_producto: opOriginal.id_producto,
-            id_linea: a.id_linea,
-            dia,
-            prioridad: opOriginal.prioridad || "manual",
-            cantidad_lotes: JSON.stringify({ lotes_incluidos: a.lotesIncluidos, lotes_total: lotesTotales }),
-            fijada: true,
-            hora_inicio,
-            hora_fin
-        });
+        // Función para sumar minutos a hora
+        const sumarMinutos = (horaStr, minutos) => {
+          const [h, m] = horaStr.split(":").map(Number);
+          const totalMin = h * 60 + m + minutos;
+          const hh = String(Math.floor(totalMin / 60)).padStart(2, "0");
+          const mm = String(totalMin % 60).padStart(2, "0");
+          return `${hh}:${mm}`;
+        };
+
+        const horaFin = sumarMinutos(horaInicioFija, duracionTotal);
+
+        const registro = {
+          id_op: idOP,
+          numero_op: opOriginal.numero_op + " 🧩",
+          id_linea: a.id_linea,
+          dia: hoyISO,
+          prioridad: opOriginal.prioridad,
+          cantidad_lotes: JSON.stringify({ lotes_incluidos: a.lotesIncluidos, lotes_total: lotesTotales }),
+          fijada: true,
+          hora_inicio: horaInicioFija,
+          hora_fin: horaFin
+        };
+
+        if (planExistente?.length) {
+          const { error } = await supabaseClient
+            .from("planificacion_semanal")
+            .update(registro)
+            .eq("id_op", idOP)
+            .eq("id_linea", a.id_linea)
+            .eq("dia", hoyISO);
+          if (error) throw error;
+        } else {
+          const { error } = await supabaseClient
+            .from("planificacion_semanal")
+            .insert(registro);
+          if (error) throw error;
+        }
+      } catch (e) {
+        console.error(`Error al fijar OP ${idOP} en línea ${a.id_linea}:`, e);
+        return mostrarAviso("Ocurrió un error al fijar la OP");
+      }
     }
 
     mostrarAviso("OP dividida y guardada correctamente");
     document.getElementById("modalDividirOP").style.display = "none";
     renderAgendaDesdeSupabase();
+
+  } catch (err) {
+    console.error("Error general al guardar la división:", err);
+    mostrarAviso("Ocurrió un error al guardar la división");
+  }
 });
 
-// ==================== CERRAR MODAL ====================
+// Funciones auxiliares
+function minutosToHora(minutos) {
+  const h = Math.floor(minutos / 60).toString().padStart(2, "0");
+  const m = (minutos % 60).toString().padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+// Función auxiliar para convertir minutos a formato HH:MM
+function minutosToHora(minutos) {
+  const h = Math.floor(minutos / 60).toString().padStart(2, "0");
+  const m = (minutos % 60).toString().padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+/* ==================== FUNCIONES AUX ==================== */
+function minutosToHora(minutos) {
+  const h = Math.floor(minutos / 60).toString().padStart(2, "0");
+  const m = (minutos % 60).toString().padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+/* ==================== CERRAR MODAL ==================== */
 document.getElementById("cerrarModalDividir").addEventListener("click", () => {
-    document.getElementById("modalDividirOP").style.display = "none";
+  document.getElementById("modalDividirOP").style.display = "none";
 });
+
+/* ==================== FUNCIONES AUX ==================== */
+function horaToMinutos(hora) {
+  const [h, m] = hora.split(":").map(Number);
+  return h * 60 + m;
+}
+
+// ---------------------- Minutos a hora ----------------------
+function minutosToHora(min) {
+  const totalMin = 8 * 60 + min; // siempre empieza 8:00
+  const h = String(Math.floor(totalMin / 60)).padStart(2, "0");
+  const m = String(totalMin % 60).padStart(2, "0");
+  return `${h}:${m}:00`;
+}
 btnAyuda.addEventListener("click", () => {
   modalAyuda.style.display = "block";
 });
