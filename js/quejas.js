@@ -569,6 +569,24 @@ async function guardarRespuesta() {
 
   if (!id || !respuesta || !estado) return;
 
+  // Traer datos completos del reclamo antes de actualizar
+  const { data: reclamo, error: fetchErr } = await supabaseClient
+    .from("reclamo")
+    .select(`
+      id,
+      queja,
+      id_cliente,
+      cliente: id_cliente (nombre, email)
+    `)
+    .eq("id", id)
+    .single();
+
+  if (fetchErr) {
+    console.error("Error cargando reclamo:", fetchErr);
+    return;
+  }
+
+  // Actualizar reclamo en DB
   const { error } = await supabaseClient
     .from("reclamo")
     .update({ respuesta, estado })
@@ -579,9 +597,51 @@ async function guardarRespuesta() {
     return;
   }
 
+  // ---- Enviar email al cliente ----
+  await enviarRespuestaReclamoEmail({
+    id,
+    queja: reclamo.queja,
+    respuesta,
+    estado,
+    cliente: reclamo.cliente
+  });
+
   cerrarModalResponder();
   cargarResponder();
   cargarQuejas();
+}
+
+
+// ================== Enviar email por respuesta de reclamo ==================
+async function enviarRespuestaReclamoEmail(data) {
+  try {
+    if (!data.cliente?.email) {
+      console.warn(`Reclamo ${data.id} NO tiene email, no se envía.`);
+      return;
+    }
+
+    const templateParams = {
+      reclamo_id: data.id,
+      cliente_nombre: data.cliente.nombre,
+      cliente_email: data.cliente.email,
+      estado: data.estado,              // Aceptada o Rechazada
+      queja: data.queja,
+      respuesta: data.respuesta
+    };
+
+    const result = await emailjs.send(
+      "service_fi08iwj",      // TU SERVICE ID
+      "template_q8oz1is",  // Template nuevo para reclamos
+      templateParams
+    );
+
+    console.log(
+      `Email de reclamo enviado a ${data.cliente.email}. Estado reclamo: ${data.estado}`
+    );
+
+  } catch (err) {
+    console.error(`Error enviando email del reclamo ${data.id}:`, err);
+  }
 }
 document.getElementById("btnEnviarEmails").addEventListener("click", async () => {
   try {
