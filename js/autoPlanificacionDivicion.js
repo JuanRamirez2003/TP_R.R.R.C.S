@@ -1734,7 +1734,10 @@ document.getElementById("btnDividirOP").addEventListener("click", async () => {
     </option>`;
   });
 
-  document.getElementById("modalDividirOP").style.display = "flex";
+  const modal = document.getElementById("modalDividirOP");
+  modal.style.display = "flex";
+  modal.style.color = "#111"; // texto más visible
+  modal.style.backgroundColor = "rgba(255,255,255,0.95)";
 });
 
 /* ==================== CARGAR LINEAS Y ASIGNACION ==================== */
@@ -1745,21 +1748,23 @@ document.getElementById("selectOPDividir").addEventListener("change", async (e) 
   if (!idOP) return;
 
   const lotesTotales = parseInt(e.target.selectedOptions[0].getAttribute("data-lotes"));
-  
+  const idProducto = Number(e.target.selectedOptions[0].getAttribute("data-producto"));
+
   const { data: lineas, error } = await supabaseClient
     .from("linea_productos")
-    .select("id_linea, descripcion");
+    .select("id_linea");
   if (error) return mostrarAviso("Error al cargar líneas");
+
+  lineas.sort((a, b) => a.id_linea - b.id_linea);
 
   let html = `<p><b>Lotes totales:</b> ${lotesTotales}</p>
               <p>Asignar lotes entre líneas:</p>
               <div id="listaLineasDividir" style="display:flex; flex-direction:column; gap:6px;">`;
 
-  lineas.forEach((l, i) => {
-    const nombreLinea = l.descripcion?.trim() || "Línea " + (i + 1);
+  lineas.forEach((l) => {
     html += `<div class="linea-card" draggable="true" data-id="${l.id_linea}" 
-                 style="padding:6px; border:1px solid #ccc; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
-               <span>${nombreLinea}</span>
+                 style="padding:6px; border:1px solid #666; border-radius:6px; display:flex; justify-content:space-between; align-items:center; color:#000;">
+               <span>Línea ${l.id_linea}</span>
                <input type="number" min="0" max="${lotesTotales}" value="0" 
                       class="input-lotes-linea" style="width:60px; text-align:right;"/>
              </div>`;
@@ -1823,90 +1828,62 @@ document.getElementById("btnGuardarDividir").addEventListener("click", async () 
   const idOP = Number(document.getElementById("selectOPDividir").value);
   if (!idOP) return mostrarAviso("Seleccione una OP");
 
-  const dia = document.getElementById("inputDiaDividir").value;
-  if (!dia) return mostrarAviso("Seleccione un día");
-
   try {
-    // Obtener OP original
     const { data: opOriginal, error: opError } = await supabaseClient
       .from("orden_produccion")
       .select("*")
       .eq("id_orden_produccion", idOP)
       .single();
-
-    if (opError || !opOriginal) {
-      console.error("Error al obtener OP original:", opError);
-      return mostrarAviso("No se encontró la OP");
-    }
+    if (opError || !opOriginal) return mostrarAviso("No se encontró la OP");
 
     const lotesTotales = parseInt(document.querySelector(`#selectOPDividir option[value="${idOP}"]`).getAttribute("data-lotes"));
+    const idProducto = Number(document.querySelector(`#selectOPDividir option[value="${idOP}"]`).getAttribute("data-producto"));
     const inputs = document.querySelectorAll("#listaLineasDividir .input-lotes-linea");
 
     let totalAsignado = 0;
-    let siguienteLote = Number(opOriginal.lotes_terminados || 0) + 1;
+    let siguienteLote = (opOriginal.lotes_terminados || 0) + 1;
     const asignaciones = [];
 
-    inputs.forEach(input => {
+    for (const input of inputs) {
       const card = input.closest(".linea-card");
       const idLinea = Number(card.dataset.id);
       const lotes = Number(input.value) || 0;
+      totalAsignado += lotes;
       if (lotes > 0) {
         const lotesIncluidos = Array.from({ length: lotes }, (_, i) => siguienteLote + i);
         siguienteLote += lotes;
-        totalAsignado += lotes;
         asignaciones.push({ id_linea: idLinea, lotes, lotesIncluidos });
       }
-    });
-
-    if (totalAsignado !== lotesTotales) {
-      return mostrarAviso(`La suma debe ser ${lotesTotales}, actual: ${totalAsignado}`);
     }
 
-    const hoyISO = new Date(dia).toISOString().split("T")[0];
-    const horaInicioFija = "08:00";
+    if (totalAsignado !== lotesTotales) {
+      return mostrarAviso(`La suma de lotes debe ser exactamente ${lotesTotales}, actual: ${totalAsignado}`);
+    }
+
+    const hoyISO = new Date().toISOString().split("T")[0];
 
     for (const a of asignaciones) {
       try {
-        // Consultar planificación existente
-        const { data: planExistente, error: planError } = await supabaseClient
+        // Buscar duración según id_producto y id_linea
+        const { data: lineaData } = await supabaseClient
+          .from("linea_produccion")
+          .select("duracion")
+          .eq("id_linea", a.id_linea)
+          .eq("id_producto", idProducto)
+          .limit(1);
+
+        const duracionPorLote = lineaData?.[0]?.duracion || 60;
+        const duracionTotal = duracionPorLote * a.lotes;
+
+        const horaInicio = "08:00";
+        const horaFin = sumarMinutos(horaInicio, duracionTotal);
+
+        const { data: planExistente } = await supabaseClient
           .from("planificacion_semanal")
           .select("*")
           .eq("id_op", idOP)
           .eq("id_linea", a.id_linea)
           .eq("dia", hoyISO);
-
-        if (planError) {
-          console.error("Error al verificar planificación existente:", planError);
-          return mostrarAviso("Error al verificar planificación existente");
-        }
-
-        // Consultar duración de la línea
-        const { data: lineaData, error: lineaError } = await supabaseClient
-          .from("linea_produccion")
-          .select("duracion")
-          .eq("id_linea", a.id_linea)
-          .limit(1)
-          .single();
-
-        if (lineaError || !lineaData) {
-          console.error("Error al obtener duración de la línea:", lineaError);
-          return mostrarAviso("No se pudo calcular la duración de la línea");
-        }
-
-        const duracionPorLote = Number(lineaData.duracion) || 60; // minutos
-        const duracionTotal = duracionPorLote * a.lotes;
-        
-
-        // Función para sumar minutos a hora
-        const sumarMinutos = (horaStr, minutos) => {
-          const [h, m] = horaStr.split(":").map(Number);
-          const totalMin = h * 60 + m + minutos;
-          const hh = String(Math.floor(totalMin / 60)).padStart(2, "0");
-          const mm = String(totalMin % 60).padStart(2, "0");
-          return `${hh}:${mm}`;
-        };
-
-        const horaFin = sumarMinutos(horaInicioFija, duracionTotal);
 
         const registro = {
           id_op: idOP,
@@ -1916,24 +1893,23 @@ document.getElementById("btnGuardarDividir").addEventListener("click", async () 
           prioridad: opOriginal.prioridad,
           cantidad_lotes: JSON.stringify({ lotes_incluidos: a.lotesIncluidos, lotes_total: lotesTotales }),
           fijada: true,
-          hora_inicio: horaInicioFija,
+          hora_inicio: horaInicio,
           hora_fin: horaFin
         };
 
         if (planExistente?.length) {
-          const { error } = await supabaseClient
+          await supabaseClient
             .from("planificacion_semanal")
             .update(registro)
             .eq("id_op", idOP)
             .eq("id_linea", a.id_linea)
             .eq("dia", hoyISO);
-          if (error) throw error;
         } else {
-          const { error } = await supabaseClient
+          await supabaseClient
             .from("planificacion_semanal")
             .insert(registro);
-          if (error) throw error;
         }
+
       } catch (e) {
         console.error(`Error al fijar OP ${idOP} en línea ${a.id_linea}:`, e);
         return mostrarAviso("Ocurrió un error al fijar la OP");
@@ -1949,6 +1925,16 @@ document.getElementById("btnGuardarDividir").addEventListener("click", async () 
     mostrarAviso("Ocurrió un error al guardar la división");
   }
 });
+
+
+// Función auxiliar para sumar minutos a una hora en formato HH:MM
+function sumarMinutos(hora, minutos) {
+  const [h, m] = hora.split(":").map(Number);
+  const totalMin = h * 60 + m + minutos;
+  const hh = Math.floor(totalMin / 60).toString().padStart(2, "0");
+  const mm = (totalMin % 60).toString().padStart(2, "0");
+  return `${hh}:${mm}`;
+}
 
 // Funciones auxiliares
 function minutosToHora(minutos) {
