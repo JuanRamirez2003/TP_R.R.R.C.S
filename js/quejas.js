@@ -583,9 +583,109 @@ async function guardarRespuesta() {
   cargarResponder();
   cargarQuejas();
 }
+document.getElementById("btnEnviarEmails").addEventListener("click", async () => {
+  try {
+    // Traer todas las facturas pendientes con cliente y email válido
+    const { data: facturasPendientes, error } = await supabaseClient
+      .from('factura')
+      .select(`
+        id,
+        id_orden,
+        fecha,
+        estado,
+        clientes ( nombre, dni_cuil, direccion, email ),
+        orden_ventas (
+          detalle_ordenes (
+            cantidad,
+            productos ( nombre, precio_unitario )
+          )
+        )
+      `)
+      .is('estado', null)
+      .not('id_cliente', 'is', null)
+      .not('clientes.email', 'is', null);
 
-// =================== CARGA AUTOMÁTICA ===================
-document.addEventListener("DOMContentLoaded", () => {
-  cargarQuejas();
-  cargarResponder();
+    if (error) throw error;
+
+    if (!facturasPendientes || facturasPendientes.length === 0) {
+      alert("No hay facturas pendientes con email para enviar.");
+      return;
+    }
+
+    let enviadas = 0;
+
+    for (const factura of facturasPendientes) {
+      const emailCliente = factura.clientes?.email;
+      if (!emailCliente) {
+        console.warn(`Factura ${factura.id} no tiene email de cliente, se omite.`);
+        continue;
+      }
+
+      await enviarFacturaEmail(factura);
+
+      // Actualizar estado de la factura a "enviada"
+      await supabaseClient
+        .from('factura')
+        .update({ estado: 'enviada' })
+        .eq('id', factura.id);
+
+      console.log(`Factura ${factura.id} enviada a ${emailCliente}`);
+      enviadas++;
+
+      // Delay de 0.5 segundos entre envíos para no saturar EmailJS
+      await sleep(500);
+    }
+
+    alert(`Se enviaron ${enviadas} facturas pendientes.`);
+
+  } catch (err) {
+    console.error("Error al enviar facturas pendientes:", err);
+    alert("Ocurrió un error al enviar las facturas. Revisa la consola.");
+  }
 });
+
+// ================== Función para enviar una factura ==================
+async function enviarFacturaEmail(factura) {
+  try {
+    const baseImponible = (factura.orden_ventas?.detalle_ordenes || []).reduce(
+      (sum, item) => sum + item.cantidad * item.productos.precio_unitario,
+      0
+    );
+    const iva = baseImponible * 0.21;
+    const total = baseImponible + iva;
+
+    const templateParams = {
+      factura_id: factura.id,
+      cliente_nombre: factura.clientes.nombre,
+      cliente_dni: factura.clientes.dni_cuil,
+      cliente_direccion: factura.clientes.direccion || '-',
+      cliente_email: factura.clientes.email,
+      id_orden: factura.id_orden,
+      fecha: new Date(factura.fecha).toLocaleDateString(),
+      detalle_ordenes: (factura.orden_ventas?.detalle_ordenes || []).map(item => ({
+        producto_nombre: item.productos.nombre,
+        cantidad: item.cantidad,
+        precio_unitario: item.productos.precio_unitario.toFixed(2),
+        subtotal: (item.cantidad * item.productos.precio_unitario).toFixed(2)
+      })),
+      base_imponible: baseImponible.toFixed(2),
+      iva: iva.toFixed(2),
+      total: total.toFixed(2)
+    };
+
+    const result = await emailjs.send(
+      'service_fi08iwj',    // Tu Service ID
+      'template_smikcrs',   // Tu Template ID
+      templateParams
+    );
+
+    console.log(`Factura ${factura.id} enviada correctamente a ${factura.clientes.email}. Status: ${result.status}`);
+  } catch (err) {
+    console.error(`Error al enviar factura ${factura.id}:`, err);
+  }
+}
+
+// ================== Función auxiliar para delay ==================
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
