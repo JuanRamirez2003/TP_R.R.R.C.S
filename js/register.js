@@ -142,6 +142,9 @@ captureButton.addEventListener("click", async () => {
 
 // ====== Registro de usuario ======
 registerButton.addEventListener("click", async () => {
+    const originalText = registerButton.textContent;
+    registerButton.textContent = "Cargando...";
+    registerButton.disabled = true;
     try {
         const name = nameInput.value.trim();
         const dni = dniInput.value.trim();
