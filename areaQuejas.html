@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Área de Quejas</title>
+  <link rel="stylesheet" href="css/admin-users.css">
+</head>
+
+<body>
+  <!-- Logo superior derecho -->
+  <img src="logo.png" alt="Logo de la empresa" id="logoEmpresa">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>Quejas</h2>
+    <ul>
+      <li><button onclick="mostrarSeccion('verQuejas')">Ver Quejas</button></li>
+      <li><button onclick="mostrarSeccion('responderQuejas')">Responder Quejas</button></li>
+      <li><button onclick="mostrarSeccion('facturas')">Facturación</button></li>
+
+    </ul>
+
+    <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+    <h1>Área de Quejas</h1>
+
+<!-- Modal para responder -->
+<div id="modalResponder" class="modal" style="display:none;">
+  <div class="modal-content" style="background:#222; color:#fff; padding:20px; border-radius:8px; max-width:500px; width:90%;">
+    <h2>Responder Queja</h2>
+
+    <input type="hidden" id="quejaId">
+
+    <label>Estado:</label>
+    <select id="estadoSelect" style="width:100%; padding:8px; margin-bottom:10px; border-radius:4px; border:1px solid #555; background:#333; color:#fff;">
+      <option value="Aceptada">Aceptada</option>
+      <option value="Rechazada">Rechazada</option>
+    </select>
+
+    <label>Motivo / Respuesta:</label>
+    <textarea id="respuestaTexto" style="width:100%; height:120px; padding:8px; background:#222; color:#fff; border:1px solid #555; border-radius:6px;"></textarea>
+
+    <div style="display:flex; justify-content:space-between; margin-top:15px;">
+      <button class="btn-edit" onclick="guardarRespuesta()">Enviar</button>
+      <button class="btn-delete" onclick="cerrarModalResponder()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sección VER QUEJAS -->
+<div id="verQuejas" class="seccion">
+  <h2>Listado de Quejas</h2>
+  <button class="btn btn-edit btn-volver" onclick="window.location.href='areaQuejas.html'">Volver Inicio</button>
+
+  <div style="margin-bottom:10px;">
+    <input type="text" id="filtroQuejas" placeholder="Buscar quejas..."
+      style="padding:8px; width:100%; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0;">
+  </div>
+
+  <table id="tablaQuejas" style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Usuario</th>
+        <th>Factura</th>
+        <th>Queja</th>
+        <th>Respuesta</th>
+        <th>Estado</th>
+        <th>Fecha</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- Sección RESPONDER -->
+<div id="responderQuejas" class="seccion" style="display:none;">
+  <h2>Responder Quejas</h2>
+  <button class="btn btn-edit btn-volver" onclick="window.location.href='areaQuejas.html'">Volver Inicio</button>
+
+  <div style="margin-bottom:10px;">
+    <input type="text" id="filtroResponder" placeholder="Buscar quejas pendientes..."
+      style="padding:8px; width:100%; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0;">
+  </div>
+
+  <table id="tablaResponder" style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Usuario</th>
+        <th>Queja</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- Modal para ver texto (Queja o Respuesta) -->
+<div id="modalVerTexto" class="modal" style="display:none;">
+  <div class="modal-content" style="background:#222; color:#fff; padding:20px; border-radius:8px; max-width:500px; width:90%;">
+    <h3 id="modalVerTitulo"></h3>
+    <p id="modalVerContenido" style="white-space:pre-wrap;"></p>
+    <button onclick="cerrarModalVerTexto()">Cerrar</button>
+  </div>
+</div>
+
+<!-- ===================== SECCIÓN FACTURAS ===================== -->
+      <div id="facturas" class="seccion" style="display:none;">
+        <h2>Facturación</h2>
+
+        <!-- Tabla de Facturas -->
+        <div style="margin-top:20px;">
+          <table id="tablaFacturas" class="table-wrapper" style="width:100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background-color:#f2f2f2;">
+                <th>ID Factura</th>
+                <th>Orden</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Modal Detalle Factura -->
+        <!-- Modal PDF de Factura -->
+        <div id="modalFacturaPDF" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+    background: rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000;">
+          <div
+            style="background:white; padding:20px; border-radius:8px; max-width:800px; width:95%; max-height:90%; overflow:auto; position:relative;">
+            <h3>Factura PDF</h3>
+            <iframe id="iframeFactura" style="width:100%; height:500px; border:none;"></iframe>
+            <div style="margin-top:15px; display:flex; justify-content:flex-end; gap:10px;">
+              <button onclick="descargarFacturaPDF()"
+                style="padding:8px 15px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer;">
+                Descargar PDF
+              </button>
+              <button onclick="cerrarModalFacturaPDF()"
+                style="padding:8px 15px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer;">
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+    
+
+  </main>
+   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+        <script>
+          const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co";
+          const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
+          const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        </script>
+        <script src="js/quejas.js"></script>
+        
+        
+
+</body>
+</html>
