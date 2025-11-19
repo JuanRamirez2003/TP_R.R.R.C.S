@@ -1836,8 +1836,14 @@ document.getElementById("btnGuardarDividir").addEventListener("click", async () 
       .single();
     if (opError || !opOriginal) return mostrarAviso("No se encontró la OP");
 
-    const lotesTotales = parseInt(document.querySelector(`#selectOPDividir option[value="${idOP}"]`).getAttribute("data-lotes"));
-    const idProducto = Number(document.querySelector(`#selectOPDividir option[value="${idOP}"]`).getAttribute("data-producto"));
+    const lotesTotales = parseInt(
+      document.querySelector(`#selectOPDividir option[value="${idOP}"]`).getAttribute("data-lotes")
+    );
+
+    const idProducto = Number(
+      document.querySelector(`#selectOPDividir option[value="${idOP}"]`).getAttribute("data-producto")
+    );
+
     const inputs = document.querySelectorAll("#listaLineasDividir .input-lotes-linea");
 
     let totalAsignado = 0;
@@ -1848,6 +1854,7 @@ document.getElementById("btnGuardarDividir").addEventListener("click", async () 
       const card = input.closest(".linea-card");
       const idLinea = Number(card.dataset.id);
       const lotes = Number(input.value) || 0;
+
       totalAsignado += lotes;
       if (lotes > 0) {
         const lotesIncluidos = Array.from({ length: lotes }, (_, i) => siguienteLote + i);
@@ -1864,7 +1871,7 @@ document.getElementById("btnGuardarDividir").addEventListener("click", async () 
 
     for (const a of asignaciones) {
       try {
-        // Buscar duración según id_producto y id_linea
+        // Buscar duración por línea y producto
         const { data: lineaData } = await supabaseClient
           .from("linea_produccion")
           .select("duracion")
@@ -1875,15 +1882,26 @@ document.getElementById("btnGuardarDividir").addEventListener("click", async () 
         const duracionPorLote = lineaData?.[0]?.duracion || 60;
         const duracionTotal = duracionPorLote * a.lotes;
 
-        const horaInicio = "08:00";
-        const horaFin = sumarMinutos(horaInicio, duracionTotal);
-
+        // ============================
+        // BUSCAR SI YA HAY UNA FIJADA
+        // ============================
         const { data: planExistente } = await supabaseClient
           .from("planificacion_semanal")
-          .select("*")
-          .eq("id_op", idOP)
+          .select("hora_fin")
           .eq("id_linea", a.id_linea)
-          .eq("dia", hoyISO);
+          .eq("dia", hoyISO)
+          .eq("fijada", true)
+          .order("hora_fin", { ascending: false })
+          .limit(1);
+
+        let horaInicio = "08:00";
+
+        if (planExistente?.length > 0) {
+          // Comienza después de la última fijada
+          horaInicio = planExistente[0].hora_fin;
+        }
+
+        const horaFin = sumarMinutos(horaInicio, duracionTotal);
 
         const registro = {
           id_op: idOP,
@@ -1891,24 +1909,19 @@ document.getElementById("btnGuardarDividir").addEventListener("click", async () 
           id_linea: a.id_linea,
           dia: hoyISO,
           prioridad: opOriginal.prioridad,
-          cantidad_lotes: JSON.stringify({ lotes_incluidos: a.lotesIncluidos, lotes_total: lotesTotales }),
+          cantidad_lotes: JSON.stringify({
+            lotes_incluidos: a.lotesIncluidos,
+            lotes_total: lotesTotales
+          }),
           fijada: true,
           hora_inicio: horaInicio,
           hora_fin: horaFin
         };
 
-        if (planExistente?.length) {
-          await supabaseClient
-            .from("planificacion_semanal")
-            .update(registro)
-            .eq("id_op", idOP)
-            .eq("id_linea", a.id_linea)
-            .eq("dia", hoyISO);
-        } else {
-          await supabaseClient
-            .from("planificacion_semanal")
-            .insert(registro);
-        }
+        // Insertar sin actualizar (siempre se agregan al final)
+        await supabaseClient
+          .from("planificacion_semanal")
+          .insert(registro);
 
       } catch (e) {
         console.error(`Error al fijar OP ${idOP} en línea ${a.id_linea}:`, e);
