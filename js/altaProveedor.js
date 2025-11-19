@@ -249,6 +249,9 @@ document.addEventListener("DOMContentLoaded", inicializarNormalizacionDireccion)
 document.getElementById("proveedorForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
+  const submitBtn = this.querySelector('button[type="submit"]');
+  submitBtn.disabled = true; // Desactiva el botón al hacer submit
+
   const id_proveedor = document.getElementById("id_proveedor").value;
   const nombre = document.getElementById("nombre").value.trim();
   const tipo_proveedor = document.getElementById("tipoProveedor").value;
@@ -259,13 +262,13 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
   const direccion = document.getElementById("direccion").value.trim();
   //const estado = document.getElementById("estado").value;
 
-  if (!nombre) return mostrarAviso("El nombre es obligatorio");
-  if (!tipo_proveedor) return mostrarAviso("Debe seleccionar el tipo de proveedor");
-  if (!validarCUIT(dni_cuil, tipo_proveedor)) return mostrarAviso("CUIT inválido según tipo de proveedor");
-  if (!pref_cont) return mostrarAviso("Debe seleccionar la preferencia de contacto");
-  if (!validarEmail(email)) return mostrarAviso("El email no tiene un formato válido");
-  if (!validarTelefono(telefono)) return mostrarAviso("El teléfono debe tener 10 números");
-  if (!direccionEsValida(direccion)) return mostrarAviso("Debe seleccionar una dirección válida de la lista");
+  // Validaciones
+  if (!nombre || !tipo_proveedor || !validarCUIT(dni_cuil, tipo_proveedor) ||
+      !pref_cont || !validarEmail(email) || !validarTelefono(telefono) || 
+      !direccionEsValida(direccion)) {
+    submitBtn.disabled = false; // Rehabilitar si hay error de validación
+    return mostrarAviso("Revisar campos. Hay datos inválidos.");
+  }
 
   try {
     const { data: existente } = await supabaseClient
@@ -310,7 +313,8 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
 
   } catch (err) {
     console.error("Error:", err);
-   mostrarAviso(err.message || "Error al procesar el proveedor");
+    mostrarAviso(err.message || "Error al procesar el proveedor");
+    submitBtn.disabled = false; // Se vuelve a habilitar si hubo error
   }
 });
 
@@ -334,7 +338,7 @@ async function editarProveedor(dni) {
     document.getElementById('tablaProveedorContainer').style.display = 'none';
   } catch (err) {
     console.error(err);
-   mostrarAviso('Error al cargar datos del proveedor');
+    mostrarAviso('Error al cargar datos del proveedor');
   }
 }
 
@@ -348,6 +352,6 @@ async function bajaProveedor(dni) {
     listarProveedores();
   } catch (err) {
     console.error(err);
-   mostrarAviso('Error al dar de baja el proveedor');
+    mostrarAviso('Error al dar de baja el proveedor');
   }
 }
