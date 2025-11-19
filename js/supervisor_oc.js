@@ -126,7 +126,7 @@ if (typeof emailjs !== 'undefined') {
     const confirmLink = `https://juanramirez2003.github.io/TP_R.R.R.C.S/confirmar_recibido.html?id=${idPedido}`;
 
     // Enviar variables a la plantilla de EmailJS
-    emailjs.send('service_n3qcy6p', 'template_80elrdn', {
+    emailjs.send('service_fi08iwj', 'template_w9ormn4', {
         materia_prima: materia,
         proveedor: proveedor,
         cantidad: cantidad,
