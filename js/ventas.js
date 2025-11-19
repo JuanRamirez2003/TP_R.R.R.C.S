@@ -65,7 +65,9 @@ tipoClienteSelect.addEventListener("change", () => {
 // ================== EVENTO SUBMIT ==================
 document.getElementById("clienteForm").addEventListener("submit", async function (e) {
   e.preventDefault();
-
+  const botonSubmit = e.submitter;
+  botonSubmit.disabled = true;
+  botonSubmit.textContent = 'Guardando...';
   // Tomar valores
   const id_cliente = document.getElementById("id_cliente").value;
   const nombre = document.getElementById("nombre").value.trim();
