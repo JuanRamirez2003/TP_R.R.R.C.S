@@ -167,13 +167,22 @@ registerButton.addEventListener("click", async () => {
             showMessage("El DNI ya está registrado", "error"); 
             return; 
         }
+        const currentUserId = localStorage.getItem("currentUserId");
+        if (!currentUserId) {
+        console.warn("⚠️ No hay usuario logueado en localStorage");
+        //mostrarAviso("No se pudo identificar al usuario para auditoría");
+        return;
+        }
 
+        showMessage(currentUserId, "success");
+        console.log("################ ", currentUserId);
         const { error: insertError } = await supabaseClient.from("usuarios").insert([{
             opCode,
             name,
             dni,
             area,
-            descriptor: JSON.stringify(Array.from(capturedDescriptor))
+            descriptor: JSON.stringify(Array.from(capturedDescriptor)),
+            audit_user_id: currentUserId
         }]);
 
         if (insertError) throw insertError;
