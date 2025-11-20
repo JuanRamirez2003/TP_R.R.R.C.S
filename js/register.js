@@ -153,6 +153,10 @@ registerButton.addEventListener("click", async () => {
 
         if (!name || !dni || !area || !capturedDescriptor) {
             showMessage("Complete todos los campos y capture la foto", "error");
+            if (registerButton) {
+            registerButton.disabled = false;
+            registerButton.textContent = originalText;
+            }
             return;
         }
 
@@ -165,12 +169,20 @@ registerButton.addEventListener("click", async () => {
 
         if (existing && existing.length > 0) { 
             showMessage("El DNI ya está registrado", "error"); 
+            if (registerButton) {
+            registerButton.disabled = false;
+            registerButton.textContent = originalText;
+            }
             return; 
         }
         const currentUserId = localStorage.getItem("currentUserId");
         if (!currentUserId) {
         console.warn("⚠️ No hay usuario logueado en localStorage");
         //mostrarAviso("No se pudo identificar al usuario para auditoría");
+        if (registerButton) {
+            registerButton.disabled = false;
+            registerButton.textContent = originalText;
+            }
         return;
         }
 
@@ -185,7 +197,10 @@ registerButton.addEventListener("click", async () => {
         }]);
 
         if (insertError) throw insertError;
-
+        if (registerButton) {
+            registerButton.disabled = false;
+            registerButton.textContent = originalText;
+            }
         showMessage("✅ Usuario registrado con éxito", "success");
 
         // Limpiar campos y redirigir
@@ -200,6 +215,10 @@ registerButton.addEventListener("click", async () => {
     } catch (err) {
         console.error("Error registrando usuario:", err);
         showMessage("Ocurrió un error al registrar el usuario", "error");
+        if (registerButton) {
+            registerButton.disabled = false;
+            registerButton.textContent = originalText;
+            }
     }
 });
 
