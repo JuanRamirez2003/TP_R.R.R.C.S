@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 320px;
+      text-align: center;
+    }
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      color: white;
+    }
+    .btn-rrhh { background: #6c5ce7; }
+    .btn-operario { background: #00b894; }
+    .btn-supervisor { background: #fdcb6e; color: #333; }
+    .btn-ventas { background: #0984e3; }
+    .btn-areaQuejas { background: #e17055; }
+    .btn-gerente { background: #d63031; }
+    .btn-ti { background: #00cec9; }
+    .btn-preparacion { background: #fd79a8; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Panel de Demo</h2>
+
+    <button class="btn btn-rrhh" onclick="irA('rrhh.html')">Recursos Humanos</button>
+    <button class="btn btn-operario" onclick="irA('operario.html')">Operario</button>
+    <button class="btn btn-supervisor" onclick="irA('supervisor.html')">Supervisor</button>
+    <button class="btn btn-ventas" onclick="irA('ventas.html')">Ventas</button>
+    <button class="btn btn-areaQuejas" onclick="irA('areaQuejas.html')">Área de Quejas</button>
+    <button class="btn btn-gerente" onclick="irA('gerente.html')">Gerente General</button>
+    <button class="btn btn-ti" onclick="irA('ti.html')">TI</button>
+    <button class="btn btn-preparacion" onclick="irA('preparacion.html')">Preparación</button>
+  </div>
+
+  <script>
+    function irA(url) {
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>

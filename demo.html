@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login Manual Demo</title>
+ <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Login Manual Demo</h2>
+    <div class="form-group">
+      <input type="text" id="manual-op-code" placeholder="Código de Operario" required>
+      <input type="text" id="manual-dni" placeholder="DNI" required>
+    </div>
+    <button id="manual-login-button" class="btn btn-primary">Ingresar</button>
+    <div id="message-box" class="message-box"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    // ============================ Configuración Supabase ============================
+    const supabaseUrl = "https://ldgrlfnmuvvaqsezjsvj.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+    const manualLoginButton = document.getElementById("manual-login-button");
+    const manualOpCodeInput = document.getElementById("manual-op-code");
+    const manualDniInput = document.getElementById("manual-dni");
+    const messageBox = document.getElementById("message-box");
+
+    // ============================ Funciones de UI ============================
+    function showMessage(text, type = "info", duration = 3000) {
+      messageBox.textContent = text;
+      messageBox.className = "message-box show " + type;
+      if (duration > 0) {
+        setTimeout(() => {
+          messageBox.classList.remove("show");
+        }, duration);
+      }
+    }
+
+    // ============================ Evento login manual ============================
+    manualLoginButton.addEventListener("click", async () => {
+      const opCode = manualOpCodeInput.value.trim();
+      const dni = manualDniInput.value.trim();
+
+      if (!opCode || !dni) {
+        showMessage("Complete todos los campos", "error");
+        return;
+      }
+
+      try {
+        // Buscar usuario en la tabla
+        const { data: users, error } = await supabaseClient
+          .from("usuarios")
+          .select("*")
+          .eq("opCode", opCode)
+          .eq("dni", dni);
+
+        if (error) throw error;
+        if (!users || users.length === 0) {
+          showMessage("❌ Usuario no encontrado", "error");
+          return;
+        }
+
+        // Forzar login con usuario ID 2
+        const { data: forcedUser, error: forcedError } = await supabaseClient
+          .from("usuarios")
+          .select("*")
+          .eq("id", 2)
+          .single();
+
+        if (forcedError || !forcedUser) {
+          showMessage("❌ No se pudo cargar el usuario forzado", "error");
+          return;
+        }
+
+        localStorage.setItem("currentUserId", forcedUser.id);
+        localStorage.setItem("currentUserName", forcedUser.nombre || forcedUser.name || "Usuario");
+
+        showMessage(`✅ Bienvenido ${forcedUser.nombre || forcedUser.name}`, "success");
+
+        // Redirigir a demo2.html
+        setTimeout(() => {
+          window.location.href = "demo2.html";
+        }, 1000);
+
+      } catch (err) {
+        console.error("Error en login manual:", err);
+        showMessage("Error inesperado. Intente nuevamente.", "error");
+      }
+    });
+  </script>
+</body>
+</html>
