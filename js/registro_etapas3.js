@@ -102,6 +102,12 @@ async function toggleLinea(n) {
 
     let duracionLinea = 60; // default
 
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+    mostrarError("No se pudo identificar al usuario para auditoría");
+    return;
+    }
+
     try {
         // Obtener id_producto de la OP
         const { data: opData, error: opError } = await supabaseClient
@@ -133,14 +139,16 @@ async function toggleLinea(n) {
         if (planId) {
             const { error: updErr } = await supabaseClient
                 .from('planificacion_semanal')
-                .update({ estado: 'en elaboracion' })
+                .update({ estado: 'en elaboracion',
+                audit_user_id: currentUserId })
                 .eq('id', planId);
             if (updErr) console.warn("No se pudo marcar planificacion en elaboracion:", updErr);
         } else {
             // si no hay planId, marcamos la orden directamente (esto cubre ejecución sin planificación)
             await supabaseClient
                 .from('orden_produccion')
-                .update({ estado: 'en elaboracion' })
+                .update({ estado: 'en elaboracion',
+                audit_user_id: currentUserId })
                 .eq('id_orden_produccion', opId);
         }
     } catch (err) { console.error("Error marcando en elaboración:", err); }
@@ -226,7 +234,16 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
     const estadoText = document.getElementById(`estado-linea-${n}`);
     const opInfo = document.getElementById(`opInfo-${n}`);
 
+
+
+
     try {
+
+        const currentUserId = localStorage.getItem("currentUserId");
+        if (!currentUserId) {
+        mostrarError("No se pudo identificar al usuario para auditoría");
+        return;
+        }
         // detener animaciones
         cancelAnimationFrame(animaciones[n]);
         clearTimeout(timers[n]);
@@ -260,7 +277,9 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
         // actualizar lotes terminados
         await supabaseClient
             .from('orden_produccion')
-            .update({ lotes_terminados: nuevosTerminados })
+            .update({ lotes_terminados: nuevosTerminados,
+                      audit_user_id: currentUserId
+            })
             .eq('id_orden_produccion', opId);
 
         eliminarEstadoLinea(n);
@@ -271,7 +290,9 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
         if (idPlanificacion) {
             await supabaseClient
                 .from('planificacion_semanal')
-                .update({ estado: 'finalizada' })
+                .update({ estado: 'finalizada',
+                        audit_user_id: currentUserId
+                    })
                 .eq('id', idPlanificacion);
         }
 
@@ -301,7 +322,9 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
 
             await supabaseClient
                 .from('orden_produccion')
-                .update({ estado: 'finalizada' })
+                .update({ estado: 'finalizada',
+                    audit_user_id: currentUserId
+                })
                 .eq('id_orden_produccion', opId);
 
             // Calcular lotes producidos reales
@@ -358,7 +381,9 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
 
                         await supabaseClient
                             .from('productos')
-                            .update({ stock: prod.stock + cantidadASumar })
+                            .update({ stock: prod.stock + cantidadASumar,
+                                audit_user_id: currentUserId
+                            })
                             .eq('id_producto', opData.id_producto);
 
                         console.log(`📦 Stock actualizado +${cantidadASumar}`);
@@ -368,7 +393,8 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
                 // B) Marcar OP finalizada
                 await supabaseClient
                     .from('orden_produccion')
-                    .update({ estado: 'finalizado' })
+                    .update({ estado: 'finalizado',
+                            audit_user_id: currentUserId })
                     .eq('id_orden_produccion', opId);
 
                 console.log(`✔ OP ${opId} marcada como FINALIZADO (sin OV)`);
@@ -428,7 +454,8 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
 
                     await supabaseClient
                         .from('orden_ventas')
-                        .update({ estado: 'completada' })
+                        .update({ estado: 'completada',
+                                audit_user_id: currentUserId })
                         .eq('id_orden', idOrden);
 
                     const { data: ovData } = await supabaseClient
