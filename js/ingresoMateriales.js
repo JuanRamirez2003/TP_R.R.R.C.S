@@ -33,10 +33,15 @@ function mostrarSeccion(seccionId) {
             if (sec.id === 'IngresoMateriales') {
                 const form = sec.querySelector('form');
                 if (form) form.reset();
+                form.style.display = "grid";
+                resetBotonLote();
+
                 habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMaterial'], false);
                 resetSelect('provMaterial');
             }
         });
+                // Ocultar mensajes de éxito o error
+        document.getElementById('mensajeExito').style.display = 'none';
 
         const target = document.getElementById(seccionId);
         if (target) target.style.display = 'block';
@@ -145,6 +150,7 @@ async function mostrarDatosMaterial() {
 document.getElementById('btnCancelar')?.addEventListener('click', () => {
     const form = document.getElementById('MaterialesForm');
     form.reset();
+    resetBotonLote();
     form.style.display = 'grid';
     document.getElementById('mensajeExito').style.display = 'none';
     habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMaterial'], false);
@@ -155,6 +161,7 @@ document.getElementById('btnCancelar')?.addEventListener('click', () => {
 document.getElementById('btnOtroLote')?.addEventListener('click', () => {
     const form = document.getElementById('MaterialesForm');
     form.reset();
+    resetBotonLote();
     form.style.display = 'grid';
     document.getElementById('mensajeExito').style.display = 'none';
     habilitarCampos(['lote', 'cantidad_disponible', 'fecha_ingreso', 'fecha_cad', 'estado', 'provMaterial'], false);
@@ -162,10 +169,18 @@ document.getElementById('btnOtroLote')?.addEventListener('click', () => {
 });
 
 document.getElementById('btnVolverPrincipal')?.addEventListener('click', () => {
+    resetBotonLote();
     document.getElementById('mensajeExito').style.display = 'none';
     mostrarSeccion('vistaMateriales');
 });
 
+function resetBotonLote() {
+    const btnSubmit = document.querySelector('.btn-submit');
+    if (!btnSubmit) return;
+
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = "Registrar Lote";
+}
 // ============================
 // Insertar lote
 // ============================
@@ -177,6 +192,15 @@ document.getElementById('MaterialesForm')?.addEventListener('submit', async (e) 
     btnSubmit.disabled = true;
     btnSubmit.textContent = "Guardando...";
     try {
+
+        const currentUserId = localStorage.getItem("currentUserId");
+        if (!currentUserId) {
+            document.getElementById('mensaje').textContent = "No se pudo identificar al usuario para auditoría";
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = "Registrar Lote";
+            return;
+        }
+
         const nuevoLote = {
             id_mp: parseInt(document.getElementById('Id_Material').value),
             id_proveedor: parseInt(document.getElementById('provMaterial').value),
@@ -184,7 +208,8 @@ document.getElementById('MaterialesForm')?.addEventListener('submit', async (e) 
             cantidad_disponible: parseFloat(document.getElementById('cantidad_disponible').value),
             fecha_ingreso: document.getElementById('fecha_ingreso').value,
             fecha_caducidad: document.getElementById('fecha_cad').value,
-            estado: document.getElementById('estado').value
+            estado: document.getElementById('estado').value,
+            audit_user_id: currentUserId
         };
         const { error } = await supabaseClient.from('lote_mp').insert([nuevoLote]);
         if (error) throw error;
