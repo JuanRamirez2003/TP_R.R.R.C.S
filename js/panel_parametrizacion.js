@@ -145,6 +145,12 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
   e.preventDefault();
   const form = e.target;
   const datos = Object.fromEntries(new FormData(form));
+  const currentUserId = localStorage.getItem("currentUserId");
+  if (!currentUserId) {
+    mostrarAviso("No se pudo identificar al usuario para auditoría.");
+    return;
+  }
+
 
   try {
     const idLinea = Number(datos.id_linea);
@@ -186,6 +192,7 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
       eficiencia,
       capacidad_diaria: Number(datos.capacidad_diaria),
       estado: datos.estado,
+      audit_user_id: currentUserId
     };
 
     let error;
@@ -197,7 +204,9 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
 
     if (error) throw error;
 
-    alert(filaEditando ? "Datos actualizados correctamente" : "Línea agregada correctamente");
+    //alert(filaEditando ? "Datos actualizados correctamente" : "Línea agregada correctamente");
+
+    mostrarAviso("Datos actualizados correctamente");
     form.reset();
     filaEditando = null;
     form.querySelector(".btn-guardar").innerHTML = `<i class="fas fa-save"></i> Guardar parámetros`;
@@ -207,7 +216,8 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
 
   } catch (error) {
     console.error("❌ Error en validación o guardado:", error);
-    alert(error.message || "Ocurrió un error al guardar los datos.");
+    //alert(error.message || "Ocurrió un error al guardar los datos.");
+    mostrarAviso("Ocurrió un error al guardar los datos.");
   }
 });
 
@@ -393,3 +403,23 @@ document.getElementById("btn-cancelar").addEventListener("click", () => {
     select.appendChild(opt);
   });
 }*/
+
+
+function mostrarAviso(mensaje) {
+  const modal = document.getElementById('modalAviso');
+  const mensajeP = document.getElementById('mensajeAvisoTexto');
+  const btnCerrar = document.getElementById('btnCerrarAviso');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de aviso");
+    return alert(mensaje);
+  }
+
+  mensajeP.textContent = mensaje;
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
+}
