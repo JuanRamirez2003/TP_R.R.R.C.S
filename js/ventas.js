@@ -511,6 +511,13 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
   botonSubmit.disabled = true;
   botonSubmit.textContent = 'Guardando...';
 
+  const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+      mostrarErrorOC("No se pudo identificar al usuario para auditoría");
+      return;
+    }
+
+
   try {
     const cliente = document.getElementById('clienteOrden').value;
     const productosDivs = document.querySelectorAll('#productosContainer .producto-item');
@@ -568,7 +575,8 @@ if (productosConStock.length > 0) {
       id_cliente: parseInt(cliente),
       fecha: new Date().toISOString(),
       estado: 'completada',
-      fecha_estimada_entrega: hoyStr // <-- AGREGADO AQUÍ
+      fecha_estimada_entrega: hoyStr,// <-- AGREGADO AQUÍ
+      audit_user_id: currentUserId 
     }])
     .select()
     .single();
@@ -590,7 +598,7 @@ if (productosConStock.length > 0) {
 
     await supabaseClient
       .from('productos')
-      .update({ stock: p.stock_actual - p.cantidad })
+      .update({ stock: p.stock_actual - p.cantidad, audit_user_id: currentUserId })
       .eq('id_producto', p.id_producto);
   }
 
@@ -621,7 +629,8 @@ if (productosConStock.length > 0) {
           id_cliente: parseInt(cliente),
           fecha: fechaActual.toISOString(),
           estado: 'pendiente',
-          fecha_estimada_entrega: fechaEntregaStr
+          fecha_estimada_entrega: fechaEntregaStr,
+          audit_user_id: currentUserId
         }])
         .select()
         .single();
