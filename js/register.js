@@ -174,8 +174,7 @@ registerButton.addEventListener("click", async () => {
         return;
         }
 
-        showMessage(currentUserId, "success");
-        console.log("################ ", currentUserId);
+        //console.log("################ ", currentUserId);
         const { error: insertError } = await supabaseClient.from("usuarios").insert([{
             opCode,
             name,
