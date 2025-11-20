@@ -24,6 +24,7 @@ function mostrarSeccion(seccionId) {
 
 // Volver al panel principal
 function volverPanel() {
+  resetBotonGuardar()
   document.getElementById("mensajeExitoCliente").style.display = "none";
   document.getElementById("mensajeExitoOrden").style.display = "none";
   document.querySelectorAll('.seccion').forEach(sec => sec.style.display = 'none');
@@ -31,6 +32,7 @@ function volverPanel() {
 
 // ===================== CLIENTES =====================
 function mostrarFormularioCliente() {
+  resetBotonGuardar()
   document.getElementById('formCliente').style.display = 'block';
   document.getElementById('clienteForm').reset();
   document.getElementById('mensajeExitoCliente').style.display = 'none';
@@ -61,7 +63,13 @@ tipoClienteSelect.addEventListener("change", () => {
     documentoInput.value = "";
   }
 });
-
+function resetBotonGuardar() {
+  const boton = document.querySelector('#clienteForm button[type="submit"]');
+  if (boton) {
+    boton.disabled = false;
+    boton.textContent = "Guardar";
+  }
+}
 // ================== EVENTO SUBMIT ==================
 document.getElementById("clienteForm").addEventListener("submit", async function (e) {
   e.preventDefault();
@@ -201,6 +209,11 @@ async function editarCliente(dni) {
     document.getElementById('formCliente').style.display = 'block';
 
     document.getElementById('tablaClientesContainer').style.display = 'none';
+    
+    // 🔥 Reiniciar estado del botón Guardar
+    const boton = document.querySelector('#clienteForm button[type="submit"]');
+    boton.disabled = false;
+    boton.textContent = "Guardar";
   } catch (err) {
     console.error(err);
     mostrarError('Error al cargar datos del cliente');
@@ -245,9 +258,16 @@ async function bajaCliente(dni) {
     const confirmar = await mostrarModalBajaC();
     if (!confirmar) return;
 
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+      mostrarError("No se pudo identificar al usuario para auditoría");
+      return;
+    }
+
     const { error } = await supabaseClient
       .from('clientes')
-      .update({ estado: 'inactivo' })
+      .update({ estado: 'inactivo',
+                audit_user_id: currentUserId })
       .eq('dni_cuil', dni);
 
     if (error) throw error;
@@ -491,6 +511,13 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
   botonSubmit.disabled = true;
   botonSubmit.textContent = 'Guardando...';
 
+  const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+      mostrarErrorOC("No se pudo identificar al usuario para auditoría");
+      return;
+    }
+
+
   try {
     const cliente = document.getElementById('clienteOrden').value;
     const productosDivs = document.querySelectorAll('#productosContainer .producto-item');
@@ -548,7 +575,8 @@ if (productosConStock.length > 0) {
       id_cliente: parseInt(cliente),
       fecha: new Date().toISOString(),
       estado: 'completada',
-      fecha_estimada_entrega: hoyStr // <-- AGREGADO AQUÍ
+      fecha_estimada_entrega: hoyStr,// <-- AGREGADO AQUÍ
+      audit_user_id: currentUserId 
     }])
     .select()
     .single();
@@ -570,7 +598,7 @@ if (productosConStock.length > 0) {
 
     await supabaseClient
       .from('productos')
-      .update({ stock: p.stock_actual - p.cantidad })
+      .update({ stock: p.stock_actual - p.cantidad, audit_user_id: currentUserId })
       .eq('id_producto', p.id_producto);
   }
 
@@ -601,7 +629,8 @@ if (productosConStock.length > 0) {
           id_cliente: parseInt(cliente),
           fecha: fechaActual.toISOString(),
           estado: 'pendiente',
-          fecha_estimada_entrega: fechaEntregaStr
+          fecha_estimada_entrega: fechaEntregaStr,
+          audit_user_id: currentUserId
         }])
         .select()
         .single();
