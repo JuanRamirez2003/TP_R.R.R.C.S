@@ -109,6 +109,13 @@ document.getElementById("clienteForm").addEventListener("submit", async function
       throw new Error("Ya existe un cliente con ese DNI/CUIL");
     }
 
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+      mostrarError("No se pudo identificar al usuario para auditoría");
+      return;
+    }
+
+
     // ============ DATOS DEL CLIENTE ============
     const nuevoCliente = {
       nombre,
@@ -118,7 +125,8 @@ document.getElementById("clienteForm").addEventListener("submit", async function
       email,
       telefono,
       direccion,
-      estado
+      estado,
+      audit_user_id: currentUserId
     };
 
     // ============ CREAR O EDITAR ============
