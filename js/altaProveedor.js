@@ -269,7 +269,12 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
     submitBtn.disabled = false; // Rehabilitar si hay error de validación
     return mostrarAviso("Revisar campos. Hay datos inválidos.");
   }
-
+  const currentUserId = localStorage.getItem("currentUserId");
+if (!currentUserId) {
+  console.warn("⚠️ No hay usuario logueado en localStorage");
+  mostrarAviso("No se pudo identificar al usuario para auditoría");
+  return;
+}
   try {
     const { data: existente } = await supabaseClient
       .from('proveedor')
@@ -289,8 +294,11 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
       email,
       telefono,
       direccion,
+      audit_user_id: currentUserId
       //estado
     };
+
+    console.log("$$$$$$$$$$$$$$",currentUserId);
 
     if (id_proveedor) {
       const { error } = await supabaseClient
@@ -317,11 +325,15 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
     submitBtn.disabled = false; // Se vuelve a habilitar si hubo error
   }
 });
-
 // ================== EDITAR / BAJA ==================
 async function editarProveedor(dni) {
   try {
-    const { data, error } = await supabaseClient.from('proveedor').select('*').eq('dni_cuil', dni).single();
+    const { data, error } = await supabaseClient
+    .from('proveedor')
+    .select('*')
+    .eq('dni_cuil', dni)
+    
+    .single();
     if (error) throw error;
 
     tipoProveedorSelect.value = data.tipo_proveedor;

@@ -198,6 +198,12 @@ async function crearOPSupaBase() {
     mostrarAviso("No hay suficiente stock para producir este lote.");//Alert
     return;
   }
+  const currentUserId = localStorage.getItem("currentUserId");
+  if (!currentUserId) {
+    mostrarAviso("No se pudo identificar al usuario para auditoría");
+    return;
+  }
+
 
   const { data, error } = await supabaseClient.from('orden_produccion').insert([{
     numero_op: numeroOP,
@@ -209,7 +215,8 @@ async function crearOPSupaBase() {
     fecha_emision: fecha,
     estado: 'Pendiente',
     fecha_estimada_entrega: calcularFechaPorPrioridad(prioridad),
-    prioridad: prioridad
+    prioridad: prioridad,
+    audit_user_id: currentUserId
   }])
     .select();
   if (error) return console.error("Error al guardar OP:", error);
@@ -436,13 +443,19 @@ async function reservarLotes(idOrden, idMP, cantidadTotal) {
         cantidadReservadaActual,
         cantidadAR
       });
+      const currentUserId = localStorage.getItem("currentUserId");
+      if (!currentUserId) {
+        mostrarAviso("No se pudo identificar al usuario para auditoría");
+        return false;
+      }
 
       // Actualizar lote_mp (reservar cantidad)
       const { error: errorUpdate } = await supabaseClient
         .from('lote_mp')
         .update({
           cantidad_disponible: cantidadDisponibleActual - cantidadAR,
-          cantidad_reservada: cantidadReservadaActual + cantidadAR
+          cantidad_reservada: cantidadReservadaActual + cantidadAR,
+          audit_user_id: currentUserId
         })
         .eq('id_lote', lote.id_lote);
 
@@ -792,9 +805,20 @@ async function guardarOVsEnOP(idOP) {
 
       console.log("Insertando relación OP-OV con:", { idOP, idDetalle, cantidad });
 
+      const currentUserId = localStorage.getItem("currentUserId");
+      if (!currentUserId) {
+        mostrarAviso("No se pudo identificar al usuario para auditoría");
+        return false;
+      }
+
+
       const { data, error } = await supabaseClient
         .from('op_ov')
-        .insert([{ id_op: idOP, id_detalle_ov: idDetalle }]);
+        .insert([{
+          id_op: idOP, 
+          id_detalle_ov: idDetalle,
+          audit_user_id: currentUserId
+        }]);
 
       if (error) {
         console.error("Error guardando relación OP-OV:", error);
