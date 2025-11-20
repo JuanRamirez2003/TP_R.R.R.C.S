@@ -714,6 +714,9 @@ async function enviarFacturaEmail(factura) {
     const iva = baseImponible * 0.21;
     const total = baseImponible + iva;
 
+    // ================== NUEVO: Link para ver la factura ==================
+    const facturaLink = `https://juanramirez2003.github.io/TP_R.R.R.C.S/ReclamosLink.html?factura=${factura.id}`;
+
     const templateParams = {
       factura_id: factura.id,
       cliente_nombre: factura.clientes.nombre,
@@ -730,12 +733,15 @@ async function enviarFacturaEmail(factura) {
       })),
       base_imponible: baseImponible.toFixed(2),
       iva: iva.toFixed(2),
-      total: total.toFixed(2)
+      total: total.toFixed(2),
+
+      // ================== NUEVO PARAMETRO PARA EMAIL ==================
+      factura_link: facturaLink
     };
 
     const result = await emailjs.send(
-      'service_fi08iwj',    // Tu Service ID
-      'template_smikcrs',   // Tu Template ID
+      'service_fi08iwj',
+      'template_smikcrs',
       templateParams
     );
 

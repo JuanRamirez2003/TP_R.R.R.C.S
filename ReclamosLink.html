@@ -6,246 +6,82 @@
 <title>Seguimiento de Pedido</title>
 
 <style>
-  body { 
-    font-family: 'Segoe UI', sans-serif; 
-    background:#f5f6fa; 
-    margin:0; 
-    padding:0; 
-  }
-
-  .container { 
-    max-width:800px; 
-    margin:40px auto; 
-    background:#fff; 
-    padding:20px; 
-    border-radius:12px; 
-    box-shadow:0 4px 12px rgba(0,0,0,0.1); 
-  }
-
-  h1 { 
-    text-align:center; 
-    margin-bottom:20px; 
-    color:#2f3640;
-  }
-
-  input { 
-    width:100%; 
-    padding:10px; 
-    margin-bottom:15px; 
-    border:1px solid #ccc; 
-    border-radius:6px; 
-  }
-
-  button { 
-    background:#273c75; 
-    color:#fff; 
-    padding:12px; 
-    border:none; 
-    border-radius:6px; 
-    cursor:pointer; 
-    width:100%; 
-    font-size:16px;
-  }
-
-  .card { 
-    padding:15px; 
-    background:#f1f2f6; 
-    border-radius:8px; 
-    margin-top:20px; 
-  }
-
-  .error { 
-    color:red; 
-    font-weight:bold; 
-    margin-top:10px; 
-  }
-
-  .animContainer {
-    text-align:center;
-    margin-top:25px;
-  }
-
-  .estadoTitulo {
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
-    margin-top:10px;
-  }
-
-  /* ===================== ANIMACIÓN 1: RELOJ (PENDIENTE) ====================== */
-  .reloj {
-    width:160px;
-    height:160px;
-    border-radius:50%;
-    border:6px solid #273c75;
-    margin:auto;
-    position:relative;
-  }
-
-  .aguja {
-    width:4px;
-    height:60px;
-    background:#273c75;
-    position:absolute;
-    top:20px;
-    left:50%;
-    transform-origin: bottom;
-    animation: girar 2.4s linear infinite;
-  }
-
-  @keyframes girar {
-    from { transform: translateX(-50%) rotate(0deg); }
-    to   { transform: translateX(-50%) rotate(360deg); }
-  }
-
-  /* ===================== ANIMACIÓN 2: CAJA RECIBIENDO PRODUCTOS ====================== */
-.cintaBox {
-  width: 260px;
-  height: 160px;
-  margin: auto;
-  position: relative;
-  overflow: visible;
+/* ======================= RESET ======================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: #eef2f7;
+  color: #2f3640;
 }
 
-/* La caja */
-.cajaDrop {
-  width: 150px;
-  height: 110px;
-  background: #f6d79a;
-  border-radius: 12px;
-  position: absolute;
-  bottom: 35px;
-  left: 55px;
-  z-index: 10;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  overflow: hidden;
-  animation: moverCaja 1.6s ease-in-out infinite alternate;
+/* ======================= CONTENEDOR ======================= */
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  background: #fff;
+  padding: 25px 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  transition: 0.2s;
+}
+.container:hover { box-shadow: 0 10px 26px rgba(0,0,0,0.12); }
+
+h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 32px;
+  color: #273c75;
+  font-weight: 700;
 }
 
-/* Borde superior simulando tapa entreabierta */
-.cajaDrop::before {
-  content:"";
+/* ======================= INPUTS ======================= */
+input, textarea {
   width: 100%;
-  height: 18px;
-  background: #d6a769;
-  position: absolute;
-  top: 0;
-}
-
-/* Cinta */
-.baseCinta {
-  width: 100%;
-  height: 34px;
-  background: #2d3436;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
   border-radius: 8px;
-  position: absolute;
-  bottom: 0;
-  overflow: hidden;
+  outline: none;
+  font-size: 16px;
+  transition: 0.2s;
+  background: #f8f9fa;
+}
+input:focus, textarea:focus {
+  border-color: #273c75;
+  background: #fff;
 }
 
-.rodillos2 {
-  display: flex;
-  height: 100%;
-  animation: rodillosMove 0.45s linear infinite;
+/* ======================= BOTONES ======================= */
+button {
+  background: #273c75;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  font-size: 16px;
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+button:hover {
+  background: #1e2f5a;
+  transform: translateY(-1px);
 }
 
-.rodillo2 {
-  width: 28px;
-  height: 28px;
-  background: #636e72;
-  border-radius: 50%;
-  margin-right: 6px;
+/* Botón Reclamo */
+.btnReclamo {
+  margin-top: 20px;
+  background: #e84118;
 }
+.btnReclamo:hover { background: #c23616; }
 
-/* Productos entrando */
-.producto {
-  width: 28px;
-  height: 28px;
-  background: #ffbe76;
-  border-radius: 6px;
-  position: absolute;
-  left: -40px;
-  bottom: 80px;
-  z-index: 5;
-  animation: entrarProducto 2.2s ease-in-out infinite;
-}
-
-/* Un producto más grande */
-.producto2 {
-  width: 34px;
-  height: 34px;
-  background: #f0932b;
-  border-radius: 6px;
-  position: absolute;
-  left: -50px;
-  bottom: 95px;
-  z-index: 5;
-  animation: entrarProducto2 2.8s ease-in-out infinite;
-}
-
-/* Animaciones */
-@keyframes moverCaja {
-  from { transform: translateX(-4px); }
-  to   { transform: translateX(4px); }
-}
-
-@keyframes rodillosMove {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-34px); }
-}
-
-@keyframes entrarProducto {
-  0%   { transform: translateX(0) translateY(0); opacity:1; }
-  40%  { transform: translateX(120px) translateY(-20px); }
-  55%  { transform: translateX(145px) translateY(10px); }
-  70%  { opacity:0; }
-  100% { opacity:0; }
-}
-
-@keyframes entrarProducto2 {
-  0%   { transform: translateX(0) translateY(0); opacity:1; }
-  50%  { transform: translateX(150px) translateY(-30px); }
-  65%  { transform: translateX(170px) translateY(20px); }
-  80%  { opacity:0; }
-  100% { opacity:0; }
-}
-  /* ===================== ANIMACIÓN 3: CAJA LISTA ====================== */
-  .cajaLista {
-    width:150px;
-    height:120px;
-    background:#7bed9f;
-    border-radius:10px;
-    margin:auto;
-    position:relative;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    animation: aparecer 0.8s ease-out;
-  }
-
-  @keyframes aparecer {
-    from { transform: scale(0.6); opacity:0; }
-    to   { transform: scale(1); opacity:1; }
-  }
-
-  .check {
-    width: 70px;
-    height: 35px;
-    border-left: 8px solid #2ecc71;
-    border-bottom: 8px solid #2ecc71;
-    transform: rotate(-45deg);
-    animation: dibujar 0.9s ease forwards;
-    opacity:0;
-  }
-
-  @keyframes dibujar {
-    0% { opacity:0; transform: scale(0.4) rotate(-45deg); }
-    100% { opacity:1; transform: scale(1) rotate(-45deg); }
-  }
-  .card {
+/* ======================= CARDS ======================= */
+.card {
   background: #1e1e1e;
   padding: 18px;
   border-radius: 12px;
@@ -253,101 +89,203 @@
   color: #fff;
   box-shadow: 0 4px 10px rgba(0,0,0,0.4);
 }
-
 .card h3 {
   margin-bottom: 12px;
   font-size: 20px;
   border-bottom: 1px solid #444;
   padding-bottom: 5px;
 }
-
 .factRow {
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
   border-bottom: 1px dashed #333;
 }
+.factRow span { color: #bbb; }
 
-.factRow span {
-  color: #bbb;
-}
-
+/* Chips estado */
 .chip {
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 14px;
   text-transform: capitalize;
 }
+.chip-pendiente { background: #555; color: #fff; }
+.chip-preparacion { background: #f7c325; color: #000; }
+.chip-preparado, .chip-listo { background: #28d67c; color: #000; }
 
-.chip-pendiente {
-  background: #555;
-  color: #fff;
-}
-
-.chip-preparacion {
-  background: #f7c325;
-  color: #000;
-}
-
-.chip-preparado,
-.chip-listo {
-  background: #28d67c;
-  color: #000;
-}
-
+/* Tabla detalles */
 .detallesCard table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
 }
-
 .tablaDetalles th {
   text-align: left;
   padding: 8px;
   background: #292929;
 }
-
 .tablaDetalles td {
   padding: 8px;
   border-top: 1px solid #333;
 }
 
+/* ======================= MODAL ======================= */
+.modalReclamoBack {
+  position: fixed;
+  top: 0; left: 0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.65);
+  display: none;
+  justify-content:center;
+  align-items:center;
+  z-index:99999;
+}
+.modalReclamo {
+  background: #fff;
+  width: 90%;
+  max-width: 450px;
+  padding: 20px;
+  border-radius: 12px;
+  animation: fadeIn 0.35s ease;
+}
+@keyframes fadeIn {
+  from { transform: scale(0.8); opacity:0; }
+  to   { transform: scale(1); opacity:1; }
+}
+.modalReclamo h2 { margin-top:0; text-align:center; }
+
+.btnEnviarRec {
+  margin-top: 12px;
+  background:#273c75;
+  color:#fff;
+  padding:10px;
+  width:100%;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  cursor:pointer;
+}
+.btnCancelarRec {
+  margin-top: 8px;
+  background:#777;
+  color:#fff;
+  padding:10px;
+  width:100%;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  cursor:pointer;
+}
+
+/* ======================= MENSAJES ======================= */
+#msgBox {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.msg {
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: 'Segoe UI', sans-serif;
+  color: #fff;
+  min-width: 260px;
+  max-width: 350px;
+  animation: fadeInMsg 0.4s ease;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+.msg-error { background: #c0392b; }
+.msg-ok { background: #27ae60; }
+.msg-warn { background: #f1c40f; color: #000; }
+@keyframes fadeInMsg {
+  from { opacity:0; transform: translateY(15px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+/* ======================= ANIMACIONES ESTADO PEDIDO ======================= */
 .estadoTitulo {
   text-align: center;
   font-size: 22px;
-  margin-top: 10px;
   font-weight: bold;
+  margin-top: 10px;
 }
-
-.estado-pendiente {
-  color: #bbb;
+.reloj {
+  width:160px; height:160px; border-radius:50%; border:6px solid #273c75;
+  margin:auto; position:relative;
 }
-
-.estado-preparacion {
-  color: #f7c325;
+.aguja {
+  width:4px; height:60px; background:#273c75; position:absolute;
+  top:20px; left:50%; transform-origin: bottom;
+  animation: girar 2.4s linear infinite;
 }
-
-.estado-listo {
-  color: #28d67c;
+@keyframes girar {
+  from { transform: translateX(-50%) rotate(0deg); }
+  to   { transform: translateX(-50%) rotate(360deg); }
 }
+/* Caja preparación */
+.cintaBox {
+  width: 260px; height: 160px; margin:auto; position:relative; overflow:visible;
+}
+.cajaDrop {
+  width: 150px; height: 110px; background: #f6d79a; border-radius: 12px;
+  position:absolute; bottom:35px; left:55px; z-index:10;
+  display:flex; justify-content:center; align-items:flex-start;
+  overflow:hidden; animation: moverCaja 1.6s ease-in-out infinite alternate;
+}
+.cajaDrop::before { content:""; width:100%; height:18px; background:#d6a769; position:absolute; top:0; }
+.baseCinta { width:100%; height:34px; background:#2d3436; border-radius:8px; position:absolute; bottom:0; overflow:hidden; }
+.rodillos2 { display:flex; height:100%; animation: rodillosMove 0.45s linear infinite; }
+.rodillo2 { width:28px; height:28px; background:#636e72; border-radius:50%; margin-right:6px; }
+.producto { width:28px; height:28px; background:#ffbe76; border-radius:6px; position:absolute; left:-40px; bottom:80px; z-index:5; animation: entrarProducto 2.2s ease-in-out infinite; }
+.producto2 { width:34px; height:34px; background:#f0932b; border-radius:6px; position:absolute; left:-50px; bottom:95px; z-index:5; animation: entrarProducto2 2.8s ease-in-out infinite; }
+@keyframes moverCaja { from{transform:translateX(-4px);} to{transform:translateX(4px);} }
+@keyframes rodillosMove { 0%{transform:translateX(0);} 100%{transform:translateX(-34px);} }
+@keyframes entrarProducto { 0%{transform:translateX(0) translateY(0);opacity:1;} 40%{transform:translateX(120px) translateY(-20px);} 55%{transform:translateX(145px) translateY(10px);} 70%{opacity:0;} 100%{opacity:0;} }
+@keyframes entrarProducto2 { 0%{transform:translateX(0) translateY(0);opacity:1;} 50%{transform:translateX(150px) translateY(-30px);} 65%{transform:translateX(170px) translateY(20px);} 80%{opacity:0;} 100%{opacity:0;} }
+/* Caja lista */
+.cajaLista { width:150px; height:120px; background:#7bed9f; border-radius:10px; margin:auto; position:relative; display:flex; justify-content:center; align-items:center; animation: aparecer 0.8s ease-out; }
+.check { width:70px; height:35px; border-left:8px solid #2ecc71; border-bottom:8px solid #2ecc71; transform: rotate(-45deg); animation: dibujar 0.9s ease forwards; opacity:0; }
+@keyframes aparecer { from{transform:scale(0.6);opacity:0;} to{transform:scale(1);opacity:1;} }
+@keyframes dibujar { 0%{opacity:0;transform:scale(0.4) rotate(-45deg);} 100%{opacity:1;transform:scale(1) rotate(-45deg);} }
 
 </style>
 </head>
 <body>
 
+<button class="btnReclamo" onclick="abrirReclamo()">📢 Hacer un reclamo</button>
+
+<div id="modalReclamo" class="modalReclamoBack">
+  <div class="modalReclamo">
+    <h2>Enviar Reclamo</h2>
+    <label>DNI / CUIT</label>
+    <input type="text" id="recDni" placeholder="Ej: 12345678">
+    <label>N° de Factura</label>
+    <input type="text" id="recFacturaNum" placeholder="Ej: 155">
+    <label>Detalle del Reclamo</label>
+    <textarea id="recTexto" placeholder="Describa su reclamo..."></textarea>
+    <button class="btnEnviarRec" onclick="enviarReclamo()">Enviar Reclamo</button>
+    <button class="btnCancelarRec" onclick="cerrarReclamo()">Cancelar</button>
+  </div>
+</div>
+
 <div class="container">
   <h1>Seguimiento de Pedido</h1>
-
   <label>ID de Factura</label>
   <input id="inputFactura" placeholder="Ej: 12">
-
   <label>DNI / CUIL</label>
   <input id="inputDni" placeholder="Ej: 40123123">
-
   <button onclick="consultarSeguimiento()">Consultar</button>
-
   <div id="resultadoSeguimiento"></div>
 </div>
+
+<div id="msgBox"></div>
+
+
 
 <!-- Supabase JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -357,16 +295,77 @@
   const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZ3JsZm5tdXZ2YXFzZXpqc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzEwNDMsImV4cCI6MjA3NDUwNzA0M30.NrUTqCLkzMWUGqn2XIAsCY8H90vgHpuxhMT2zIVt3Zo";
   const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-async function consultarSeguimiento() {
+// ================== Mensajes lindos ==================
+function mostrarMsg(texto, tipo="ok") {
+  const div = document.createElement("div");
+  div.className = `msg msg-${tipo}`;
+  div.textContent = texto;
+  document.getElementById("msgBox").appendChild(div);
+  setTimeout(() => { div.style.opacity="0"; div.style.transform="translateY(10px)"; }, 3000);
+  setTimeout(()=>div.remove(), 3500);
+}
 
+// ================== Modal Reclamo ==================
+function abrirReclamo() { document.getElementById("modalReclamo").style.display="flex"; }
+function cerrarReclamo() {
+  document.getElementById("modalReclamo").style.display="none";
+  document.getElementById("recDni").value="";
+  document.getElementById("recFacturaNum").value="";
+  document.getElementById("recTexto").value="";
+}
+
+async function enviarReclamo() {
+  const dni = document.getElementById("recDni").value.trim();
+  const facturaNum = document.getElementById("recFacturaNum").value.trim();
+  const texto = document.getElementById("recTexto").value.trim();
+
+  if (!dni || !facturaNum || !texto) { 
+    mostrarMsg("Complete todos los campos", "warn"); 
+    return; 
+  }
+
+  // 1) Buscar cliente
+  const { data: cliente } = await supabaseClient
+    .from("clientes")
+    .select("id_cliente")
+    .eq("dni_cuil", dni)
+    .maybeSingle();
+  if (!cliente) { mostrarMsg("Cliente no encontrado", "error"); return; }
+
+  // 2) Buscar factura
+  const { data: fact } = await supabaseClient
+    .from("factura")
+    .select("id")
+    .eq("id", facturaNum)
+    .eq("id_cliente", cliente.id_cliente)
+    .maybeSingle();
+  if (!fact) { mostrarMsg("Factura no encontrada", "error"); return; }
+
+  // 3) Insertar reclamo
+  const { error } = await supabaseClient
+    .from("reclamo")
+    .insert({
+      id_cliente: cliente.id_cliente,
+      id_factura: fact.id,
+      estado: "pendiente",
+      queja: texto,
+      create_at: new Date()
+    });
+
+  if (error) { mostrarMsg("Error al guardar reclamo", "error"); return; }
+
+  mostrarMsg("Reclamo enviado correctamente", "ok");
+  cerrarReclamo();
+}
+
+// ================== Seguimiento de pedido ==================
+async function consultarSeguimiento() {
   const facturaId = inputFactura.value.trim();
   const dni = inputDni.value.trim();
   const div = resultadoSeguimiento;
 
-  div.innerHTML = "Buscando...";
-
   if (!facturaId || !dni) {
-    div.innerHTML = `<p class='error'>Complete ambos campos.</p>`;
+    mostrarMsg("Complete ambos campos", "warn");
     return;
   }
 
@@ -376,11 +375,7 @@ async function consultarSeguimiento() {
     .select("id_cliente, nombre")
     .eq("dni_cuil", dni)
     .maybeSingle();
-
-  if (!cliente) {
-    div.innerHTML = `<p class='error'>No existe un cliente con ese DNI/CUIL.</p>`;
-    return;
-  }
+  if (!cliente) { mostrarMsg("No existe un cliente con ese DNI/CUIL", "error"); return; }
 
   // 2) Factura
   const { data: factura } = await supabaseClient
@@ -389,27 +384,15 @@ async function consultarSeguimiento() {
     .eq("id", facturaId)
     .eq("id_cliente", cliente.id_cliente)
     .maybeSingle();
-
-  if (!factura) {
-    div.innerHTML = `<p class='error'>No se encontró una factura para ese cliente.</p>`;
-    return;
-  }
+  if (!factura) { mostrarMsg("No se encontró una factura para ese cliente", "error"); return; }
 
   // 3) Detalles + JOIN con productos
   const { data: detalles } = await supabaseClient
     .from("detalle_ordenes")
-    .select(`
-      id_producto,
-      cantidad,
-      estado_preparacion,
-      productos (
-        nombre
-      )
-    `)
+    .select(`id_producto, cantidad, estado_preparacion, productos(nombre)`)
     .eq("id_orden", factura.id_orden);
 
   let estado = "pendiente";
-
   if (detalles?.length > 0) {
     const total = detalles.length;
     const pend = detalles.filter(d => d.estado_preparacion === "pendiente").length;
@@ -422,115 +405,70 @@ async function consultarSeguimiento() {
   }
 
   // Animación según estado
-  let animHtml = "";
-  let titulo = "";
-
-  if (estado === "pendiente") {
-    titulo = "Pendiente";
-    animHtml = `
-      <div class="reloj">
-        <div class="aguja"></div>
-      </div>`;
-  }
-
-  if (estado === "preparacion") {
-    titulo = "En preparación";
-    animHtml = `
-  <div class="cintaBox">
-
-    <!-- Objetos entrando -->
-    <div class="producto"></div>
-    <div class="producto2"></div>
-
-    <!-- Caja -->
-    <div class="cajaDrop"></div>
-
-    <!-- Cinta -->
-    <div class="baseCinta">
-      <div class="rodillos2">
-        <div class="rodillo2"></div>
-        <div class="rodillo2"></div>
-        <div class="rodillo2"></div>
-        <div class="rodillo2"></div>
-        <div class="rodillo2"></div>
-        <div class="rodillo2"></div>
+  let animHtml = "", titulo = "";
+  if (estado === "pendiente") { titulo="Pendiente"; animHtml=`<div class="reloj"><div class="aguja"></div></div>`; }
+  if (estado === "preparacion") { 
+    titulo="En preparación";
+    animHtml=`
+    <div class="cintaBox">
+      <div class="producto"></div>
+      <div class="producto2"></div>
+      <div class="cajaDrop"></div>
+      <div class="baseCinta">
+        <div class="rodillos2">
+          <div class="rodillo2"></div><div class="rodillo2"></div><div class="rodillo2"></div>
+          <div class="rodillo2"></div><div class="rodillo2"></div><div class="rodillo2"></div>
+        </div>
       </div>
-    </div>
-
-  </div>
-`;
+    </div>`; 
   }
+  if (estado === "listo") { titulo="Listo para entregar"; animHtml=`<div class="cajaLista"><div class="check"></div></div>`; }
 
-  if (estado === "listo") {
-    titulo = "Listo para entregar";
-    animHtml = `
-      <div class="cajaLista">
-        <div class="check"></div>
-      </div>`;
-  }
-
-  // ====== DETALLES MOSTRANDO NOMBRE DEL PRODUCTO ======
+  // Detalles de productos
   let htmlDetalles = "<ul>";
-  (detalles || []).forEach(d => {
+  (detalles||[]).forEach(d=>{
     const nombreProd = d.productos?.nombre || `Producto ${d.id_producto}`;
     htmlDetalles += `<li>${nombreProd} - Cant: ${d.cantidad} - Estado: ${d.estado_preparacion}</li>`;
   });
   htmlDetalles += "</ul>";
 
+  // Render resultado
   div.innerHTML = `
     <div class="animContainer">
-  ${animHtml}
-  <div class="estadoTitulo estado-${estado}">${titulo}</div>
-</div>
-
-<div class="card facturaCard">
-  <h3>📄 Factura Nº ${factura.id}</h3>
-
-  <div class="factRow"><span>Cliente:</span> <b>${cliente.nombre}</b></div>
-  <div class="factRow"><span>Orden:</span> <b>#${factura.id_orden}</b></div>
-  <div class="factRow"><span>Total:</span> <b>$${factura.total}</b></div>
-  <div class="factRow"><span>Fecha:</span> <b>${new Date(factura.fecha).toLocaleDateString()}</b></div>
-  <div class="factRow"><span>Estado:</span> 
-    <span class="chip chip-${estado}">${factura.estado}</span>
-  </div>
-</div>
-
-<div class="card detallesCard">
-  <h3>📦 Detalles del Pedido</h3>
-
-  <table class="tablaDetalles">
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th>Cantidad</th>
-        <th>Estado</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${
-        (detalles || [])
-          .map(d => {
-            const nombreProd = d.productos?.nombre || `Producto ${d.id_producto}`;
-            return `
-              <tr>
-                <td>${nombreProd}</td>
-                <td>${d.cantidad}</td>
-                <td>
-                  <span class="chip chip-${d.estado_preparacion}">
-                    ${d.estado_preparacion.replace("_", " ")}
-                  </span>
-                </td>
-              </tr>
-            `;
-          })
-          .join("")
-      }
-    </tbody>
-  </table>
-</div>
+      ${animHtml}
+      <div class="estadoTitulo estado-${estado}">${titulo}</div>
+    </div>
+    <div class="card facturaCard">
+      <h3>📄 Factura Nº ${factura.id}</h3>
+      <div class="factRow"><span>Cliente:</span> <b>${cliente.nombre}</b></div>
+      <div class="factRow"><span>Orden:</span> <b>#${factura.id_orden}</b></div>
+      <div class="factRow"><span>Total:</span> <b>$${factura.total}</b></div>
+      <div class="factRow"><span>Fecha:</span> <b>${new Date(factura.fecha).toLocaleDateString()}</b></div>
+      <div class="factRow"><span>Estado:</span> 
+        <span class="chip chip-${estado}">${factura.estado}</span>
+      </div>
+    </div>
+    <div class="card detallesCard">
+      <h3>📦 Detalles del Pedido</h3>
+      <table class="tablaDetalles">
+        <thead>
+          <tr><th>Producto</th><th>Cantidad</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          ${(detalles||[]).map(d=>{
+            const nombreProd=d.productos?.nombre||`Producto ${d.id_producto}`;
+            return `<tr>
+              <td>${nombreProd}</td>
+              <td>${d.cantidad}</td>
+              <td><span class="chip chip-${d.estado_preparacion}">${d.estado_preparacion.replace("_"," ")}</span></td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
   `;
 }
-
 </script>
+
 </body>
 </html>
