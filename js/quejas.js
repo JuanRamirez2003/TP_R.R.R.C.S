@@ -561,11 +561,12 @@ function cerrarModalResponder() {
   if (modal) modal.style.display = "none";
 }
 
-// =================== GUARDAR RESPUESTA ===================
+// =================== GUARDAR RESPUESTA CON DESCUENTO EN % ===================
 async function guardarRespuesta() {
   const id = document.getElementById("quejaId")?.value;
   const respuesta = document.getElementById("respuestaTexto")?.value;
   const estado = document.getElementById("estadoSelect")?.value;
+  const descuento = parseFloat(document.getElementById("descuentoInput")?.value) || 0;
 
   if (!id || !respuesta || !estado) return;
 
@@ -576,6 +577,7 @@ async function guardarRespuesta() {
       id,
       queja,
       id_cliente,
+      id_factura,
       cliente: id_cliente (nombre, email)
     `)
     .eq("id", id)
@@ -597,13 +599,35 @@ async function guardarRespuesta() {
     return;
   }
 
-  // ---- Enviar email al cliente ----
+  // Aplicar descuento porcentual a la factura
+  let totalActualizado = null;
+  if (descuento > 0 && reclamo.id_factura) {
+    const { data: factura, error: facErr } = await supabaseClient
+      .from("factura")
+      .select("total")
+      .eq("id", reclamo.id_factura)
+      .single();
+
+    if (!facErr && factura) {
+      totalActualizado = (parseFloat(factura.total) * (1 - descuento / 100)).toFixed(2);
+      await supabaseClient
+        .from("factura")
+        .update({ total: totalActualizado })
+        .eq("id", reclamo.id_factura);
+      console.log(`Descuento de ${descuento}% aplicado. Nuevo total: $${totalActualizado}`);
+    }
+  }
+
+  // ---- Enviar email al cliente con el total actualizado ----
   await enviarRespuestaReclamoEmail({
     id,
     queja: reclamo.queja,
     respuesta,
     estado,
-    cliente: reclamo.cliente
+    descuento,
+    cliente: reclamo.cliente,
+    id_factura: reclamo.id_factura,
+    total_actualizado: totalActualizado
   });
 
   cerrarModalResponder();
@@ -611,8 +635,7 @@ async function guardarRespuesta() {
   cargarQuejas();
 }
 
-
-// ================== Enviar email por respuesta de reclamo ==================
+// =================== Enviar email con descuento porcentual ===================
 async function enviarRespuestaReclamoEmail(data) {
   try {
     if (!data.cliente?.email) {
@@ -621,24 +644,24 @@ async function enviarRespuestaReclamoEmail(data) {
     }
 
     const templateParams = {
-      reclamo_id: data.id,
-      cliente_nombre: data.cliente.nombre,
-      cliente_email: data.cliente.email,
-      estado: data.estado,              // Aceptada o Rechazada
-      queja: data.queja,
-      respuesta: data.respuesta
-    };
+  reclamo_id: data.id,
+  cliente_nombre: data.cliente.nombre,
+  cliente_email: data.cliente.email,
+  estado: data.estado,
+  queja: data.queja,
+  respuesta: data.respuesta,
+  descuento: data.descuento || 0,
+  total: data.total_original || 0,
+  total_con_descuento: data.total_actualizado || 0
+};
 
-    const result = await emailjs.send(
+    await emailjs.send(
       "service_fi08iwj",      // TU SERVICE ID
-      "template_q8oz1is",  // Template nuevo para reclamos
+      "template_q8oz1is",     // Template para reclamos
       templateParams
     );
 
-    console.log(
-      `Email de reclamo enviado a ${data.cliente.email}. Estado reclamo: ${data.estado}`
-    );
-
+    console.log(`Email de reclamo enviado a ${data.cliente.email} con descuento: ${data.descuento || 0}%`);
   } catch (err) {
     console.error(`Error enviando email del reclamo ${data.id}:`, err);
   }
