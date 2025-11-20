@@ -131,6 +131,12 @@ function agruparOVsPorProducto(listaOVs) {
 
 async function crearOrdenesProduccion() {
     console.log("⚙️ Creando OP por producto...");
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+    alert("No se pudo identificar al usuario para auditoría.");
+    return;
+    }
+
     //const detallesQueQuedaron =[];
     opCreadas = []; // inicializar al inicio de la función
 
@@ -241,7 +247,8 @@ async function crearOrdenesProduccion() {
                     fecha_emision: fecha,
                     estado: 'Pendiente',
                     fecha_estimada_entrega: obtenerFechaEntregaMasCercana(detallesOP),
-                    prioridad: calcularPrioridad(new Date(obtenerFechaEntregaMasCercana(detallesOP)))
+                    prioridad: calcularPrioridad(new Date(obtenerFechaEntregaMasCercana(detallesOP))),
+                    audit_user_id: currentUserId
                 }])
                 .select();
 
@@ -397,6 +404,12 @@ async function verificarStockSuficiente(detalleReceta) {
 
 // Función para reservar lotes de un material según FEFO
 async function reservarLotes(idOrden, idMP, cantidadTotal) {
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+    alert("No se pudo identificar al usuario para auditoría.");
+    return;
+    }
+
     try {
         let cantidadRestante = cantidadTotal;
 
@@ -438,7 +451,8 @@ async function reservarLotes(idOrden, idMP, cantidadTotal) {
                 .from('lote_mp')
                 .update({
                     cantidad_disponible: cantidadDisponibleActual - cantidadAR,
-                    cantidad_reservada: cantidadReservadaActual + cantidadAR
+                    cantidad_reservada: cantidadReservadaActual + cantidadAR,
+                    audit_user_id: currentUserId
                 })
                 .eq('id_lote', lote.id_lote);
 
@@ -481,6 +495,12 @@ async function reservarLotes(idOrden, idMP, cantidadTotal) {
 
 async function guardarOVsEnOPAutomatica(idOP, detallesOV) {
     try {
+        const currentUserId = localStorage.getItem("currentUserId");
+        if (!currentUserId) {
+        throw new Error("No se pudo identificar al usuario para auditoría.");
+        }
+
+
         if (!detallesOV || detallesOV.length === 0) return true;
 
         for (const det of detallesOV) {
@@ -492,7 +512,8 @@ async function guardarOVsEnOPAutomatica(idOP, detallesOV) {
 
             const { data, error } = await supabaseClient
                 .from('op_ov')
-                .insert([{ id_op: idOP, id_detalle_ov: id_detalle }]);
+                .insert([{ id_op: idOP, id_detalle_ov: id_detalle,
+                        audit_user_id: currentUserId }]);
 
             if (error) {
                 console.error("Error guardando relación OP-OV:", error);
@@ -667,7 +688,11 @@ async function crearOPdesdeDetallesIndividuales(det) {
 
     const minCajasOP = minLotesProduccion * cantCajasLote;
     const maxCajasOP = minLotesProduccion * cantCajasLote;
-
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+    alert("No se pudo identificar al usuario para auditoría.");
+    return false;
+    }
     // ✔ Validamos que SOLO este detalle cumple los requisitos
     if (det.cantidad < minCajasOP * (1 - tolerancia)) {
         console.warn(`❌ El detalle ${det.id_detalle} NO alcanza el mínimo. No se crea OP individual.`);
@@ -725,7 +750,8 @@ async function crearOPdesdeDetallesIndividuales(det) {
             fecha_emision: fecha,
             estado: 'Pendiente',
             fecha_estimada_entrega:det.fecha_est,
-            prioridad: calcularPrioridad(new Date(det.fecha_entrega))
+            prioridad: calcularPrioridad(new Date(det.fecha_entrega)),
+            audit_user_id: currentUserId
         }])
         .select();
 
@@ -866,6 +892,12 @@ async function crearOPSUrg(det, superUrgente) {
 
 
 async function procesarPasadaFinalRestos() {
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+    alert("No se pudo identificar al usuario para auditoría.");
+    return;
+    }
+
     console.log("♻️ Pasada final: creando OP para restos por producto...");
 
     // recargar OV pendientes
@@ -931,7 +963,8 @@ async function procesarPasadaFinalRestos() {
                     fecha_emision: fecha,
                     estado: 'Pendiente',
                     fecha_estimada_entrega: obtenerFechaEntregaMasCercana(pequeños),
-                    prioridad: calcularPrioridad(new Date(obtenerFechaEntregaMasCercana(pequeños)))
+                    prioridad: calcularPrioridad(new Date(obtenerFechaEntregaMasCercana(pequeños))),
+                    audit_user_id: currentUserId
                 }])
                 .select();
 
@@ -971,6 +1004,11 @@ async function crearOPdesdeDetallesIndividuales22(det) {
 
     const minCajasOP = minLotesProduccion * cantCajasLote;
     const maxCajasOP = minLotesProduccion * cantCajasLote;
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+    alert("No se pudo identificar al usuario para auditoría.");
+    return false;
+    }
 
 
 
@@ -1020,7 +1058,8 @@ async function crearOPdesdeDetallesIndividuales22(det) {
             fecha_emision: fecha,
             estado: 'Pendiente',
             fecha_estimada_entrega:det.fecha_est,
-            prioridad: calcularPrioridad(new Date(det.fecha_entrega))
+            prioridad: calcularPrioridad(new Date(det.fecha_entrega)),
+            audit_user_id: currentUserId
         }])
         .select();
 
