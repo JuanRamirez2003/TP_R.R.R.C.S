@@ -119,9 +119,15 @@ async function guardarEdicion() {
       mensajeModal.textContent = 'El DNI ya pertenece a otro usuario';
       return;
     }
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+      mensajeModal.textContent = 'No se pudo identificar al usuario para auditoría';
+      return;
+    }
+
 
     const { error } = await supabaseClient
-      .from('usuarios').update({ dni, name, estado, area }).eq('id', id);
+      .from('usuarios').update({ dni, name, estado, area, audit_user_id: currentUserId }).eq('id', id);
 
     if (error) {
       mensajeModal.textContent = 'Error al actualizar usuario';
@@ -240,11 +246,17 @@ async function eliminarUsuario(e) {
       showMessage('El usuario ya está inactivo y no se puede eliminar nuevamente', 'error');
       return;
     }
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+      showMessage('No se pudo identificar al usuario para auditoría', 'error');
+      return;
+    }
 
     // Actualizar estado a 'Inactivo'
     const { error: updateError } = await supabaseClient
       .from('usuarios')
-      .update({ estado: 'Inactivo' })
+      .update({ estado: 'Inactivo',
+                audit_user_id: currentUserId })
       .eq('id', id);
 
     if (updateError) {
