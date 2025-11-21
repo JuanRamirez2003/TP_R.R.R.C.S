@@ -104,6 +104,7 @@
 
     .normal {
       background-color: #ebeb08;
+      color: black;
     }
 
     .baja {
@@ -138,7 +139,7 @@
       border-color: #aaa;
       background-color: #222;
     }
-
+    #btnDividirOP,
     #btnPlanificar,
     #btnCambiarPlanificacion,
     #btnDividirOP,
@@ -153,7 +154,7 @@
       border: none;
       transition: 0.3s;
     }
-
+    #btnDividirOP:hover,
     #btnPlanificar:hover,
     #btnCambiarPlanificacion:hover,
     #btnVolver:hover,
@@ -845,6 +846,127 @@
       border-color: #55a630;
       box-shadow: 0 0 6px rgba(85, 166, 48, 0.6);
     }
+
+
+
+
+/*#modalCancelarOP {
+  display: none;                oculto por defecto 
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);  fondo semitransparente 
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;               más alto que modalDetalle 
+}
+#modalCancelarOP > div {
+  background: #000;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  text-align: center;
+}*/
+
+
+/* Fondo general del modal de confirmación */
+.modal-cancelarOP {
+    display: none;               /* oculto por defecto */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* fondo semitransparente */
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;              /* más alto que modalDetalle */
+}
+
+/* Mostrar modal con animación */
+.modal-cancelarOP.mostrar {
+    display: flex;
+    animation: aparecerModal 0.3s ease;
+}
+
+/* Contenido del modal */
+.modal-cancelarOP > div {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    padding: 25px 35px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(85, 166, 48, 0.4);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: scaleUp 0.25s ease-in-out;
+}
+
+/* Título */
+.modal-cancelarOP h3 {
+    margin-bottom: 12px;
+    color: #55a630;
+    font-size: 1.4rem;
+}
+
+/* Texto del mensaje */
+.modal-cancelarOP p {
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+
+/* Contenedor de botones */
+.modal-cancelarOP-contenido {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Botón confirmar */
+.btn-confirmarOP {
+    padding: 12px 26px;
+    background-color: #d00000; /* rojo para acción crítica */
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-confirmarOP:hover {
+    background-color: #a00000;
+    transform: scale(1.05);
+}
+
+/* Botón cancelar */
+.btn-cancelarOP {
+    padding: 12px 26px;
+    background-color: #ccc;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-cancelarOP:hover {
+    background-color: #999;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+/* Animaciones reutilizadas */
+@keyframes aparecerModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+    from { transform: scale(0.9); }
+    to { transform: scale(1); }
+}
+
+
   </style>
 </head>
 
@@ -896,6 +1018,22 @@
           style="position:absolute; top:10px; right:10px; cursor:pointer; font-size:20px; color:#fff; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:50%;">✖</span>
 
         <div id="detalleContenido"></div>
+      </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div id="modalCancelarOP" class="modal-cancelarOP">
+      <div >
+        <h3>¿Está seguro de cancelar la OP?</h3>
+        <p id="detalleConfirmacion"></p>
+        <div class="modal-cancelarOP-contenido" >
+          <button id="btnConfirmarCancelar"  class="btn-confirmarOP" >
+            Confirmar
+          </button>
+          <button id="btnCerrarConfirmacion" class="btn-cancelarOP">
+            Cancelar
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1028,11 +1166,11 @@
         <ul class="leyenda-colores">
           <li><span class="color-box urgente">Urgente</span> Prioridad máxima.</li>
           <li><span class="color-box alta">Alta</span> Falta 2 días.</li>
-          <li><span class="color-box normal">Normal</span> Falta 5 días.</li>
+          <li><span class="color-box normal">Normal</span> Falta 5 días. . Se usa texto de color negro porque el contraste con blanco dificultaría la lectura.</li>
           <li><span class="color-box baja">Baja</span> Más de 5 días.</li>
           <li>
             <span class="color-box fijada">📌 / 🔒</span>
-            — OP fijada. No se mueve en replanificaciones.
+            — OP fijada. Al re planificar la/s OP fijada/s no cambiaran de línea ni se dia de producción.
           </li>
         </ul>
 

@@ -23,10 +23,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("filtro-prioridad").addEventListener("change", renderAgendaDesdeSupabase);
   //document.getElementById("btnPlanificar").addEventListener("click", planificarSemana);
   document.getElementById("btnPlanificar").addEventListener("click", () => {
-    planificarSemana(false); // modo normal (determinista)
+    planificarSemana(false,true); // modo normal (determinista)
   });
   document.getElementById("btnCambiarPlanificacion").addEventListener("click", () => {
-    planificarSemana(true); // modo aleatorio dentro de prioridades
+    planificarSemana(true,true); // modo aleatorio dentro de prioridades
   });
   document.getElementById("btnVolver").addEventListener("click", () => { window.location.href = "operario.html"; });
   document.getElementById("cerrarModal").addEventListener("click", () => { document.getElementById("modalDetalle").style.display = "none"; });
@@ -136,13 +136,18 @@ async function renderAgendaDesdeSupabase() {
             ${p.hora_inicio} - ${p.hora_fin} | 
             Lotes: ${cantIncluidos} de ${cantidadLotes.lotes_total}
           </div>
+          
+          
           <button class="pin-btn ${pinActivo ? 'fijada' : ''}" 
                   title="${pinActivo ? 'Desfijar' : 'Fijar'}">
             ${pinActivo ? "🔒" : "📌"}
           </button>
+
+
+
         </div>
       `;
-        //FIJADA
+        /** FIJADA   COMENTRA ESA PARTE PARA QUITAR EL PIN     /\/\ */
 
 
         //console.log("ACAAA", p.numero_op);
@@ -155,7 +160,10 @@ async function renderAgendaDesdeSupabase() {
       });
 
     agenda.appendChild(columna);
-    //  FIJADA
+
+
+
+    //  FIJADA --> COMENTAR ESTO PARA QUITAR EL PIN  Y -><button class="pin-btn></botton>
     document.querySelectorAll('.pin-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -179,7 +187,11 @@ async function renderAgendaDesdeSupabase() {
         e.target.title = nuevoEstado ? 'Desfijar' : 'Fijar';
       });
     });
-    //FIJADA
+    ////  FIJADA --> COMENTAR ESTO PARA QUITAR EL PIN 
+
+
+
+
   });
 
   agenda.style.display = "flex";
@@ -187,271 +199,273 @@ async function renderAgendaDesdeSupabase() {
 
 
 // ---------------------- Generar planificación ----------------------
-async function planificarSemana(modoAleatorio = false) {
+async function planificarSemana(modoAleatorio = false, aviso = true) {
 
-    window.tiempoPlanificadoLinea = 0;
-    window.tiempoRequeridoOPUrgente = 0;
-    const currentUserId = localStorage.getItem("currentUserId");
-    if (!currentUserId) {
-      mostrarAviso("No se pudo identificar al usuario para auditoría.");
-      return;
+  window.tiempoPlanificadoLinea = 0;
+  window.tiempoRequeridoOPUrgente = 0;
+  const currentUserId = localStorage.getItem("currentUserId");
+  if (!currentUserId) {
+    mostrarAviso("No se pudo identificar al usuario para auditoría.");
+    return;
+  }
+
+  const hoyStr = new Date().toISOString().split("T")[0];
+
+  // 1️⃣ Limpiar planificaciones no fijadas desde hoy
+  await supabaseClient
+    .from("planificacion_semanal")
+    .delete()
+    .gte("dia", hoyStr)
+    .eq("fijada", false);
+
+  // 2️⃣ Cargar planificaciones fijadas
+  const { data: fijadas } = await supabaseClient
+    .from("planificacion_semanal")
+    .select("*")
+    .gte("dia", hoyStr)
+    .eq("fijada", true);
+
+  // 3️⃣ Cargar órdenes pendientes
+  const { data: ordenes } = await supabaseClient
+    .from("orden_produccion")
+    .select("*, lotes_terminados")
+    .eq("estado", "Pendiente");
+
+  if (!ordenes?.length)
+    return mostrarAviso("No hay órdenes pendientes");
+
+  // Cálculo real de lotes pendientes
+  const ordenesAPlanificar = ordenes
+    .map(op => {
+      const terminados = op.lotes_terminados || 0;
+      const pendientes = (op.cant_lote || 1) - terminados;
+      return {
+        ...op,
+        lotes_pendientes: pendientes > 0 ? pendientes : 0
+      };
+    })
+    .filter(op => op.lotes_pendientes > 0);
+
+  // 4️⃣ Cargar líneas
+  const [{ data: lineas }, { data: lineasProd }] = await Promise.all([
+    supabaseClient.from("linea_productos").select("*"),
+    supabaseClient.from("linea_produccion").select("*")
+  ]);
+
+  // 🔥 4.1 Calcular la mayor horas_jornada por cada línea
+  const horasPorLinea = {};
+
+  lineasProd.forEach(lp => {
+    if (!horasPorLinea[lp.id_linea]) {
+      horasPorLinea[lp.id_linea] = lp.horas_jornada || 0;
+    } else {
+      horasPorLinea[lp.id_linea] = Math.max(
+        horasPorLinea[lp.id_linea],
+        lp.horas_jornada || 0
+      );
     }
+  });
 
-    const hoyStr = new Date().toISOString().split("T")[0];
+  // 5️⃣ Inicializar carga diaria
+  const carga = {};
+  for (const l of lineas) {
+    carga[l.id_linea] = {};
+    fechasMostrar.forEach(f => {
+      const fechaKey = f.toISOString().split("T")[0];
+      carga[l.id_linea][fechaKey] = 0;
+    });
+  }
 
-    // 1️⃣ Limpiar planificaciones no fijadas desde hoy
-    await supabaseClient
+  // 6️⃣ Aplicar planificaciones fijadas
+  const fijadasPorLineaDia = {};
+
+  fijadas.forEach(f => {
+    const key = `${f.id_linea}_${f.dia}`;
+    if (!fijadasPorLineaDia[key]) fijadasPorLineaDia[key] = [];
+    fijadasPorLineaDia[key].push(f);
+  });
+
+  for (const key in fijadasPorLineaDia) {
+    const [id_linea, dia] = key.split("_");
+    const grupo = fijadasPorLineaDia[key];
+
+    grupo.sort((a, b) => a.numero_op.localeCompare(b.numero_op));
+
+    let minutosInicio = 0;
+
+    for (const f of grupo) {
+      const duracion =
+        horaToMinutos(f.hora_fin) - horaToMinutos(f.hora_inicio);
+
+      f.hora_inicio = minutosToHora(minutosInicio);
+      f.hora_fin = minutosToHora(minutosInicio + duracion);
+
+      carga[id_linea][dia] += duracion;
+      minutosInicio += duracion;
+    }
+  }
+
+  // Guardar horas reajustadas
+  await Promise.all(
+    fijadas.map(f =>
+      supabaseClient
         .from("planificacion_semanal")
-        .delete()
-        .gte("dia", hoyStr)
-        .eq("fijada", false);
+        .update({
+          hora_inicio: f.hora_inicio,
+          hora_fin: f.hora_fin,
+          audit_user_id: currentUserId
 
-    // 2️⃣ Cargar planificaciones fijadas
-    const { data: fijadas } = await supabaseClient
-        .from("planificacion_semanal")
-        .select("*")
-        .gte("dia", hoyStr)
-        .eq("fijada", true);
-
-    // 3️⃣ Cargar órdenes pendientes
-    const { data: ordenes } = await supabaseClient
-        .from("orden_produccion")
-        .select("*, lotes_terminados")
-        .eq("estado", "Pendiente");
-
-    if (!ordenes?.length)
-        return mostrarAviso("No hay órdenes pendientes");
-
-    // Cálculo real de lotes pendientes
-    const ordenesAPlanificar = ordenes
-        .map(op => {
-            const terminados = op.lotes_terminados || 0;
-            const pendientes = (op.cant_lote || 1) - terminados;
-            return {
-                ...op,
-                lotes_pendientes: pendientes > 0 ? pendientes : 0
-            };
         })
-        .filter(op => op.lotes_pendientes > 0);
+        .eq("id_op", f.id_op)
+        .eq("dia", f.dia)
+        .eq("id_linea", f.id_linea)
+    )
+  );
 
-    // 4️⃣ Cargar líneas
-    const [{ data: lineas }, { data: lineasProd }] = await Promise.all([
-        supabaseClient.from("linea_productos").select("*"),
-        supabaseClient.from("linea_produccion").select("*")
-    ]);
+  // 7️⃣ Ordenar OP por prioridad
+  const prioridadOrden = {
+    urgente: 1,
+    alta: 2,
+    normal: 3,
+    baja: 4
+  };
 
-    // 🔥 4.1 Calcular la mayor horas_jornada por cada línea
-    const horasPorLinea = {};
-
-    lineasProd.forEach(lp => {
-        if (!horasPorLinea[lp.id_linea]) {
-            horasPorLinea[lp.id_linea] = lp.horas_jornada || 0;
-        } else {
-            horasPorLinea[lp.id_linea] = Math.max(
-                horasPorLinea[lp.id_linea],
-                lp.horas_jornada || 0
-            );
-        }
-    });
-
-    // 5️⃣ Inicializar carga diaria
-    const carga = {};
-    for (const l of lineas) {
-        carga[l.id_linea] = {};
-        fechasMostrar.forEach(f => {
-            const fechaKey = f.toISOString().split("T")[0];
-            carga[l.id_linea][fechaKey] = 0;
-        });
-    }
-
-    // 6️⃣ Aplicar planificaciones fijadas
-    const fijadasPorLineaDia = {};
-
-    fijadas.forEach(f => {
-        const key = `${f.id_linea}_${f.dia}`;
-        if (!fijadasPorLineaDia[key]) fijadasPorLineaDia[key] = [];
-        fijadasPorLineaDia[key].push(f);
-    });
-
-    for (const key in fijadasPorLineaDia) {
-        const [id_linea, dia] = key.split("_");
-        const grupo = fijadasPorLineaDia[key];
-
-        grupo.sort((a, b) => a.numero_op.localeCompare(b.numero_op));
-
-        let minutosInicio = 0;
-
-        for (const f of grupo) {
-            const duracion =
-                horaToMinutos(f.hora_fin) - horaToMinutos(f.hora_inicio);
-
-            f.hora_inicio = minutosToHora(minutosInicio);
-            f.hora_fin = minutosToHora(minutosInicio + duracion);
-
-            carga[id_linea][dia] += duracion;
-            minutosInicio += duracion;
-        }
-    }
-
-    // Guardar horas reajustadas
-    await Promise.all(
-        fijadas.map(f =>
-            supabaseClient
-                .from("planificacion_semanal")
-                .update({
-                    hora_inicio: f.hora_inicio,
-                    hora_fin: f.hora_fin,
-                    audit_user_id: currentUserId
-
-                })
-                .eq("id_op", f.id_op)
-                .eq("dia", f.dia)
-                .eq("id_linea", f.id_linea)
-        )
+  let ordenesParaPlanificar = ordenesAPlanificar
+    .filter(op => !fijadas.some(f => f.id_op === op.id_orden_produccion))
+    .sort(
+      (a, b) =>
+        (prioridadOrden[a.prioridad?.toLowerCase()] || 5) -
+        (prioridadOrden[b.prioridad?.toLowerCase()] || 5)
     );
 
-    // 7️⃣ Ordenar OP por prioridad
-    const prioridadOrden = {
-        urgente: 1,
-        alta: 2,
-        normal: 3,
-        baja: 4
-    };
+  if (modoAleatorio) {
+    const grupos = { urgente: [], alta: [], normal: [], baja: [] };
+    ordenesParaPlanificar.forEach(op => {
+      grupos[op.prioridad?.toLowerCase()]?.push(op);
+    });
+    for (const k in grupos)
+      grupos[k].sort(() => Math.random() - 0.5);
 
-    let ordenesParaPlanificar = ordenesAPlanificar
-        .filter(op => !fijadas.some(f => f.id_op === op.id_orden_produccion))
-        .sort(
-            (a, b) =>
-                (prioridadOrden[a.prioridad?.toLowerCase()] || 5) -
-                (prioridadOrden[b.prioridad?.toLowerCase()] || 5)
+    ordenesParaPlanificar = [
+      ...grupos.urgente,
+      ...grupos.alta,
+      ...grupos.normal,
+      ...grupos.baja
+    ];
+  }
+
+  // 8️⃣ Generar planificación SOLO de lotes no finalizados
+  const planificaciones = [];
+
+  for (const op of ordenesParaPlanificar) {
+
+    const cantidadLotes = op.lotes_pendientes;
+
+    const posibles = lineasProd.filter(
+      v => v.id_producto === op.id_producto
+    );
+
+    if (!posibles.length) continue;
+
+    posibles.sort((a, b) => a.duracion - b.duracion);
+
+    let lotesRestantes = cantidadLotes;
+
+    // 🔥 Primer lote pendiente real
+    let siguienteLote = (op.lotes_terminados || 0) + 1;
+
+    for (const fecha of fechasMostrar) {
+      if (lotesRestantes <= 0) break;
+
+      const fechaKey = fecha.toISOString().split("T")[0];
+
+      for (const cand of posibles) {
+        if (lotesRestantes <= 0) break;
+
+        // 🔥 Capacidad real usando la mayor horas_jornada encontrada
+        const capacidad = (horasPorLinea[cand.id_linea] ?? 8) * 60;
+
+        const minutosUsados = carga[cand.id_linea][fechaKey];
+        const espacioLibre = capacidad - minutosUsados;
+
+        if (espacioLibre <= 0) continue;
+
+        const duracionPorLote = cand.duracion;
+        const lotesPosibles = Math.min(
+          Math.floor(espacioLibre / duracionPorLote),
+          lotesRestantes
         );
 
-    if (modoAleatorio) {
-        const grupos = { urgente: [], alta: [], normal: [], baja: [] };
-        ordenesParaPlanificar.forEach(op => {
-            grupos[op.prioridad?.toLowerCase()]?.push(op);
+        if (lotesPosibles <= 0) continue;
+
+        const duracionTotal = lotesPosibles * duracionPorLote;
+
+        // 🔥 Rango correcto de lotes incluidos
+        const inicio = siguienteLote;
+        const fin = inicio + lotesPosibles - 1;
+
+        const lotesAsignados = Array.from(
+          { length: lotesPosibles },
+          (_, i) => inicio + i
+        );
+
+        siguienteLote = fin + 1;
+
+        const cantidadLotesJSON = {
+          lotes_incluidos: lotesAsignados,
+          lotes_total: cantidadLotes
+        };
+
+        planificaciones.push({
+          id_op: op.id_orden_produccion,
+          numero_op:
+            op.numero_op +
+            (lotesRestantes > lotesPosibles ? " 🧩" : ""),
+          id_linea: cand.id_linea,
+          dia: fechaKey,
+          hora_inicio: minutosToHora(minutosUsados),
+          hora_fin: minutosToHora(minutosUsados + duracionTotal),
+          prioridad: op.prioridad?.toLowerCase() || "normal",
+          cantidad_lotes: cantidadLotesJSON
         });
-        for (const k in grupos)
-            grupos[k].sort(() => Math.random() - 0.5);
 
-        ordenesParaPlanificar = [
-            ...grupos.urgente,
-            ...grupos.alta,
-            ...grupos.normal,
-            ...grupos.baja
-        ];
+        carga[cand.id_linea][fechaKey] += duracionTotal;
+        lotesRestantes -= lotesPosibles;
+      }
     }
 
-    // 8️⃣ Generar planificación SOLO de lotes no finalizados
-    const planificaciones = [];
-
-    for (const op of ordenesParaPlanificar) {
-
-        const cantidadLotes = op.lotes_pendientes;
-
-        const posibles = lineasProd.filter(
-            v => v.id_producto === op.id_producto
-        );
-
-        if (!posibles.length) continue;
-
-        posibles.sort((a, b) => a.duracion - b.duracion);
-
-        let lotesRestantes = cantidadLotes;
-
-        // 🔥 Primer lote pendiente real
-        let siguienteLote = (op.lotes_terminados || 0) + 1;
-
-        for (const fecha of fechasMostrar) {
-            if (lotesRestantes <= 0) break;
-
-            const fechaKey = fecha.toISOString().split("T")[0];
-
-            for (const cand of posibles) {
-                if (lotesRestantes <= 0) break;
-
-                // 🔥 Capacidad real usando la mayor horas_jornada encontrada
-                const capacidad = (horasPorLinea[cand.id_linea] ?? 8) * 60;
-
-                const minutosUsados = carga[cand.id_linea][fechaKey];
-                const espacioLibre = capacidad - minutosUsados;
-
-                if (espacioLibre <= 0) continue;
-
-                const duracionPorLote = cand.duracion;
-                const lotesPosibles = Math.min(
-                    Math.floor(espacioLibre / duracionPorLote),
-                    lotesRestantes
-                );
-
-                if (lotesPosibles <= 0) continue;
-
-                const duracionTotal = lotesPosibles * duracionPorLote;
-
-                // 🔥 Rango correcto de lotes incluidos
-                const inicio = siguienteLote;
-                const fin = inicio + lotesPosibles - 1;
-
-                const lotesAsignados = Array.from(
-                    { length: lotesPosibles },
-                    (_, i) => inicio + i
-                );
-
-                siguienteLote = fin + 1;
-
-                const cantidadLotesJSON = {
-                    lotes_incluidos: lotesAsignados,
-                    lotes_total: cantidadLotes
-                };
-
-                planificaciones.push({
-                    id_op: op.id_orden_produccion,
-                    numero_op:
-                        op.numero_op +
-                        (lotesRestantes > lotesPosibles ? " 🧩" : ""),
-                    id_linea: cand.id_linea,
-                    dia: fechaKey,
-                    hora_inicio: minutosToHora(minutosUsados),
-                    hora_fin: minutosToHora(minutosUsados + duracionTotal),
-                    prioridad: op.prioridad?.toLowerCase() || "normal",
-                    cantidad_lotes: cantidadLotesJSON
-                });
-
-                carga[cand.id_linea][fechaKey] += duracionTotal;
-                lotesRestantes -= lotesPosibles;
-            }
-        }
-
-        if (lotesRestantes > 0) {
-            mostrarAviso(`⚠️ La OP ${op.numero_op} no pudo planificarse completamente`);
-        }
+    if (lotesRestantes > 0) {
+      ///mostrarAviso(`⚠️ La OP ${op.numero_op} no pudo planificarse completamente`);  
+      //modal que aparece menos de un segundo (pestaneo)
     }
+  }
 
-    // 9️⃣ Guardar planificación
-    if (planificaciones.length) {
-        const planificacionesConJSON = planificaciones.map(p => ({
-            ...p,
-            cantidad_lotes: JSON.stringify(p.cantidad_lotes),
-            audit_user_id: currentUserId
-        }));
+  // 9️⃣ Guardar planificación
+  if (planificaciones.length) {
+    const planificacionesConJSON = planificaciones.map(p => ({
+      ...p,
+      cantidad_lotes: JSON.stringify(p.cantidad_lotes),
+      audit_user_id: currentUserId
+    }));
 
-        const { error: insertError } = await supabaseClient
-            .from("planificacion_semanal")
-            .insert(planificacionesConJSON);
+    const { error: insertError } = await supabaseClient
+      .from("planificacion_semanal")
+      .insert(planificacionesConJSON);
 
-        if (insertError)
-            return mostrarAviso("Error al guardar planificación: " + insertError.message);
+    if (insertError)
+      return mostrarAviso("Error al guardar planificación: " + insertError.message);
 
-        mostrarAviso(
-            modoAleatorio
-                ? "🔁 Se generó una planificación alternativa"
-                : "✅ Planificación generada correctamente"
-        );
-
-        renderAgendaDesdeSupabase();
-    } else {
-        mostrarAviso("⚠️ No se pudo generar planificación");
+     if (aviso) {
+      mostrarAviso(
+        modoAleatorio
+          ? "🔁 Se generó una planificación alternativa"
+          : "✅ Planificación generada correctamente"
+      );
     }
+    renderAgendaDesdeSupabase();
+  } else {
+    mostrarAviso("⚠️ No se pudo generar planificación");
+  }
 }
 
 // ---------------------- Minutos a hora ----------------------
@@ -475,30 +489,52 @@ async function mostrarDetalleOP(id_op, id_linea) {
     .single();
   if (error) return mostrarAviso("Error al cargar OP: " + error.message);//alert
 
+  const hoyStr = new Date().toISOString().split("T")[0];
+
+  //planificaciones de esa OP desde hoy en adelante
+  const { data: planes, error: errorPlan } = await supabaseClient
+    .from("planificacion_semanal")
+    .select("id, fijada, dia")
+    .eq("id_op", id_op)
+    .gte("dia", hoyStr);
+
+  if (errorPlan) {
+    console.warn("No se pudo obtener planificación:", errorPlan);
+  }
+
+  const planFijado = planes?.find(p => p.fijada === true);
+
+
   // Contenido básico del modal
   let contenido = `
     <h3 style="text-align:center;">Detalle ${op.numero_op}</h3>
     <p><strong>Prioridad:</strong> ${op.prioridad}</p>
     <p><strong>Estado:</strong> ${op.estado}</p>
     <p><strong>Fecha estimada:</strong> ${op.fecha_estimada_entrega || "N/A"}</p>
+    <p><strong>Fijada:</strong> ${planFijado ? "SI" : "NO"}</p>
     <p><strong>Productos/Lotes:</strong></p>
     ${op.ver_orden.map(item => `
       <div>${item.nombre} - Cantidad de lotes: ${item.cantidad}</div>
     `).join('')}
   `;
 
+
   contenido += `
   <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
     <button id="btnVerLinea" class="boton-ver">Ver detalle de línea</button>
     <button id="btnVerOV" class="boton-ver">Ver detalle de OV</button>
+    ${planFijado ? `
+    <button id="btnDesfijarCancelar" class="boton-ver" style="background:#d00000; color:#fff;">
+      Desfijar y cancelar OP
+    </button>
+    ` : ""}
   </div>
+  `;
 
+  contenido += `
   <h3 style="text-align:center;">Lotes / Materiales reservados:</h3>
-<h4 style="text-align:center; font-weight: normal;">Ver detalle de Lote (clic en una fila para más info)</h4>
+  <h4 style="text-align:center; font-weight: normal;">Ver detalle de Lote (clic en una fila para más info)</h4>
 
-
-
-  
   <div id="detalleMateriales" style="margin-top:10px;">Cargando...</div>
 
   <div id="detalleLinea" style="margin-top:15px; display:none;"></div>
@@ -522,6 +558,29 @@ async function mostrarDetalleOP(id_op, id_linea) {
       margin-bottom:8px;
     `;
   });
+
+
+  // ========== BOTÓN CANCELAR ==========
+  const btnCancelar = document.getElementById("btnDesfijarCancelar");
+  if (btnCancelar) {
+    btnCancelar.addEventListener("click", () => {
+      document.getElementById("modalCancelarOP").style.display = "flex";
+      document.getElementById("detalleConfirmacion").textContent = `${op.numero_op}`;
+    });
+  }
+
+  // Confirmar
+  document.getElementById("btnConfirmarCancelar").addEventListener("click", async () => {
+    await desfijarYCancelarOP(id_op, planes,op.numero_op);
+    document.getElementById("modalCancelarOP").style.display = "none";
+    document.getElementById("modalDetalle").style.display = "none"; // aquí sí cerrás ambos
+  });
+
+  // Cancelar
+  document.getElementById("btnCerrarConfirmacion").addEventListener("click", () => {
+    document.getElementById("modalCancelarOP").style.display = "none";
+  });
+
 
   // ========== BOTÓN DETALLE DE LÍNEA ==========
   const btnVerLinea = document.getElementById("btnVerLinea");
@@ -812,8 +871,10 @@ async function toggleFijada(id_op, nuevoEstado, dia) {
     // Actualizar todas las partes de la OP para el día indicado
     const { error } = await supabaseClient
       .from("planificacion_semanal")
-      .update({ fijada: nuevoEstado,
-                audit_user_id: currentUserId })
+      .update({
+        fijada: nuevoEstado,
+        audit_user_id: currentUserId
+      })
       .eq("id_op", id_op)
       .eq("dia", dia);
 
@@ -1261,7 +1322,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     .select("*, orden_produccion(numero_op, ver_orden, prioridad, id_orden_produccion)")
     .eq("id_linea", idLinea)
     .eq("dia", hoy);
-    
+
   if (error) {
     console.error("Error al traer planificacion:", error);
     return;
@@ -1274,7 +1335,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     lista.innerHTML = "<p>No hay OPs planificadas para hoy en esta línea.</p>";
     return;
   }
- 
+
   calcularTiempoPlanificado(data);
   validarTiempoTotal();
   //console.log("||||||||||||", tiempoPlanificadoLinea);
@@ -1285,7 +1346,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     const opItem = document.createElement("div");
 
     opItem.classList.add("op-item");
-   // console.log(">>>>>>>>>", data);
+    // console.log(">>>>>>>>>", data);
     const prioridad = (op.prioridad || "normal").toLowerCase();
     opItem.classList.add(prioridad);
 
@@ -1306,7 +1367,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     const cantidadOV = await cantOVRelacionadas(op.id_orden_produccion);
     //console.log("===============",opItem);
     opItem.innerHTML = `
-    <strong>${ item.numero_op}</strong> - ${op.ver_orden?.[0]?.nombre || "Sin nombre"}<br>
+    <strong>${item.numero_op}</strong> - ${op.ver_orden?.[0]?.nombre || "Sin nombre"}<br>
       <small>
       
         📦Lotes: <b>${cantidadLotes}</b> |
@@ -1670,15 +1731,19 @@ async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
       if (planificacionHoy) {
         await supabaseClient
           .from("planificacion_semanal")
-          .update({ id_linea: idLineaSeleccionada, fijada: true,
-                    audit_user_id: currentUserId })
+          .update({
+            id_linea: idLineaSeleccionada, fijada: true,
+            audit_user_id: currentUserId
+          })
           .eq("id_op", id_op)
           .eq("dia", hoyISO);
       } else if (planificacionFutura) {
         await supabaseClient
           .from("planificacion_semanal")
-          .update({ dia: hoyISO, id_linea: idLineaSeleccionada, fijada: true,
-                    audit_user_id: currentUserId })
+          .update({
+            dia: hoyISO, id_linea: idLineaSeleccionada, fijada: true,
+            audit_user_id: currentUserId
+          })
           .eq("id_op", id_op)
           .eq("dia", planificacionFutura.dia);
       } else {
@@ -1760,7 +1825,7 @@ document.getElementById("btnDividirOP").addEventListener("click", async () => {
   const modal = document.getElementById("modalDividirOP");
   modal.style.display = "flex";
   //modal.style.color = "#111"; // texto más visible
- // modal.style.backgroundColor = "rgba(255,255,255,0.95)";
+  // modal.style.backgroundColor = "rgba(255,255,255,0.95)";
 });
 
 /* ==================== CARGAR LINEAS Y ASIGNACION ==================== */
@@ -2038,3 +2103,39 @@ closeAyuda.addEventListener("click", () => {
 window.addEventListener("click", (e) => {
   if (e.target === modalAyuda) modalAyuda.style.display = "none";
 });
+
+// desfijar y cancelar
+async function desfijarYCancelarOP(id_op, planes , numero_op) {
+  try {
+    for (const plan of planes) {
+      if (plan.fijada) {
+        await toggleFijada(id_op, false, plan.dia);
+      }
+    }
+
+    await cancelarOP(id_op);
+
+    planificarSemana(false, false);
+    renderAgendaDesdeSupabase();
+
+    mostrarAviso(`${numero_op} cancelada y  se re-planifico correctamente.`);
+
+    document.getElementById("modalDetalle").style.display = "none";
+    
+  } catch (err) {
+    mostrarAviso("Error al desfijar/cancelar OP: " + err.message);
+  }
+}
+async function cancelarOP(id_op) {
+  const currentUserId = localStorage.getItem("currentUserId");
+  if (!currentUserId) {
+    mostrarAviso("No se pudo identificar al usuario - Inicie sesión y vuelva a re intentar la accion.");
+    return;
+  }
+  const { error } = await supabaseClient
+    .from("orden_produccion")
+    .update({ estado: "cancelada", audit_user_id: currentUserId })
+    .eq("id_orden_produccion", id_op);
+
+  if (error) throw error;
+}
