@@ -191,6 +191,11 @@ async function planificarSemana(modoAleatorio = false) {
 
     window.tiempoPlanificadoLinea = 0;
     window.tiempoRequeridoOPUrgente = 0;
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+      mostrarAviso("No se pudo identificar al usuario para auditoría.");
+      return;
+    }
 
     const hoyStr = new Date().toISOString().split("T")[0];
 
@@ -295,7 +300,9 @@ async function planificarSemana(modoAleatorio = false) {
                 .from("planificacion_semanal")
                 .update({
                     hora_inicio: f.hora_inicio,
-                    hora_fin: f.hora_fin
+                    hora_fin: f.hora_fin,
+                    audit_user_id: currentUserId
+
                 })
                 .eq("id_op", f.id_op)
                 .eq("dia", f.dia)
@@ -424,7 +431,8 @@ async function planificarSemana(modoAleatorio = false) {
     if (planificaciones.length) {
         const planificacionesConJSON = planificaciones.map(p => ({
             ...p,
-            cantidad_lotes: JSON.stringify(p.cantidad_lotes)
+            cantidad_lotes: JSON.stringify(p.cantidad_lotes),
+            audit_user_id: currentUserId
         }));
 
         const { error: insertError } = await supabaseClient
@@ -762,6 +770,12 @@ function mostrarAviso(mensaje) {
 }
 // ---------------------- Fijar / Desfijar OP ----------------------
 async function toggleFijada(id_op, nuevoEstado, dia) {
+  const currentUserId = localStorage.getItem("currentUserId");
+  if (!currentUserId) {
+    mostrarAviso("No se pudo identificar al usuario para auditoría.");
+    return;
+  }
+
   try {
     // Obtener todas las planificaciones de esa OP
     const { data: planificaciones, error: errorFetch } = await supabaseClient
@@ -798,7 +812,8 @@ async function toggleFijada(id_op, nuevoEstado, dia) {
     // Actualizar todas las partes de la OP para el día indicado
     const { error } = await supabaseClient
       .from("planificacion_semanal")
-      .update({ fijada: nuevoEstado })
+      .update({ fijada: nuevoEstado,
+                audit_user_id: currentUserId })
       .eq("id_op", id_op)
       .eq("dia", dia);
 
@@ -1627,6 +1642,11 @@ document.getElementById("btnGuardarLinea").disabled = (window.tiempoPlanificadoL
 
 async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
   let huboError = false;
+  const currentUserId = localStorage.getItem("currentUserId");
+  if (!currentUserId) {
+    mostrarAviso("No se pudo identificar al usuario para auditoría.", "error");
+    return;
+  }
 
   for (const id_op of ids) {
     const { data, error } = await supabaseClient
@@ -1650,13 +1670,15 @@ async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
       if (planificacionHoy) {
         await supabaseClient
           .from("planificacion_semanal")
-          .update({ id_linea: idLineaSeleccionada, fijada: true })
+          .update({ id_linea: idLineaSeleccionada, fijada: true,
+                    audit_user_id: currentUserId })
           .eq("id_op", id_op)
           .eq("dia", hoyISO);
       } else if (planificacionFutura) {
         await supabaseClient
           .from("planificacion_semanal")
-          .update({ dia: hoyISO, id_linea: idLineaSeleccionada, fijada: true })
+          .update({ dia: hoyISO, id_linea: idLineaSeleccionada, fijada: true,
+                    audit_user_id: currentUserId })
           .eq("id_op", id_op)
           .eq("dia", planificacionFutura.dia);
       } else {
@@ -1668,6 +1690,7 @@ async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
             id_linea: idLineaSeleccionada,
             dia: hoyISO,
             fijada: true,
+            audit_user_id: currentUserId
           });
       }
     } catch (e) {
@@ -1825,6 +1848,13 @@ function activarControlSumaDividir(maxLotes) {
 
 /* ==================== GUARDAR DIVISION FIJADA ==================== */
 document.getElementById("btnGuardarDividir").addEventListener("click", async () => {
+
+  const currentUserId = localStorage.getItem("currentUserId");
+  if (!currentUserId) {
+    mostrarAviso("No se pudo identificar al usuario para auditoría.");
+    return;
+  }
+
   const idOP = Number(document.getElementById("selectOPDividir").value);
   if (!idOP) return mostrarAviso("Seleccione una OP");
 
@@ -1915,7 +1945,8 @@ document.getElementById("btnGuardarDividir").addEventListener("click", async () 
           }),
           fijada: true,
           hora_inicio: horaInicio,
-          hora_fin: horaFin
+          hora_fin: horaFin,
+          audit_user_id: currentUserId
         };
 
         // Insertar sin actualizar (siempre se agregan al final)
