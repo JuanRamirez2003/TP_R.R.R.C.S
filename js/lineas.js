@@ -158,6 +158,7 @@ function filtrarLineas() {
 /* === PRODUCTOS POR LÍNEA === */
 async function verProductosLinea(idLinea, descripcion) {
   lineaSeleccionada = idLinea;
+  descripcionLineaSeleccionada = descripcion;
   document.getElementById("tituloLinea").innerText = `📦 Línea: ${descripcion}`;
   document.getElementById("modalProductos").style.display = "flex";
   document.getElementById("idLineaProducto").value = idLinea;
@@ -222,7 +223,7 @@ async function guardarProducto(e) {
   }
 
   cerrarModalGestionProducto();
-  verProductosLinea(idLinea, document.getElementById("tituloLinea").innerText);
+  verProductosLinea(idLinea, descripcionLineaSeleccionada); // ← Corrección
 }
 
 async function editarProducto(idProducto) {
