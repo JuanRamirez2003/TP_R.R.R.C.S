@@ -69,7 +69,7 @@ async function cargarAuditoria() {
         });
         //<td>${row.usuario ?? ''}</td>   //COMO ESTBA ANTES
         //<td>${row.rol ?? ''}</td>
-        
+
         container.style.display = 'block';
 
         // Agregar eventos a los botones "Ver"
@@ -82,7 +82,7 @@ async function cargarAuditoria() {
 
     } catch (err) {
         console.error('Error al cargar auditoría:', err.message);
-        alert('No se pudo cargar la tabla de auditoría.');
+        mostrarAviso('No se pudo cargar la tabla de auditoría.');
     }
 }
 // ================== Modal Detalle ==================
@@ -159,3 +159,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('buscador').addEventListener('input', filtrarTabla);
     document.getElementById('cerrarModal').addEventListener('click', cerrarModal);
 });
+function mostrarAviso(mensaje) {
+  const modal = document.getElementById('modalAviso');
+  const mensajeP = document.getElementById('mensajeAvisoTexto');
+  const btnCerrar = document.getElementById('btnCerrarAviso');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de aviso");
+    return alert(mensaje);
+  }
+
+  mensajeP.textContent = mensaje;
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
+}
