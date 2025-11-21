@@ -65,7 +65,7 @@ async function cargarAuditoria() {
                 <td>${row.fecha ? new Date(row.fecha).toLocaleString() : ''}</td>
                 <td><button class="btn-ver" data-index="${index}">Ver</button></td>
             `;
-                    tbody.appendChild(tr);
+            tbody.appendChild(tr);
         });
         //<td>${row.usuario ?? ''}</td>   //COMO ESTBA ANTES
         //<td>${row.rol ?? ''}</td>
@@ -76,7 +76,7 @@ async function cargarAuditoria() {
         document.querySelectorAll('.btn-ver').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const i = e.target.dataset.index;
-                mostrarModal(data[i]);
+                mostrarModal(data[i], mapaUsuarios);
             });
         });
 
@@ -86,7 +86,7 @@ async function cargarAuditoria() {
     }
 }
 // ================== Modal Detalle ==================
-function mostrarModal(registro) {
+/*function mostrarModal(registro) {
     const modal = document.getElementById('modalDetalle');
     const modalBody = document.getElementById('modalBody');
 
@@ -135,7 +135,83 @@ function mostrarModal(registro) {
     `;
 
     modal.style.display = 'flex';
+}*/
+function mostrarModal(registro, mapaUsuarios) {
+    const modal = document.getElementById('modalDetalle');
+    const modalBody = document.getElementById('modalBody');
+
+    const crearCard = (label, valor) => `
+    <div style="
+      background:#2a2a2a;
+      padding:10px 14px;
+      border-radius:6px;
+      color:#e0e0e0;
+      font-size:0.95rem;
+      word-break: break-word;
+      white-space: pre-wrap;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+    ">
+      <strong style="color:#55a630;">${label}:</strong> ${valor ?? ''}
+    </div>
+  `;
+
+    // Buscar nombre y rol del usuario
+    let usuarioNombre = "Sistema";
+    let usuarioRol = "Sistema";
+    if (registro.usuario && mapaUsuarios[registro.usuario]) {
+        usuarioNombre = mapaUsuarios[registro.usuario].nombre;
+        usuarioRol = mapaUsuarios[registro.usuario].rol || "Sistema";
+    }
+
+    // Cabecera
+    let detalleArriba = `
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:15px;">
+      ${crearCard("ID", registro.id)}
+      ${crearCard("Tabla", registro.tabla)}
+      ${crearCard("Operación", registro.operacion)}
+      ${crearCard("Usuario", usuarioNombre)}
+      ${crearCard("Rol", usuarioRol)}
+      ${crearCard("Fecha", registro.fecha ? new Date(registro.fecha).toLocaleString() : '')}
+    </div>
+  `;
+
+    // Detalle del registro
+    let detalleHTML = '';
+    if (registro.registro && typeof registro.registro === 'object') {
+        detalleHTML += '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">';
+        for (const [key, value] of Object.entries(registro.registro)) {
+            detalleHTML += crearCard(key, value);
+        }
+        detalleHTML += '</div>';
+    } else {
+        detalleHTML = '<p style="color:#ccc;">No hay detalles disponibles</p>';
+    }
+
+    modalBody.innerHTML = `
+    ${detalleArriba}
+    <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+    <h3 style="color:#55a630; margin-bottom:10px;">Registro</h3>
+    ${detalleHTML}
+  `;
+
+    modal.classList.add('mostrar');
 }
+
+function cerrarModalDetalle() {
+    document.getElementById('modalDetalle').classList.remove('mostrar');
+}
+document.getElementById('modalDetalle').addEventListener('click', (e) => {
+    const contenido = document.querySelector('.modal-auditoria-contenido');
+    if (!contenido.contains(e.target)) {
+        cerrarModalDetalle();
+    }
+});
+
+
 
 
 function cerrarModal() {
@@ -160,20 +236,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cerrarModal').addEventListener('click', cerrarModal);
 });
 function mostrarAviso(mensaje) {
-  const modal = document.getElementById('modalAviso');
-  const mensajeP = document.getElementById('mensajeAvisoTexto');
-  const btnCerrar = document.getElementById('btnCerrarAviso');
+    const modal = document.getElementById('modalAviso');
+    const mensajeP = document.getElementById('mensajeAvisoTexto');
+    const btnCerrar = document.getElementById('btnCerrarAviso');
 
-  if (!modal || !mensajeP || !btnCerrar) {
-    console.error("⚠️ No se encontró el modal de aviso");
-    return alert(mensaje);
-  }
+    if (!modal || !mensajeP || !btnCerrar) {
+        console.error("⚠️ No se encontró el modal de aviso");
+        return alert(mensaje);
+    }
 
-  mensajeP.textContent = mensaje;
-  modal.classList.add('mostrar');
+    mensajeP.textContent = mensaje;
+    modal.classList.add('mostrar');
 
-  btnCerrar.onclick = () => modal.classList.remove('mostrar');
-  modal.onclick = (e) => {
-    if (e.target === modal) modal.classList.remove('mostrar');
-  };
+    btnCerrar.onclick = () => modal.classList.remove('mostrar');
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove('mostrar');
+    };
 }
