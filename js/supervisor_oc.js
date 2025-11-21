@@ -96,6 +96,12 @@ document.getElementById('pedidoForm').addEventListener('submit', async e => {
         mensajeError.style.display = "block";
         return;
     }
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+    mensajeError.textContent = "No se pudo identificar al usuario para auditoría.";
+    mensajeError.style.display = "block";
+    return;
+}
 
     try {
         const materia = materiaSelect.selectedOptions[0].textContent;
@@ -104,7 +110,8 @@ document.getElementById('pedidoForm').addEventListener('submit', async e => {
         // --- Guardar en Supabase y obtener ID ---
         const { data, error } = await supabaseClient
             .from('orden_compra_mp')
-            .insert([{ materia_prima: materia, proveedor: proveedor, cantidad, estado: 'Pendiente' }])
+            .insert([{ materia_prima: materia, proveedor: proveedor, cantidad, estado: 'Pendiente',
+            audit_user_id: currentUserId }])
             .select(); // <--- importante para recibir el id
         if (error) throw error;
 
