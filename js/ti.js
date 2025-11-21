@@ -8,7 +8,7 @@ console.log("Iniciando Panel de TI...");
 
 
 // ================== Cerrar sesión ==================
-window.cerrarSesion = function() {
+window.cerrarSesion = function () {
     localStorage.clear();
     sessionStorage.clear();
     window.location.href = "index.html";
@@ -21,13 +21,29 @@ async function cargarAuditoria() {
     tbody.innerHTML = ''; // limpiar tabla
 
     try {
-        // Traer todos los registros (ordenados por fecha descendente)
+        // Traer todos los registros de auditoría
         const { data, error } = await supabaseClient
             .from('auditoria')
             .select('*')
             .order('fecha', { ascending: false });
 
         if (error) throw error;
+
+        // Traer todos los usuarios para mapear nombre y rol
+        const { data: usuarios, error: errorUsuarios } = await supabaseClient
+            .from('usuarios')
+            .select('id, name, area');
+
+        if (errorUsuarios) throw errorUsuarios;
+
+        // Crear mapa de usuarios por ID
+        const mapaUsuarios = {};
+        usuarios.forEach(u => {
+            mapaUsuarios[u.id] = {
+                nombre: u.name,
+                rol: u.area
+            };
+        });
 
         if (!data || data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7">No hay registros</td></tr>';
@@ -36,19 +52,24 @@ async function cargarAuditoria() {
         }
 
         data.forEach((row, index) => {
+            const usuario = mapaUsuarios[row.usuario]?.nombre || 'Sistema';
+            const rol = mapaUsuarios[row.usuario]?.rol || 'Sistema';
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${row.id ?? ''}</td>
                 <td>${row.tabla ?? ''}</td>
                 <td>${row.operacion ?? ''}</td>
-                <td>${row.usuario ?? ''}</td>
-                <td>${row.rol ?? ''}</td>
+                <td>${usuario}</td>
+                <td>${rol}</td>
                 <td>${row.fecha ? new Date(row.fecha).toLocaleString() : ''}</td>
                 <td><button class="btn-ver" data-index="${index}">Ver</button></td>
             `;
-            tbody.appendChild(tr);
+                    tbody.appendChild(tr);
         });
-
+        //<td>${row.usuario ?? ''}</td>   //COMO ESTBA ANTES
+        //<td>${row.rol ?? ''}</td>
+        
         container.style.display = 'block';
 
         // Agregar eventos a los botones "Ver"
@@ -64,7 +85,6 @@ async function cargarAuditoria() {
         alert('No se pudo cargar la tabla de auditoría.');
     }
 }
-
 // ================== Modal Detalle ==================
 function mostrarModal(registro) {
     const modal = document.getElementById('modalDetalle');
