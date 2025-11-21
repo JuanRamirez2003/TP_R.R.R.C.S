@@ -1759,8 +1759,8 @@ document.getElementById("btnDividirOP").addEventListener("click", async () => {
 
   const modal = document.getElementById("modalDividirOP");
   modal.style.display = "flex";
-  modal.style.color = "#111"; // texto más visible
-  modal.style.backgroundColor = "rgba(255,255,255,0.95)";
+  //modal.style.color = "#111"; // texto más visible
+ // modal.style.backgroundColor = "rgba(255,255,255,0.95)";
 });
 
 /* ==================== CARGAR LINEAS Y ASIGNACION ==================== */
@@ -1785,13 +1785,21 @@ document.getElementById("selectOPDividir").addEventListener("change", async (e) 
               <div id="listaLineasDividir" style="display:flex; flex-direction:column; gap:6px;">`;
 
   lineas.forEach((l) => {
+    html += `
+      <div class="linea-card" draggable="true" data-id="${l.id_linea}">
+        <span>Línea ${l.id_linea}</span>
+        <input type="number" min="0" max="${lotesTotales}" value="0" class="input-lotes-linea"/>
+      </div>`;
+  });
+
+  /**  lineas.forEach((l) => {
     html += `<div class="linea-card" draggable="true" data-id="${l.id_linea}" 
                  style="padding:6px; border:1px solid #666; border-radius:6px; display:flex; justify-content:space-between; align-items:center; color:#000;">
                <span>Línea ${l.id_linea}</span>
                <input type="number" min="0" max="${lotesTotales}" value="0" 
                       class="input-lotes-linea" style="width:60px; text-align:right;"/>
              </div>`;
-  });
+  }); */
 
   html += `</div>`;
   cont.innerHTML = html;
