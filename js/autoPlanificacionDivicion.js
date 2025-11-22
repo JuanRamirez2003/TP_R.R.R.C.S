@@ -49,6 +49,8 @@ function calcularFechas() {
 async function cargarLineas() {
   const { data, error } = await supabaseClient.from("linea_productos").select("*");
   if (error) return mostrarAviso("Error al cargar líneas: " + error.message);//alert
+  data.sort((a, b) => a.id_linea - b.id_linea);
+
   lineasGlobal = data;
   const filtro = document.getElementById("filtro-linea");
   data.forEach(l => {
@@ -1092,7 +1094,7 @@ buscador.addEventListener("input", () => {
 });
 const DURACION_JORNADA = 8 * 60;
 // ---------------------- DRAG & DROP ----------------------
-
+/*
 function activarDragAndDrop() {
   let draggedItem = null;
   let lineaOrigen = null;
@@ -1223,7 +1225,195 @@ function activarDragAndDrop() {
 
   });
 }
+*/
 
+
+function activarDragAndDrop() {
+  let draggedItem = null;
+  let lineaOrigen = null;
+
+  let duracionOP = 0;
+  let duracionplanificada = 0;
+  let duracionEnMinutos = 0;
+
+  let touchSelectedItem = null; // 🔵 Para Android/iPhone
+
+
+  // =====================================================
+  // 1️⃣ EVENTOS PARA PC — drag & drop original
+  // =====================================================
+  document.querySelectorAll(".op-item").forEach(item => {
+
+    // 🔵 PC: iniciar drag
+    item.addEventListener("dragstart", e => {
+      try {
+        draggedItem = item;
+        lineaOrigen = item.closest(".lista-op")?.dataset.linea || null;
+
+        const duracionRaw = draggedItem.querySelector("small")?.innerText || "";
+        const match2 = duracionRaw.match(/Duración:\s*(\d+)h\s*(\d+)m/);
+        duracionEnMinutos = match2 ? (parseInt(match2[1]) * 60 + parseInt(match2[2])) : 0;
+
+        const textoDuracion = item.querySelector(".duracion-texto")?.textContent || "0h 0m";
+        const match = textoDuracion.match(/(\d+)h\s*(\d+)m/);
+        if (match) {
+          const horas = parseInt(match[1]) || 0;
+          const minutos = parseInt(match[2]) || 0;
+          duracionOP = horas * 60 + minutos;
+        } else {
+          duracionOP = 0;
+        }
+
+        setTimeout(() => item.style.display = "none", 0);
+      } catch (error) {
+        console.error("Error en dragstart:", error);
+      }
+    });
+
+    // 🔵 PC: terminar drag
+    item.addEventListener("dragend", e => {
+      try {
+        setTimeout(() => {
+          item.style.display = "block";
+          draggedItem = null;
+          lineaOrigen = null;
+          duracionOP = 0;
+        }, 0);
+      } catch (error) {
+        console.error("Error en dragend:", error);
+      }
+    });
+
+
+    // =====================================================
+    // 2️⃣ EVENTOS PARA CELULAR — TAP-TO-MOVE
+    // =====================================================
+    item.addEventListener("touchstart", e => {
+      e.preventDefault();
+
+      // Si ya había uno seleccionado → se des-selecciona
+      if (touchSelectedItem === item) {
+        item.classList.remove("op-selected-touch");
+        touchSelectedItem = null;
+        return;
+      }
+
+      // Si selecciono una nueva OP
+      if (!touchSelectedItem) {
+        touchSelectedItem = item;
+        item.classList.add("op-selected-touch");
+
+        // Guardamos los datos igual que dragStart
+        draggedItem = item;
+        lineaOrigen = item.closest(".lista-op")?.dataset.linea || null;
+
+        const duracionRaw = draggedItem.querySelector("small")?.innerText || "";
+        const match2 = duracionRaw.match(/Duración:\s*(\d+)h\s*(\d+)m/);
+        duracionEnMinutos = match2 ? (parseInt(match2[1]) * 60 + parseInt(match2[2])) : 0;
+      }
+    });
+  });
+
+
+  // =====================================================
+  // LISTAS
+  // =====================================================
+  document.querySelectorAll(".lista-op").forEach(lista => {
+
+    // 🔵 PC normal
+    lista.addEventListener("dragover", e => {
+      try {
+        e.preventDefault();
+        lista.classList.add("drag-over");
+      } catch (error) {
+        console.error("Error en dragover:", error);
+      }
+    });
+
+    lista.addEventListener("drop", e => {
+      try {
+        e.preventDefault();
+        lista.classList.remove("drag-over");
+        if (!draggedItem) return;
+
+        procesarMovimiento(lista, draggedItem, lineaOrigen, duracionEnMinutos);
+
+      } catch (error) {
+        console.error("Error al procesar el drop:", error);
+      }
+    });
+
+
+    // =====================================================
+    // 3️⃣ Celular — tocar una lista para mover
+    // =====================================================
+    lista.addEventListener("touchstart", e => {
+      if (!touchSelectedItem) return; // No hay OP seleccionada
+
+      const item = touchSelectedItem;
+      item.classList.remove("op-selected-touch");
+      touchSelectedItem = null;
+
+      procesarMovimiento(lista, item, lineaOrigen, duracionEnMinutos);
+    });
+
+  });
+
+
+  // =====================================================
+  // FUNCIÓN COMPARTIDA — PROCESA EL MOVIMIENTO
+  // =====================================================
+  function procesarMovimiento(lista, item, lineaOrigen, duracion) {
+    const lineaDestino = lista.dataset.linea;
+    const origenReal = item.dataset.origen_real || null;
+
+    // Validación de línea seleccionada
+    if (lineaDestino === "linea-seleccionada") {
+      const idLineaSeleccionada = document.getElementById("filtroLineas").value;
+      if (!idLineaSeleccionada) {
+        mostrarAviso("⚠️ Seleccioná una línea antes de agregar OPs", "error");
+        return;
+      }
+    }
+
+    // === Reglas de negocio originales ===
+    if (lineaOrigen && lineaOrigen !== lineaDestino) {
+
+      if (origenReal === "pendientes" && lineaDestino === "linea-seleccionada") {
+        window.tiempoRequeridoOPUrgente += duracion;
+      }
+
+      if (origenReal === "pendientes" && lineaOrigen === "linea-seleccionada" && lineaDestino === "pendientes") {
+        window.tiempoRequeridoOPUrgente -= duracion;
+      }
+
+      if (origenReal === "linea-seleccionada" &&
+          lineaOrigen === "linea-seleccionada" &&
+          lineaDestino === "pendientes") {
+        window.tiempoPlanificadoLinea -= duracion;
+      }
+
+      if (origenReal === "linea-seleccionada" &&
+          lineaOrigen === "pendientes" &&
+          lineaDestino === "linea-seleccionada") {
+        window.tiempoPlanificadoLinea += duracion;
+      }
+
+      window.tiempoRequeridoOPUrgente = Math.max(window.tiempoRequeridoOPUrgente, 0);
+      window.tiempoPlanificadoLinea = Math.max(window.tiempoPlanificadoLinea, 0);
+
+      validarTiempoTotal();
+    }
+
+    // Mover OP
+    lista.appendChild(item);
+
+    // Recalcular tiempos
+    if (lineaDestino) {
+      actualizarTiemposLinea(lineaDestino);
+    }
+  }
+}
 
 
 
@@ -1283,6 +1473,7 @@ async function cargarLineas2() {
     console.error("Error al cargar líneas:", error);
     return;
   }
+    data.sort((a, b) => a.id_linea - b.id_linea);
 
   const select = document.getElementById("filtroLineas");
   select.innerHTML = `<option value="">-- Elegir línea --</option>`;
@@ -1510,12 +1701,12 @@ function actualizarTiemposLinea(idLinea) {
     });
 
     window.tiempoRequeridoOPUrgente = tiempoOcupado;
-    console.log("$$$$$", window.tiempoRequeridoOPUrgente);
+   console.log("$$$$$", window.tiempoRequeridoOPUrgente);
 
     //const spanRequerido = document.getElementById("tiempo-requerido");
-    if (spanRequerido) {
-      spanRequerido.textContent = `⚙️ Tiempo requerido: ${formatoDuracion(tiempoOcupado)}`;
-    }
+    //if (spanRequerido) {
+     // spanRequerido.textContent = `⚙️ Tiempo requerido: ${formatoDuracion(tiempoOcupado)}`;
+    //}
 
     //console.log(`⏱ Tiempo requerido (${idLinea}): ${formatoDuracion(tiempoOcupado)} (${tiempoOcupado} min)`);
     validarTiempoTotal();
@@ -2104,7 +2295,7 @@ window.addEventListener("click", (e) => {
   if (e.target === modalAyuda) modalAyuda.style.display = "none";
 });
 
-// desfijar y cancelar
+//-------------- desfijar y cancelar-----------------
 async function desfijarYCancelarOP(id_op, planes , numero_op) {
   try {
     for (const plan of planes) {
@@ -2139,3 +2330,30 @@ async function cancelarOP(id_op) {
 
   if (error) throw error;
 }
+
+//---------- EDITAR FILA TOMAR TIEMPO TOTAL DE OP DIVIDIDA -----------------
+async function calcularDuracionTotalOP(id_producto, id_linea, cantidadLotes) {
+  const { data, error } = await supabaseClient
+    .from("linea_produccion")
+    .select("duracion, horas_jornada")
+    .eq("id_producto", id_producto)
+    .eq("id_linea", id_linea)
+    .single();
+
+  if (error) throw error;
+
+  const duracionPorLote = data.duracion || 0;
+  const horasJornada = data.horas_jornada || 0;
+
+  const duracionTotal = duracionPorLote * cantidadLotes;
+
+  // 👉 Validar contra jornada
+  if (duracionTotal > horasJornada) {
+    mostrarAviso(`⚠️ La OP supera la jornada (${duracionTotal}h > ${horasJornada}h).`);
+    return null;
+  }
+
+  return duracionTotal;
+}
+
+
