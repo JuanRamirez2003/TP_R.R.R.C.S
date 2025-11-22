@@ -1226,92 +1226,85 @@ function activarDragAndDrop() {
   });
 }
 */
-
-
+//#########################################################################
+//#########################################################################
 function activarDragAndDrop() {
   let draggedItem = null;
   let lineaOrigen = null;
-
-  let duracionOP = 0;
-  let duracionplanificada = 0;
   let duracionEnMinutos = 0;
 
-  let touchSelectedItem = null; // 🔵 Para Android/iPhone
+  let touchSelectedItem = null; // Para modo móvil
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 
   // =====================================================
-  // 1️⃣ EVENTOS PARA PC — drag & drop original
+  // Preparar los ítems
   // =====================================================
   document.querySelectorAll(".op-item").forEach(item => {
 
-    // 🔵 PC: iniciar drag
-    item.addEventListener("dragstart", e => {
-      try {
-        draggedItem = item;
-        lineaOrigen = item.closest(".lista-op")?.dataset.linea || null;
-
-        const duracionRaw = draggedItem.querySelector("small")?.innerText || "";
-        const match2 = duracionRaw.match(/Duración:\s*(\d+)h\s*(\d+)m/);
-        duracionEnMinutos = match2 ? (parseInt(match2[1]) * 60 + parseInt(match2[2])) : 0;
-
-        const textoDuracion = item.querySelector(".duracion-texto")?.textContent || "0h 0m";
-        const match = textoDuracion.match(/(\d+)h\s*(\d+)m/);
-        if (match) {
-          const horas = parseInt(match[1]) || 0;
-          const minutos = parseInt(match[2]) || 0;
-          duracionOP = horas * 60 + minutos;
-        } else {
-          duracionOP = 0;
-        }
-
-        setTimeout(() => item.style.display = "none", 0);
-      } catch (error) {
-        console.error("Error en dragstart:", error);
-      }
-    });
-
-    // 🔵 PC: terminar drag
-    item.addEventListener("dragend", e => {
-      try {
-        setTimeout(() => {
-          item.style.display = "block";
-          draggedItem = null;
-          lineaOrigen = null;
-          duracionOP = 0;
-        }, 0);
-      } catch (error) {
-        console.error("Error en dragend:", error);
-      }
-    });
-
+    // 🔥 En móvil DESACTIVO el drag nativo para evitar mezcla
+    if (isMobile) {
+      item.setAttribute("draggable", false);
+    }
 
     // =====================================================
-    // 2️⃣ EVENTOS PARA CELULAR — TAP-TO-MOVE
+    // PC: Drag nativo
+    // =====================================================
+    item.addEventListener("dragstart", e => {
+      if (isMobile) return;
+
+      draggedItem = item;
+      lineaOrigen = item.closest(".lista-op")?.dataset.linea || null;
+
+      const duracionRaw = item.querySelector("small")?.innerText || "";
+      const m = duracionRaw.match(/Duración:\s*(\d+)h\s*(\d+)m/);
+      duracionEnMinutos = m ? (parseInt(m[1]) * 60 + parseInt(m[2])) : 0;
+
+      setTimeout(() => item.style.opacity = "0", 0);
+    });
+
+    item.addEventListener("dragend", e => {
+      if (isMobile) return;
+
+      item.style.opacity = "1";
+      draggedItem = null;
+      lineaOrigen = null;
+    });
+
+    // =====================================================
+    // MÓVIL: TAP PARA SELECCIONAR
     // =====================================================
     item.addEventListener("touchstart", e => {
-      e.preventDefault();
+      if (!isMobile) return;
 
-      // Si ya había uno seleccionado → se des-selecciona
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Si ya estaba seleccionada → se desmarca
       if (touchSelectedItem === item) {
         item.classList.remove("op-selected-touch");
         touchSelectedItem = null;
         return;
       }
 
-      // Si selecciono una nueva OP
-      if (!touchSelectedItem) {
-        touchSelectedItem = item;
-        item.classList.add("op-selected-touch");
-
-        // Guardamos los datos igual que dragStart
-        draggedItem = item;
-        lineaOrigen = item.closest(".lista-op")?.dataset.linea || null;
-
-        const duracionRaw = draggedItem.querySelector("small")?.innerText || "";
-        const match2 = duracionRaw.match(/Duración:\s*(\d+)h\s*(\d+)m/);
-        duracionEnMinutos = match2 ? (parseInt(match2[1]) * 60 + parseInt(match2[2])) : 0;
+      // Si había otra seleccionada → la deselecciono
+      if (touchSelectedItem && touchSelectedItem !== item) {
+        touchSelectedItem.classList.remove("op-selected-touch");
       }
-    });
+
+      // Marcar nueva selección
+      touchSelectedItem = item;
+      item.classList.add("op-selected-touch");
+
+      // Guardar datos para cálculo
+      draggedItem = item;
+      lineaOrigen = item.closest(".lista-op")?.dataset.linea || null;
+
+      const duracionRaw = item.querySelector("small")?.innerText || "";
+      const m = duracionRaw.match(/Duración:\s*(\d+)h\s*(\d+)m/);
+      duracionEnMinutos = m ? (parseInt(m[1]) * 60 + parseInt(m[2])) : 0;
+
+    }, { passive: false });
   });
 
 
@@ -1320,54 +1313,50 @@ function activarDragAndDrop() {
   // =====================================================
   document.querySelectorAll(".lista-op").forEach(lista => {
 
-    // 🔵 PC normal
+    // PC — drag over / drop normales
     lista.addEventListener("dragover", e => {
-      try {
-        e.preventDefault();
-        lista.classList.add("drag-over");
-      } catch (error) {
-        console.error("Error en dragover:", error);
-      }
+      if (isMobile) return;
+      e.preventDefault();
+      lista.classList.add("drag-over");
     });
 
     lista.addEventListener("drop", e => {
-      try {
-        e.preventDefault();
-        lista.classList.remove("drag-over");
-        if (!draggedItem) return;
+      if (isMobile) return;
+      e.preventDefault();
+      lista.classList.remove("drag-over");
+      if (!draggedItem) return;
 
-        procesarMovimiento(lista, draggedItem, lineaOrigen, duracionEnMinutos);
-
-      } catch (error) {
-        console.error("Error al procesar el drop:", error);
-      }
+      procesarMovimiento(lista, draggedItem, lineaOrigen, duracionEnMinutos);
     });
 
-
     // =====================================================
-    // 3️⃣ Celular — tocar una lista para mover
+    // MÓVIL — TAP PARA MOVER
     // =====================================================
     lista.addEventListener("touchstart", e => {
-      if (!touchSelectedItem) return; // No hay OP seleccionada
+      if (!isMobile) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!touchSelectedItem) return;
 
       const item = touchSelectedItem;
-      item.classList.remove("op-selected-touch");
       touchSelectedItem = null;
+      item.classList.remove("op-selected-touch");
 
       procesarMovimiento(lista, item, lineaOrigen, duracionEnMinutos);
-    });
-
+    }, { passive: false });
   });
 
 
   // =====================================================
-  // FUNCIÓN COMPARTIDA — PROCESA EL MOVIMIENTO
+  // FUNCIÓN PRINCIPAL QUE PROCESA MOVIMIENTOS (se mantiene igual)
   // =====================================================
   function procesarMovimiento(lista, item, lineaOrigen, duracion) {
     const lineaDestino = lista.dataset.linea;
     const origenReal = item.dataset.origen_real || null;
 
-    // Validación de línea seleccionada
+    // Validación original de tu app
     if (lineaDestino === "linea-seleccionada") {
       const idLineaSeleccionada = document.getElementById("filtroLineas").value;
       if (!idLineaSeleccionada) {
@@ -1376,7 +1365,7 @@ function activarDragAndDrop() {
       }
     }
 
-    // === Reglas de negocio originales ===
+    // === reglas de negocio ===
     if (lineaOrigen && lineaOrigen !== lineaDestino) {
 
       if (origenReal === "pendientes" && lineaDestino === "linea-seleccionada") {
@@ -1405,15 +1394,15 @@ function activarDragAndDrop() {
       validarTiempoTotal();
     }
 
-    // Mover OP
     lista.appendChild(item);
 
-    // Recalcular tiempos
-    if (lineaDestino) {
-      actualizarTiemposLinea(lineaDestino);
-    }
+    if (lineaDestino) actualizarTiemposLinea(lineaDestino);
   }
 }
+
+//#########################################################################
+//#########################################################################
+
 
 
 
