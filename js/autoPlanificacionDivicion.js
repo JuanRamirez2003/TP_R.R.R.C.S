@@ -1243,7 +1243,7 @@ function activarDragAndDrop() {
   // =====================================================
   document.querySelectorAll(".op-item").forEach(item => {
 
-    // 🔥 En móvil DESACTIVO el drag nativo para evitar mezcla
+    //  En móvil DESACTIVO el drag nativo para evitar mezcla
     if (isMobile) {
       item.setAttribute("draggable", false);
     }
@@ -1344,20 +1344,20 @@ function activarDragAndDrop() {
       const lineaDestino = lista.dataset.linea;
       const lineaOrigenActual = lineaOrigen;
 
-      // 🚫 Si el destino es el mismo que el origen → no mover, solo mantener selección
+      // Si el destino es el mismo que el origen → no mover, solo mantener selección
       if (lineaDestino === lineaOrigenActual) {
         // Mantener la selección visible
         item.classList.add("op-selected-touch");
         return;
       }
 
-      // ✅ Validar capacidad destino
+      //  Validar capacidad destino
       if (lista.classList.contains("lista-llena")) {
-        mostrarAviso("⚠️ El andanivel destino está lleno", "error");
+        mostrarAviso(" El andanivel destino está lleno", "error");
         //return;
       }
 
-      // 🔄 Mover
+      // Mover
       touchSelectedItem = null;
       item.classList.remove("op-selected-touch");
       procesarMovimiento(lista, item, lineaOrigenActual, duracionEnMinutos);
@@ -2117,7 +2117,20 @@ function resetearModalPlanificacion() {
 //|||||||||||||||||||INFO MODAL EDITAR PLANIFICACIÓN|||||||||||||||||||||
 const modalAyuda = document.getElementById("modalAyuda");
 const btnAyuda = document.getElementById("btnAyuda");
-const closeAyuda = document.querySelector(".close-ayuda");
+const closeAyuda =  document.getElementById("c-ayuda");
+
+btnAyuda.addEventListener("click", () => {
+  modalAyuda.style.display = "block";
+});
+
+closeAyuda.addEventListener("click", () => {
+  modalAyuda.style.display = "none";
+});
+
+window.addEventListener("click", (e) => {
+  if (e.target === modalAyuda) modalAyuda.style.display = "none";
+});
+
 /* ==================== ABRIR MODAL Y CARGAR OPS ==================== */
 document.getElementById("btnDividirOP").addEventListener("click", async () => {
   const selectOP = document.getElementById("selectOPDividir");
@@ -2419,17 +2432,6 @@ function minutosToHora(min) {
   const m = String(totalMin % 60).padStart(2, "0");
   return `${h}:${m}:00`;
 }
-btnAyuda.addEventListener("click", () => {
-  modalAyuda.style.display = "block";
-});
-
-closeAyuda.addEventListener("click", () => {
-  modalAyuda.style.display = "none";
-});
-
-window.addEventListener("click", (e) => {
-  if (e.target === modalAyuda) modalAyuda.style.display = "none";
-});
 
 //-------------- desfijar y cancelar-----------------
 async function desfijarYCancelarOP(id_op, planes, numero_op) {

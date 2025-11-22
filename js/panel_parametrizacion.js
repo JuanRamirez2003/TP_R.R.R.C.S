@@ -304,6 +304,7 @@ async function llenarFiltros() {
       .select("id_linea");
 
     if (errorLineas) throw errorLineas;
+    lineas.sort((a, b) => a.id_linea - b.id_linea)
 
     lineas?.forEach(l => {
       const opt = document.createElement("option");

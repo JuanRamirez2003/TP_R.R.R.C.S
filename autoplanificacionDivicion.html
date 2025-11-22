@@ -440,6 +440,22 @@
       background-color: #3b3b3b;
       border-color: #55a630;
     }
+    .op-item.urgente {
+      background-color: #ff0000;
+    }
+
+    .op-item.alta {
+      background-color: #ff8000; 
+    }
+
+    .op-item.normal {
+      background-color: #ebeb08; 
+      color: #000;               
+    }
+
+    .op-item.baja {
+      background-color: #00cc66;   
+    }
 
     /* ===== Select y etiqueta ===== */
     label {
@@ -638,6 +654,7 @@
       color: #e0e0e0;
       box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.6);
       text-align: left;
+      position: relative;
     }
 
     #modalAyuda h2 {
@@ -668,7 +685,26 @@
     .close {
       z-index: 2000;
     }
+    #c-ayuda {
+      position: absolute;
+      top: 12px;
+      right: 18px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #aaa;              /* gris claro sobre fondo oscuro */
+      cursor: pointer;
+      transition: transform 0.2s ease, color 0.2s ease;
+      z-index: 9999;            /* asegura que quede por encima */
+    }
 
+    #c-ayuda:hover {
+      color: #eee;           /* rojo al pasar el mouse */
+      transform: scale(1.2);    /* efecto de zoom */
+    }
+
+    #c-ayuda:active {
+      transform: scale(0.9);    /* pequeño “click” visual */
+    }
 
     /* ===================== MODAL DIVIDIR OP ===================== */
     /* Fondo del modal */
@@ -1123,8 +1159,8 @@
     <!-- ===================== MODAL AYUDA ===================== -->
     <div id="modalAyuda" class="modal">
       <div class="ayuda-content">
-
-        <span class="close-ayuda">&times;</span>
+        <span id="c-ayuda" >&times;</span>
+      <!--<span class="close-ayuda">&times;</span>-->
 
         <h2>Ayuda para el Editor de planificación</h2>
 
@@ -1140,8 +1176,8 @@
         <ul>
           <li><span class="color-box urgente">Urgente</span> 0 días o vencidas.</li>
           <li><span class="color-box alta">Alta</span> 2 días.</li>
-          <li><span class="color-box normal">Normal</span> 5 días.</li>
-          <li><span class="color-box baja">Baja</span> más de 5 días.</li>
+          <li><span class="color-box normal">Normal</span> 5 días. El color negro no significa nada.</li>
+          <li><span class="color-box baja">Baja</span> más de 5 días. </li>
         </ul>
 
       </div>
