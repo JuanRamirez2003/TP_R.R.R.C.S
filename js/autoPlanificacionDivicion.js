@@ -23,10 +23,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("filtro-prioridad").addEventListener("change", renderAgendaDesdeSupabase);
   //document.getElementById("btnPlanificar").addEventListener("click", planificarSemana);
   document.getElementById("btnPlanificar").addEventListener("click", () => {
-    planificarSemana(false,true); // modo normal (determinista)
+    planificarSemana(false, true); // modo normal (determinista)
   });
   document.getElementById("btnCambiarPlanificacion").addEventListener("click", () => {
-    planificarSemana(true,true); // modo aleatorio dentro de prioridades
+    planificarSemana(true, true); // modo aleatorio dentro de prioridades
   });
   document.getElementById("btnVolver").addEventListener("click", () => { window.location.href = "operario.html"; });
   document.getElementById("cerrarModal").addEventListener("click", () => { document.getElementById("modalDetalle").style.display = "none"; });
@@ -457,7 +457,7 @@ async function planificarSemana(modoAleatorio = false, aviso = true) {
     if (insertError)
       return mostrarAviso("Error al guardar planificación: " + insertError.message);
 
-     if (aviso) {
+    if (aviso) {
       mostrarAviso(
         modoAleatorio
           ? "🔁 Se generó una planificación alternativa"
@@ -573,7 +573,7 @@ async function mostrarDetalleOP(id_op, id_linea) {
 
   // Confirmar
   document.getElementById("btnConfirmarCancelar").addEventListener("click", async () => {
-    await desfijarYCancelarOP(id_op, planes,op.numero_op);
+    await desfijarYCancelarOP(id_op, planes, op.numero_op);
     document.getElementById("modalCancelarOP").style.display = "none";
     document.getElementById("modalDetalle").style.display = "none"; // aquí sí cerrás ambos
   });
@@ -1075,6 +1075,7 @@ async function cargarOPsPendientes() {
   });
 
   activarDragAndDrop();
+
 }
 function formatoDuracion(minutos) {
   const h = Math.floor(minutos / 60);
@@ -1228,7 +1229,7 @@ function activarDragAndDrop() {
 */
 //#########################################################################
 //#########################################################################
-function activarDragAndDrop() {
+/*function activarDragAndDrop() {
   let draggedItem = null;
   let lineaOrigen = null;
   let duracionEnMinutos = 0;
@@ -1332,20 +1333,36 @@ function activarDragAndDrop() {
     // =====================================================
     // MÓVIL — TAP PARA MOVER
     // =====================================================
-    lista.addEventListener("touchstart", e => {
+    lista.addEventListener("touchend", e => {
       if (!isMobile) return;
+      if (!touchSelectedItem) return; // si no hay OP seleccionada, no hacer nada
 
       e.preventDefault();
       e.stopPropagation();
 
-      if (!touchSelectedItem) return;
-
       const item = touchSelectedItem;
+      const lineaDestino = lista.dataset.linea;
+      const lineaOrigenActual = lineaOrigen;
+
+      // 🚫 Si el destino es el mismo que el origen → no mover, solo mantener selección
+      if (lineaDestino === lineaOrigenActual) {
+        // Mantener la selección visible
+        item.classList.add("op-selected-touch");
+        return;
+      }
+
+      // ✅ Validar capacidad destino
+      if (lista.classList.contains("lista-llena")) {
+        mostrarAviso("⚠️ El andanivel destino está lleno", "error");
+        //return;
+      }
+
+      // 🔄 Mover
       touchSelectedItem = null;
       item.classList.remove("op-selected-touch");
-
-      procesarMovimiento(lista, item, lineaOrigen, duracionEnMinutos);
+      procesarMovimiento(lista, item, lineaOrigenActual, duracionEnMinutos);
     }, { passive: false });
+
   });
 
 
@@ -1377,14 +1394,14 @@ function activarDragAndDrop() {
       }
 
       if (origenReal === "linea-seleccionada" &&
-          lineaOrigen === "linea-seleccionada" &&
-          lineaDestino === "pendientes") {
+        lineaOrigen === "linea-seleccionada" &&
+        lineaDestino === "pendientes") {
         window.tiempoPlanificadoLinea -= duracion;
       }
 
       if (origenReal === "linea-seleccionada" &&
-          lineaOrigen === "pendientes" &&
-          lineaDestino === "linea-seleccionada") {
+        lineaOrigen === "pendientes" &&
+        lineaDestino === "linea-seleccionada") {
         window.tiempoPlanificadoLinea += duracion;
       }
 
@@ -1399,11 +1416,139 @@ function activarDragAndDrop() {
     if (lineaDestino) actualizarTiemposLinea(lineaDestino);
   }
 }
-
+*/
 //#########################################################################
 //#########################################################################
 
+//?????????????????????????????????????????????????????????????????????????????
+//?????????????????????????????????????????????????????????????????????????????
 
+function activarDragAndDrop() {
+
+  let duracionEnMinutos = 0;
+
+  function getInfoOP(item) {
+    try {
+      const duracionRaw = item.querySelector("small")?.innerText || "";
+      const match = duracionRaw.match(/Duración:\s*(\d+)h\s*(\d+)m/);
+      const minutos = match ? (parseInt(match[1]) * 60 + parseInt(match[2])) : 0;
+      return { duracion: minutos };
+    } catch {
+      return { duracion: 0 };
+    }
+  }
+
+  // ---------------------------------------------------------
+  // CONFIGURAR SORTABLE PARA TODAS LAS LISTAS
+  // ---------------------------------------------------------
+  document.querySelectorAll(".lista-op").forEach(lista => {
+
+    new Sortable(lista, {
+      group: "planificacion",
+      animation: 150,
+      ghostClass: "drag-ghost",
+      chosenClass: "drag-chosen",
+      dragClass: "drag-active",
+      forceFallback: true,
+      fallbackOnBody: true,
+      touchStartThreshold: 5,
+
+      // Bloqueamos arrastrar OP fijadas
+      onMove: (evt) => {
+        const item = evt.dragged;
+
+        if (item.dataset.fijada === "true") {
+          mostrarAviso("⚠️ Esta OP está fijada en la planificación y no puede moverse.", "error");
+          return false; // ❌ BLOQUEA el movimiento
+        }
+
+        return true; // ✔ Se puede mover
+      },
+
+      onStart: (evt) => {
+        const item = evt.item;
+
+        if (item.dataset.fijada === "true") {
+          // Seguridad adicional (por si algún navegador ignora onMove)
+          mostrarAviso("⚠️ Esta OP está fijada en la planificación y no puede moverse.", "error");
+          evt.preventDefault();
+          return false;
+        }
+
+        const info = getInfoOP(item);
+        duracionEnMinutos = info.duracion;
+
+        item.dataset.origen_actual = item.closest(".lista-op").dataset.linea;
+      },
+
+      onEnd: (evt) => {
+        const item = evt.item;
+
+        if (item.dataset.fijada === "true") {
+          return; // No debería pasar, pero por seguridad no procesamos nada
+        }
+
+        const listaDestino = evt.to;
+        const listaOrigen = evt.from;
+
+        const lineaOrigen = listaOrigen.dataset.linea;
+        const lineaDestino = listaDestino.dataset.linea;
+        const origenReal = item.dataset.origen_real || lineaOrigen;
+        const duracion = duracionEnMinutos;
+
+        // Validación de agregar a línea sin seleccionarla
+        if (lineaDestino === "linea-seleccionada") {
+          const idLineaSeleccionada = document.getElementById("filtroLineas").value;
+          if (!idLineaSeleccionada) {
+            mostrarAviso("⚠️ Seleccioná una línea antes de agregar OPs", "error");
+            listaOrigen.appendChild(item); // 🔄 Revertir
+            return;
+          }
+        }
+
+        // ------------------------------------
+        // Ajustes de tiempos (tu lógica)
+        // ------------------------------------
+        if (lineaOrigen !== lineaDestino) {
+
+          if (origenReal === "pendientes" && lineaDestino === "linea-seleccionada") {
+            window.tiempoRequeridoOPUrgente += duracion;
+          }
+
+          if (origenReal === "pendientes" && lineaOrigen === "linea-seleccionada" && lineaDestino === "pendientes") {
+            window.tiempoRequeridoOPUrgente -= duracion;
+          }
+
+          if (origenReal === "linea-seleccionada" &&
+              lineaOrigen === "linea-seleccionada" &&
+              lineaDestino === "pendientes") {
+            window.tiempoPlanificadoLinea -= duracion;
+          }
+
+          if (origenReal === "linea-seleccionada" &&
+              lineaOrigen === "pendientes" &&
+              lineaDestino === "linea-seleccionada") {
+            window.tiempoPlanificadoLinea += duracion;
+          }
+
+          window.tiempoRequeridoOPUrgente = Math.max(window.tiempoRequeridoOPUrgente, 0);
+          window.tiempoPlanificadoLinea = Math.max(window.tiempoPlanificadoLinea, 0);
+
+          validarTiempoTotal();
+        }
+
+        if (lineaDestino) {
+          actualizarTiemposLinea(lineaDestino);
+        }
+      }
+
+    });
+
+  });
+}
+
+//?????????????????????????????????????????????????????????????????????????????
+//?????????????????????????????????????????????????????????????????????????????
 
 
 function obtenerLineaRecomendada(idProducto, lineasProd) {
@@ -1462,7 +1607,7 @@ async function cargarLineas2() {
     console.error("Error al cargar líneas:", error);
     return;
   }
-    data.sort((a, b) => a.id_linea - b.id_linea);
+  data.sort((a, b) => a.id_linea - b.id_linea);
 
   const select = document.getElementById("filtroLineas");
   select.innerHTML = `<option value="">-- Elegir línea --</option>`;
@@ -1526,7 +1671,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     const opItem = document.createElement("div");
 
     opItem.classList.add("op-item");
-    // console.log(">>>>>>>>>", data);
+    // console.log(">>>>>>>>>", item);
     const prioridad = (op.prioridad || "normal").toLowerCase();
     opItem.classList.add(prioridad);
 
@@ -1535,6 +1680,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     opItem.dataset.id = op.id_orden_produccion;
     opItem.dataset.numero_op = op.numero_op;//item.numero_op;//
     opItem.dataset.id_orden_produccion = op.id_orden_produccion;
+    opItem.dataset.fijada = item.fijada ? "true" : "false";
 
     //console.log(" ✅ ✅ ✅ ",  opItem.dataset.id_orden_produccion);
 
@@ -1562,6 +1708,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
   opItems.forEach(opItem => lista.appendChild(opItem));
 
   activarDragAndDrop();
+
 });
 
 
@@ -1690,11 +1837,11 @@ function actualizarTiemposLinea(idLinea) {
     });
 
     window.tiempoRequeridoOPUrgente = tiempoOcupado;
-   console.log("$$$$$", window.tiempoRequeridoOPUrgente);
+    console.log("$$$$$", window.tiempoRequeridoOPUrgente);
 
     //const spanRequerido = document.getElementById("tiempo-requerido");
     //if (spanRequerido) {
-     // spanRequerido.textContent = `⚙️ Tiempo requerido: ${formatoDuracion(tiempoOcupado)}`;
+    // spanRequerido.textContent = `⚙️ Tiempo requerido: ${formatoDuracion(tiempoOcupado)}`;
     //}
 
     //console.log(`⏱ Tiempo requerido (${idLinea}): ${formatoDuracion(tiempoOcupado)} (${tiempoOcupado} min)`);
@@ -2285,7 +2432,7 @@ window.addEventListener("click", (e) => {
 });
 
 //-------------- desfijar y cancelar-----------------
-async function desfijarYCancelarOP(id_op, planes , numero_op) {
+async function desfijarYCancelarOP(id_op, planes, numero_op) {
   try {
     for (const plan of planes) {
       if (plan.fijada) {
@@ -2301,7 +2448,7 @@ async function desfijarYCancelarOP(id_op, planes , numero_op) {
     mostrarAviso(`${numero_op} cancelada y  se re-planifico correctamente.`);
 
     document.getElementById("modalDetalle").style.display = "none";
-    
+
   } catch (err) {
     mostrarAviso("Error al desfijar/cancelar OP: " + err.message);
   }
