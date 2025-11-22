@@ -14,6 +14,8 @@ let duracionTotalLinea = 0;
 window.tiempoPlanificadoLinea = 0;
 window.tiempoRequeridoOPUrgente = 0;
 window.tiempoTotal = 0;
+
+window.duracionJornadaLinea = 0; 
 // ---------------------- Inicialización ----------------------
 document.addEventListener("DOMContentLoaded", async () => {
   calcularFechas();
@@ -1534,7 +1536,8 @@ function activarDragAndDrop() {
           window.tiempoRequeridoOPUrgente = Math.max(window.tiempoRequeridoOPUrgente, 0);
           window.tiempoPlanificadoLinea = Math.max(window.tiempoPlanificadoLinea, 0);
 
-          validarTiempoTotal();
+            const idLineaSeleccionada = document.getElementById("filtroLineas").value;
+            validarTiempoTotal(idLineaSeleccionada);
         }
 
         if (lineaDestino) {
@@ -1623,6 +1626,10 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
   lineaSeleccionada = e.target.value;
   const idLinea = e.target.value;
 
+  window.tiempoPlanificadoLinea = 0;
+  window.tiempoRequeridoOPUrgente = 0;
+  window.tiempoTotal = 0;
+
 
   //console.log("Línea seleccionada:", idLinea);
   if (!idLinea) {
@@ -1637,6 +1644,20 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     mostrarAviso22(" ", "ok");
 
     return;
+  }
+    
+  // horas_jornada de la línea seleccionada
+  const { data: lineaData, error: errorLinea } = await supabaseClient
+    .from("linea_productos")
+    .select("horas_jornada")
+    .eq("id_linea", parseInt(idLinea, 10))
+    .maybeSingle();
+
+  if (errorLinea) {
+    console.error("Error al traer horas_jornada:", errorLinea.message);
+    window.duracionJornadaLinea = 0;
+  } else {
+    window.duracionJornadaLinea = Number(lineaData?.horas_jornada || 0) * 60;
   }
 
 
@@ -1662,7 +1683,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
   }
 
   calcularTiempoPlanificado(data);
-  validarTiempoTotal();
+  validarTiempoTotal(idLinea);
   //console.log("||||||||||||", tiempoPlanificadoLinea);
 
   // Promise.all para consultas paralelas
@@ -1760,6 +1781,11 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
 
 async function recalcularDuracionesPendientes() {
   if (!lineaSeleccionada) return;
+
+  window.tiempoPlanificadoLinea = 0;
+  window.tiempoRequeridoOPUrgente = 0;
+  window.tiempoTotal = 0;
+
   console.log("🔄 Recalculando duraciones para línea:", lineaSeleccionada);
 
   const { data: lineasProd, error } = await supabaseClient
@@ -1817,7 +1843,6 @@ async function recalcularDuracionesPendientes() {
 //-----------&&&&&&&&&&&&&&&&&&&&&&--------------------
 function actualizarTiemposLinea(idLinea) {
   try {
-
     const contenedorLinea =
       document.querySelector(`#andanivel-linea-${idLinea}`) ||
       document.querySelector("#listaLinea");
@@ -1845,7 +1870,7 @@ function actualizarTiemposLinea(idLinea) {
     //}
 
     //console.log(`⏱ Tiempo requerido (${idLinea}): ${formatoDuracion(tiempoOcupado)} (${tiempoOcupado} min)`);
-    validarTiempoTotal();
+    validarTiempoTotal(idLinea);
   } catch (error) {
     console.error("Error al actualizar tiempos de la línea:", error);
   }
@@ -1892,19 +1917,39 @@ function calcularTiempoPlanificado(data) {
   }*/
 }
 // --- FUNCIÓN PARA CALCULAR TIEMPO TOTAL Y VALIDAR ---
-function validarTiempoTotal() {
-  const DURACION_JORNADA = 480; // 8 horas
-  window.tiempoTotal = window.tiempoPlanificadoLinea + window.tiempoRequeridoOPUrgente;
-  //console.log("???????", window.tiempoRequeridoOPUrgente);
-  console.log(`Tiempo total: ${tiempoTotal} min (planificado ${window.tiempoPlanificadoLinea} + requerido ${window.tiempoRequeridoOPUrgente})`);
+async function validarTiempoTotal(idLinea) {
+  const idLineaInt = parseInt(idLinea, 10);
+  if (isNaN(idLineaInt)) {
+    console.error("idLinea inválido:", idLinea);
+    mostrarAviso22("⚠️ Línea inválida seleccionada", "error");
+    return false;
+  }
 
-  if (tiempoTotal <= DURACION_JORNADA) {
-    const horas = Math.floor(tiempoTotal / 60);
-    const minutos = tiempoTotal % 60;
-    mostrarAviso22(`✅ Horas de producción de la línea:  ${horas}h ${minutos}m`, "ok");
+  const { data, error } = await supabaseClient
+    .from("linea_productos")
+    .select("horas_jornada")
+    .eq("id_linea", idLineaInt)
+    .maybeSingle(); // evita error si no hay filas
+
+  if (error) {
+    console.error("Error al traer horas_jornada:", error.message);
+    mostrarAviso22("⚠️ No se pudo obtener la jornada de la línea", "error");
+    return false;
+  }
+
+  const DURACION_JORNADA = Number(data?.horas_jornada || 0) * 60;
+  window.duracionJornadaLinea = Number(data?.horas_jornada || 0) * 60;
+  console.log("DURACION_JORNADA:", DURACION_JORNADA);
+
+  window.tiempoTotal = window.tiempoPlanificadoLinea + window.tiempoRequeridoOPUrgente;
+
+  if (window.tiempoTotal <= DURACION_JORNADA) {
+    const horas = Math.floor(window.tiempoTotal / 60);
+    const minutos = window.tiempoTotal % 60;
+    mostrarAviso22(`✅ Horas de producción de la línea: ${horas}h ${minutos}m`, "ok");
     return true;
   } else {
-    const exceso = tiempoTotal - DURACION_JORNADA;
+    const exceso = window.tiempoTotal - DURACION_JORNADA;
     const horasExceso = Math.floor(exceso / 60);
     const minutosExceso = exceso % 60;
     mostrarAviso22(
@@ -1916,7 +1961,7 @@ function validarTiempoTotal() {
 }
 
 // --- FUNCIÓN PARA QUITAR UNA OP PLANIFICADA Y RESTAR SU TIEMPO ---
-function quitarOPPlanificada(duracionMinutos) {
+function quitarOPPlanificada(duracionMinutos, idLinea) {
 
   window.tiempoPlanificadoLinea -= duracionMinutos;
   if (window.tiempoPlanificadoLinea < 0) window.tiempoPlanificadoLinea = 0;
@@ -1927,8 +1972,7 @@ function quitarOPPlanificada(duracionMinutos) {
     spanRequerido.textContent = `⏱ Tiempo planificado línea: ${formatoDuracion(window.tiempoPlanificadoLinea)}`;
   }
 
-
-  validarTiempoTotal();
+  validarTiempoTotal(idLinea);
 }
 
 // --- FUNCIÓN PARA MOSTRAR AVISOS ---
@@ -1966,12 +2010,39 @@ function obtenerIDsOPsPlanificadas() {
 
 
 document.getElementById("btnGuardarLinea").addEventListener("click", async () => {
+  const idLinea = document.getElementById("filtroLineas").value;
+  if (!idLinea) {
+    mostrarAviso22("⚠️ Seleccioná una línea antes de guardar", "error");
+    return;
+  }
+
+  // 🔍 Traer horas_jornada de la línea seleccionada
+  const { data, error } = await supabaseClient
+    .from("linea_productos")
+    .select("horas_jornada")
+    .eq("id_linea", parseInt(idLinea, 10))
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error al traer horas_jornada:", error.message);
+    mostrarAviso22("⚠️ No se pudo obtener la jornada de la línea", "error");
+    return;
+  }
+
+  const DURACION_JORNADA = Number(data?.horas_jornada || 0) * 60;
+  window.duracionJornadaLinea = Number(data?.horas_jornada || 0) * 60;
+
+
   const tiempoTotal = window.tiempoPlanificadoLinea + window.tiempoRequeridoOPUrgente;
-  if (tiempoTotal > 480) {
-    const exceso = tiempoTotal - 480;
+
+  if (tiempoTotal > DURACION_JORNADA) {
+    const exceso = tiempoTotal - DURACION_JORNADA;
     const horasExceso = Math.floor(exceso / 60);
     const minutosExceso = exceso % 60;
-    mostrarAviso22(`⚠️ No se puede guardar. Excede la jornada por ${horasExceso}h ${minutosExceso}m.`, "error");
+    mostrarAviso22(
+      `⚠️ No se puede guardar. Excede la jornada por ${horasExceso}h ${minutosExceso}m.`,
+      "error"
+    );
     return;
   }
 
@@ -1998,14 +2069,7 @@ document.getElementById("btnGuardarLinea").addEventListener("click", async () =>
   const ids = opsPlanificadas.map(op => op.id);
   console.log("⚠️❌", ids);
 
-
-
-  const idLinea = document.getElementById("filtroLineas").value;
   const hoy = new Date().toISOString().split("T")[0];
-
-
-
-
 
   const exito = await fijarOPsEnLineaSeleccionada(ids, idLinea, hoy);
 
@@ -2021,12 +2085,11 @@ document.getElementById("btnGuardarLinea").addEventListener("click", async () =>
     </span>
   `);
 
-  // planificarSemana();
   document.getElementById("modalEditarPlanificacion").style.display = "none";
   resetearModalPlanificacion();
 });
 
-document.getElementById("btnGuardarLinea").disabled = (window.tiempoPlanificadoLinea + window.tiempoRequeridoOPUrgente) > 480;
+document.getElementById("btnGuardarLinea").disabled = (window.tiempoPlanificadoLinea + window.tiempoRequeridoOPUrgente) > window.duracionJornadaLinea;
 
 async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
   let huboError = false;
