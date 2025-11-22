@@ -1015,7 +1015,58 @@
   pointer-events: none; /* evita que se pueda tocar */
 }
 
+/* .bloque-produccion.op-fijada {
+  border: 8px solid #ffffff;  
+  border-radius: 6px;
+  animation: brilloFijado 1.5s infinite alternate; 
+}
 
+@keyframes brilloFijado {
+  from {
+    box-shadow: 0 0 10px 5px rgba(255, 254, 254, 0.7);
+  }
+  to {
+    box-shadow: 0 0 25px 12px rgb(255, 255, 255);
+  }
+}*/
+
+
+/*
+.bloque-produccion.op-fijada {
+  border: 4px solid #ffffff;
+  border-radius: 6px;
+  padding: 8px; 
+  
+  background: linear-gradient(90deg, #ffffff 50%, transparent 50%) repeat-x;
+  background-size: 20px 8px;
+  animation: backgroundMove 0.5s linear infinite;
+}
+
+@keyframes backgroundMove {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 20px 0; 
+  }
+}
+*/
+.bloque-produccion.op-fijada {
+  border-radius: 6px;
+  padding: 8px; 
+  border: none; 
+  outline: 4px solid #f51414;
+  animation: outlinePulse 1s infinite alternate;
+}
+
+@keyframes outlinePulse {
+  from {
+    outline-color: #fc0202; 
+  }
+  to {
+    outline-color: #ffffff;
+  }
+}
   </style>
 </head>
 

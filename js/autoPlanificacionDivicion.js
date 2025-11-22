@@ -132,6 +132,11 @@ async function renderAgendaDesdeSupabase() {
         ///FIJADA
         const pinActivo = p.fijada === true || p.fijada === "true"; // por si viene como string
         //console.log(p);
+
+        if (pinActivo) {
+          bloque.classList.add("op-fijada"); // 👈 clase extra para estilo
+        }
+
         bloque.innerHTML = `
         <div style="display:flex; align-items:center; justify-content:space-between;">
           <div style="text-align:center; width:100%;">
