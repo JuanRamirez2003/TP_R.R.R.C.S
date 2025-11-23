@@ -160,6 +160,7 @@ async function cargarUsuarios() {
       console.warn('Usando datos de prueba para usuarios');
       data = usuariosDemo;
     }
+    data.sort((a, b) => b.id - a.id);  //orden de la lista de usuarios
 
     const tbody = document.querySelector('#tablaUsuarios tbody');
     tbody.innerHTML = '';
@@ -208,12 +209,28 @@ async function cargarAccesos() {
     tbody.innerHTML = '';
 
     data.forEach(a => {
+     const fechaHoraUTC = new Date(a.fecha_hora);
+
+    const opciones = {
+      timeZone: "America/Argentina/Buenos_Aires",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    };
+
+    const fechaHoraLocal = new Intl.DateTimeFormat("sv-SE", opciones).format(fechaHoraUTC);
+
+    const [fecha, hora] = fechaHoraLocal.split(" ");
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${a.id}</td>
         <td>${a.usuario ? a.usuario.name : 'Desconocido'}</td>
         <td>${a.accion}</td>
-        <td>${a.fecha_hora}</td>
+        <td>${fecha} / ${hora}</td>
       `;
       tbody.appendChild(tr);
     });

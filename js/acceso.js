@@ -91,12 +91,12 @@ async function registerAccess(userId, userName) {
 
         let accion = "ingreso";
         if(lastAccess && lastAccess.length>0 && lastAccess[0].accion==="ingreso") accion="egreso";
-
+        
         const { error } = await supabaseClient.from("accesos").insert([{
             usuario_id: userId,
             tipo: "facial",
             accion: accion,
-            fecha_hora: new Date().toISOString()
+            //fecha_hora: new Date().toISOString()
         }]);
 
         if(error) {
