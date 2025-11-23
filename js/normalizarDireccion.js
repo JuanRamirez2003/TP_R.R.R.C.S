@@ -6,7 +6,7 @@ function normalizarDireccion() {
     const direccion = document.getElementById('direccion').value.trim();
 
     if (!validarFormatoDireccion(direccion)) {
-        mostrarError("El formato de la dirección debe ser: Calle número, Municipio        NO SE OLVIDE DE PONER LA COMA");
+        mostrarError("El formato de la dirección debe ser:\nNombre Calle 123, Municipio\n⚠️ NO SE OLVIDE DE PONER LA COMA");
         return; 
     }
     // Si la dirección ya está en la lista de válidas, no hacer fetch
@@ -96,8 +96,8 @@ function mostrarError(mensaje) {
     return alert(mensaje);
   }
 
-  mensajeP.innerHTML = mensaje;
-
+  mensajeP.innerHTML = mensaje; 
+  
   modal.classList.add('mostrar');
 
   btnCerrar.onclick = () => modal.classList.remove('mostrar');

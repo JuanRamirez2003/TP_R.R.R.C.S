@@ -181,6 +181,13 @@
     #modalOP.show {
       display: flex;
     }
+
+    #mensajeErrorTexto {
+  white-space: pre-line;   /* respeta saltos de línea \n */
+  line-height: 1.5;        /* más aire entre renglones */
+  color: #ffffff;          /* rojo para destacar */
+  font-weight: 500;
+}
   </style>
 </head>
 
@@ -319,7 +326,7 @@
         <!-- Modal de Error -->
         <div id="modalError" class="modal-error">
           <div class="modal-error-contenido">
-            <h3>Error</h3>
+            <h3>Aviso</h3>
             <p id="mensajeErrorTexto"></p>
             <button id="btnCerrarError">Cerrar</button>
           </div>
