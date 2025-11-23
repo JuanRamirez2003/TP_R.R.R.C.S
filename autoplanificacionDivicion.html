@@ -42,6 +42,11 @@
       <button id="btnDividirOP">Separar OP</button>
       <button id="btnVolver">Volver</button>
 
+      <div class="buscador-op">
+        <input id="inputBuscarOP" type="text" placeholder="Buscar OP... " />
+        <button id="btnBuscarOP">🔍 Buscar OP</button>
+      </div>
+
       <button id="btnAyudaColores" class="btn-coloresAyuda" title="Ver ayuda">❔</button>
 
     </div>
@@ -78,6 +83,40 @@
         </div>
       </div>
     </div>
+
+    <!-- ===================== MODAL BUSCAR OP ===================== -->
+    <div id="modalBuscarOP" class="modal-busquedaOP">
+      <div class="modal-busquedaOP-contenido">
+
+        <div class="modal-busquedaOP-header">
+          <h2>Información de la OP</h2>
+          <h5>Presione sobre la OP para visualizar la línea correspondiente.</h5>
+        </div>
+
+        <div class="modal-busquedaOP-body">
+          <p id="modalBuscarOPTexto">Cargando...</p>
+        </div>
+
+        <div class="modal-botones">
+          <button id="btnCerrarBuscarOP">Volver</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===================== MODAL CONFIRMAR ===================== -->
+    <div id="modalConfirmarOP" class="modal-confirmar">
+      <div class="modal-confirmar-contenido">
+        <h3 id="modalConfirmarTitulo">¿Deseás ubicacion de OP?</h3>
+        <p id="modalConfirmarTexto">  </p>
+
+        <div class="modal-botones">
+          <button id="btnConfirmarSi"> Sí</button>
+          <button id="btnConfirmarNo"> No</button>
+        </div>
+      </div>
+    </div>
+
 
     <!-- ===================== MODAL AVISO ===================== -->
     <div id="modalAviso" class="modal-aviso">

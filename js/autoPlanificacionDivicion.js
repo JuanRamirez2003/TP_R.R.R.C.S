@@ -84,7 +84,9 @@ async function renderAgendaDesdeSupabase() {
     const columna = document.createElement("div");
     columna.className = "agenda-dia";
     const diaNombre = dias[fecha.getDay()];
-    const fechaStr = fecha.toLocaleDateString("es-ES");
+    //const fechaStr = fecha.toLocaleDateString("es-ES");
+    const fechaStr = fecha.toLocaleDateString("es-ES", { day: '2-digit', month: '2-digit', year: '2-digit' });
+
     columna.innerHTML = `<strong>${diaNombre} ${fechaStr}</strong><br>`;
 
     planificaciones
@@ -111,7 +113,9 @@ async function renderAgendaDesdeSupabase() {
         const clasePrioridad = p.prioridad?.toLowerCase() || "normal";
         bloque.className = "bloque-produccion " + clasePrioridad;
 
-        // 🧩 Asegurar que cantidad_lotes sea un objeto
+        bloque.dataset.numero_op = p.numero_op;
+        bloque.dataset.id_linea = p.id_linea;
+
         let cantidadLotes = { lotes_incluidos: [], lotes_total: 0 };
 
         if (p.cantidad_lotes) {
@@ -142,21 +146,21 @@ async function renderAgendaDesdeSupabase() {
           <div style="text-align:center; width:100%;">
             <strong>Línea ${p.id_linea}</strong><br>
             ${p.numero_op}<br>
-            ${p.hora_inicio} - ${p.hora_fin} | 
+            ${p.hora_inicio.slice(0,5)} - ${p.hora_fin.slice(0,5)} | 
             Lotes: ${cantIncluidos} de ${cantidadLotes.lotes_total}
           </div>
           
           
-          <button class="pin-btn ${pinActivo ? 'fijada' : ''}" 
-                  title="${pinActivo ? 'Desfijar' : 'Fijar'}">
-            ${pinActivo ? "🔒" : "📌"}
-          </button>
+
 
 
 
         </div>
       `;
-        /** FIJADA   COMENTRA ESA PARTE PARA QUITAR EL PIN     /\/\ */
+        /** FIJADA   COMENTRA ESA PARTE PARA QUITAR EL PIN             <button class="pin-btn ${pinActivo ? 'fijada' : ''}" 
+                  title="${pinActivo ? 'Desfijar' : 'Fijar'}">
+            ${pinActivo ? "🔒" : "📌"}
+          </button>  /\/\ */
 
 
         //console.log("ACAAA", p.numero_op);
@@ -172,7 +176,7 @@ async function renderAgendaDesdeSupabase() {
 
 
 
-    //  FIJADA --> COMENTAR ESTO PARA QUITAR EL PIN  Y -><button class="pin-btn></botton>
+    /*/  FIJADA --> COMENTAR ESTO PARA QUITAR EL PIN  Y -><button class="pin-btn></botton>
     document.querySelectorAll('.pin-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -195,13 +199,14 @@ async function renderAgendaDesdeSupabase() {
         e.target.textContent = nuevoEstado ? '🔒' : '📌';
         e.target.title = nuevoEstado ? 'Desfijar' : 'Fijar';
       });
-    });
+    });*/
     ////  FIJADA --> COMENTAR ESTO PARA QUITAR EL PIN 
 
 
 
 
   });
+
 
   agenda.style.display = "flex";
 }
@@ -486,6 +491,8 @@ function minutosToHora(min) {
 }
 
 function horaToMinutos(hora) {
+  if (!hora || typeof hora !== "string") return 0;
+
   const [h, m] = hora.split(":").map(Number);
   return h * 60 + m - 480; // 480 minutos desde 08:00
 }
@@ -1005,6 +1012,7 @@ async function cargarOPsPendientes() {
   const lista = document.getElementById("listaPendientes");
   lista.innerHTML = "<p>Cargando OPs...</p>";
 
+  // 1️⃣ Traer las OP pendientes
   const { data: ops, error: opsError } = await supabaseClient
     .from("orden_produccion")
     .select("*")
@@ -1021,6 +1029,20 @@ async function cargarOPsPendientes() {
     return;
   }
 
+  // 2️⃣ Traer fijadas para excluirlas de la lista
+  const { data: fijadas, error: fijadasError } = await supabaseClient
+    .from("planificacion_semanal")
+    .select("id_op")
+    .eq("fijada", true);
+
+  if (fijadasError) {
+    console.error("Error al obtener OPs fijadas:", fijadasError);
+  }
+
+  // Creamos un Set para búsqueda rápida
+  const opsFijadasSet = new Set(fijadas?.map(f => f.id_op) || []);
+
+  // 3️⃣ Traer conteo de OV
   const { data: ovCounts, error: ovError } = await supabaseClient
     .from("op_ov")
     .select("id_op", { count: "exact" })
@@ -1030,7 +1052,6 @@ async function cargarOPsPendientes() {
     console.error("Error al traer OV:", ovError);
   }
 
-
   const ovMap = {};
   if (ovCounts) {
     ovCounts.forEach(ov => {
@@ -1038,13 +1059,20 @@ async function cargarOPsPendientes() {
     });
   }
 
+  // 4️⃣ Traer líneas
   const { data: lineasProd } = await supabaseClient
     .from("linea_produccion")
     .select("*");
 
   lista.innerHTML = "";
 
+  // 5️⃣ Construir lista solo con OP NO fijadas
   ops.forEach(op => {
+    if (opsFijadasSet.has(op.id_orden_produccion)) {
+      // ❌ Está fijada → NO mostrar
+      return;
+    }
+
     const item = document.createElement("div");
     item.classList.add("op-item");
 
@@ -1052,7 +1080,6 @@ async function cargarOPsPendientes() {
     if (["urgente", "alta", "normal", "baja"].includes(prioridad)) {
       item.classList.add(prioridad);
     }
-
 
     item.draggable = true;
 
@@ -1062,13 +1089,10 @@ async function cargarOPsPendientes() {
     item.dataset.numero_op = op.numero_op;
     item.dataset.cantidadLotes = obtenerCantidadLotes(op);
 
-
     const lineaRec = obtenerLineaRecomendada(op.id_producto, lineasProd);
     const cantidadLotes = obtenerCantidadLotes(op);
-
     const cantidadOV = ovMap[op.id_orden_produccion] || 0;
     const duracion = formatoDuracion(lineaRec.duracion * cantidadLotes);
-    //const duracionMejorLinea = calcularDuracion(op.id_orden_produccion, lineaRec);
 
     item.innerHTML = `
       <strong>${op.numero_op}</strong> - ${op.ver_orden?.[0]?.nombre || "Sin producto"}<br>
@@ -1078,12 +1102,13 @@ async function cargarOPsPendientes() {
         🧾 OV: <b>${cantidadOV}</b><br>
         ⚙️ Línea sugerida: <b>${lineaRec.id_linea}</b>
     `;
+
     lista.appendChild(item);
   });
 
   activarDragAndDrop();
-
 }
+
 function formatoDuracion(minutos) {
   const h = Math.floor(minutos / 60);
   const m = minutos % 60;
@@ -1684,7 +1709,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
   lista.innerHTML = "";
 
   if (!data || data.length === 0) {
-    lista.innerHTML = "<p>No hay OPs planificadas para hoy en esta línea.</p>";
+    lista.innerHTML = "<p>No hay OPs Fijas planificadas para hoy en esta línea.</p>";
     return;
   }
 
@@ -1694,7 +1719,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
 
   // Promise.all para consultas paralelas
   const opItems = await Promise.all(data.map(async (item) => {
-   // console.log("✅ ✅ ✅ ",item);
+    // console.log("✅ ✅ ✅ ",item);
     const op = item.orden_produccion;
     const opItem = document.createElement("div");
 
@@ -1716,14 +1741,14 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     opItem.dataset.fijada = item.fijada ? "true" : "false";
 
     //console.log(" ✅ ✅ ✅ ",  opItem.dataset.id_orden_produccion);
-    
+
     //const cantidadLotes = Array.isArray(op.ver_orden)
     //  ? op.ver_orden.reduce((sum, v) => sum + (v.cantidad || 0), 0)
     //  : 1;
     const data = JSON.parse(item.cantidad_lotes);
     const cantidadLotes = data.lotes_incluidos.length;
     const tiempoEstimado = calcularDuracionHHMM(item.hora_inicio, item.hora_fin);
-    const lotesTotal = data.lotes_total; 
+    const lotesTotal = data.lotes_total;
     const cantidadOV = await cantOVRelacionadas(op.id_orden_produccion);
     //console.log("===============",opItem);
     opItem.innerHTML = `
@@ -1791,8 +1816,25 @@ async function cantOVRelacionadas(id_op) {
 document.getElementById("filtroLineas").addEventListener("change", async (e) => {
   lineaSeleccionada = e.target.value;
   console.log("🔁 Línea seleccionada:", lineaSeleccionada);
+
+  const buscador = document.getElementById("buscadorPendientes");
+  const textoBusqueda = buscador.value.trim().toLowerCase();
+
   await recalcularDuracionesPendientes();
+  await cargarOPsPendientes();
+
+  aplicarFiltroPendientes(textoBusqueda);
 });
+
+function aplicarFiltroPendientes(filtro) {
+  const items = document.querySelectorAll("#listaPendientes .op-item");
+
+  items.forEach(item => {
+    item.style.display = item.textContent.toLowerCase().includes(filtro)
+      ? "block"
+      : "none";
+  });
+}
 
 
 async function recalcularDuracionesPendientes() {
@@ -2055,7 +2097,7 @@ document.getElementById("btnGuardarLinea").addEventListener("click", async () =>
     const exceso = tiempoTotal - DURACION_JORNADA;
     const horasExceso = Math.floor(exceso / 60);
     const minutosExceso = exceso % 60;
-    mostrarAviso22(
+    mostrarAviso(
       `⚠️ No se puede guardar. Excede la jornada por ${horasExceso}h ${minutosExceso}m.`,
       "error"
     );
@@ -2083,7 +2125,7 @@ document.getElementById("btnGuardarLinea").addEventListener("click", async () =>
   }
 
   const ids = opsPlanificadas.map(op => op.id);
-  console.log("⚠️❌", ids);
+  //console.log("⚠️❌", ids);
 
   const hoy = new Date().toISOString().split("T")[0];
 
@@ -2097,11 +2139,12 @@ document.getElementById("btnGuardarLinea").addEventListener("click", async () =>
   mostrarAviso(`
     <span style="font-size:1.2em;">
       ✅ Planificación guardada correctamente<br>
-      <strong>GENERE OTRA VEZ LA PLANIFICACIÓN</strong>
+      
     </span>
   `);
-
+//<strong>GENERE OTRA VEZ LA PLANIFICACIÓN</strong>
   document.getElementById("modalEditarPlanificacion").style.display = "none";
+  planificarSemana(false,false);
   resetearModalPlanificacion();
 });
 
@@ -2109,7 +2152,7 @@ document.getElementById("btnGuardarLinea").disabled = (window.tiempoPlanificadoL
 
 async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
 
-  console.log("================ IDs recibidos =", ids);
+ // console.log("================ IDs recibidos =", ids);
 
   let huboError = false;
   const currentUserId = localStorage.getItem("currentUserId");
@@ -2540,6 +2583,8 @@ document.getElementById("cerrarModalDividir").addEventListener("click", () => {
 
 /* ==================== FUNCIONES AUX ==================== */
 function horaToMinutos(hora) {
+  if (!hora || typeof hora !== "string") return 0;
+
   const [h, m] = hora.split(":").map(Number);
   return h * 60 + m;
 }
@@ -2604,7 +2649,6 @@ async function calcularDuracionTotalOP(id_producto, id_linea, cantidadLotes) {
 
   const duracionTotal = duracionPorLote * cantidadLotes;
 
-  // 👉 Validar contra jornada
   if (duracionTotal > horasJornada) {
     mostrarAviso(`⚠️ La OP supera la jornada (${duracionTotal}h > ${horasJornada}h).`);
     return null;
@@ -2612,5 +2656,166 @@ async function calcularDuracionTotalOP(id_producto, id_linea, cantidadLotes) {
 
   return duracionTotal;
 }
+
+//---------- BUSCAR OP  -----------------
+document.getElementById("btnBuscarOP").addEventListener("click", async () => {
+  const valor = document.getElementById("inputBuscarOP").value.trim();
+  if (!valor) {
+    mostrarAviso("Ingresá un número de OP para buscar.");
+    return;
+  }
+
+  let filtroNumero = valor.toUpperCase();
+
+  let { data: ops, error } = await supabaseClient
+    .from("orden_produccion")
+    .select("*")
+    .or(`numero_op.eq.${filtroNumero}, numero_op.ilike.%${filtroNumero}`)
+    .eq("estado", "Pendiente");
+
+
+  if (error) {
+    console.error("Error buscando OP:", error);
+    mostrarAviso("Error al buscar la OP");
+    return;
+  }
+
+  if (!ops || ops.length === 0) {
+    mostrarAviso("No se encontró ninguna OP con ese número.");
+    return;
+  }
+
+  const op = ops[0];
+
+  const hoy = new Date();
+  const hoyStr = hoy.toLocaleDateString("en-CA");
+
+  //console.log("######",op.id_orden_produccion);
+
+  let { data: planif } = await supabaseClient
+    .from("planificacion_semanal")
+    .select("*")
+    .eq("id_op", op.id_orden_produccion)
+    .gte("dia", hoyStr);
+  console.log("######", planif);
+  if (!planif || planif.length === 0) {
+    mostrarAviso(`La ${op.numero_op} existe pero NO está planificada.`);
+    return;
+  }
+
+  let mensaje = `<div class="lista-op-partes">`;
+
+
+  planif.forEach((p, index) => {
+
+
+    const data = JSON.parse(p.cantidad_lotes);
+    const cantidadLotes = data.lotes_incluidos.length;
+    const lotesTotal = data.lotes_total;
+    mensaje += `
+    <div class="op-parte" data-linea="${p.id_linea}" data-numero="${op.numero_op}">
+      <h3>${op.numero_op}</h3>
+      <p>➡ Línea: <b>${p.id_linea}</b></p>
+      <p>➡ Día: <b>${p.dia}</b></p>
+      <p>➡ Fijada: <b>${p.fijada ? "Sí" : "No"}</b></p>
+      <p>➡ Lotes: <b>${cantidadLotes}</b> de <b>${lotesTotal}</b></p>
+    </div>
+  `;
+  });
+
+  mensaje += `</div>`;
+
+  mostrarModalBuscarOP(mensaje);
+
+});
+
+
+function mostrarModalBuscarOP(mensaje) {
+  const modal = document.getElementById("modalBuscarOP");
+  const texto = document.getElementById("modalBuscarOPTexto");
+
+  texto.innerHTML = mensaje;
+  modal.classList.add("mostrar");
+
+  document.getElementById("btnCerrarBuscarOP").onclick = () =>
+    modal.classList.remove("mostrar");
+
+  texto.querySelectorAll(".op-parte").forEach(div => {
+    div.addEventListener("click", () => {
+      const linea = div.dataset.linea;
+      const numero = div.dataset.numero;
+
+      mostrarModalConfirmar(linea, numero, () => {
+        //mostrarDetalleLinea(linea);
+      });
+
+    });
+  });
+}
+
+function mostrarModalConfirmar(linea, numero) {
+  const modal = document.getElementById("modalConfirmarOP");
+  const texto = document.getElementById("modalConfirmarTexto");
+  const titulo = document.getElementById("modalConfirmarTitulo");
+
+  titulo.textContent = `¿Deseás ver la ${numero} en su línea (${linea})?`;
+
+  modal.classList.add("mostrar");
+
+  document.getElementById("btnConfirmarSi").onclick = () => {
+    modal.classList.remove("mostrar");
+
+    const filtro = document.getElementById("filtro-linea");
+    if (filtro) {
+      filtro.value = linea;
+      filtro.dispatchEvent(new Event("change"));
+    }
+    renderAgendaDesdeSupabase().then(() => {
+      resaltarOP(numero);
+    });
+
+
+
+    document.getElementById("modalBuscarOP").classList.remove("mostrar");
+  };
+
+  document.getElementById("btnConfirmarNo").onclick = () => {
+    modal.classList.remove("mostrar");
+  };
+}
+
+function resaltarOP(numeroOP) {
+
+  document.querySelectorAll(".op-resaltada").forEach(el => el.classList.remove("op-resaltada"));
+
+  let el = Array.from(document.querySelectorAll(".bloque-produccion"))
+    .find(node => node.dataset.numero_op?.toUpperCase() === numeroOP.toUpperCase());
+
+  if (el) {
+    el.classList.add("op-resaltada");
+
+    el.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest"
+    });
+  }
+}
+
+
+document.getElementById("inputBuscarOP").addEventListener("input", (e) => {
+  const valor = e.target.value.trim();
+
+  if (!valor) {
+    document.querySelectorAll(".op-resaltada").forEach(el => {
+      el.classList.remove("op-resaltada");
+    });
+  }
+});
+
+
+
+
+
 
 

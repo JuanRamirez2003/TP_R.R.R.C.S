@@ -1189,3 +1189,283 @@
          outline-color: #ffffff;
      }
  }
+
+
+
+
+ /*MODAL INFO DE BUSQUEDA*/
+/* Fondo del modal */
+.modal-busquedaOP {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+/* Cuando está visible */
+.modal-busquedaOP.mostrar {
+    display: flex;
+}
+
+/* Contenido principal del modal */
+.modal-busquedaOP-contenido {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(85, 166, 48, 0.4);
+    max-width: 450px;
+    width: 90%;
+    max-height: 80vh;
+
+    display: flex;              /* 👈 estructura en columnas */
+    flex-direction: column;     /* header arriba, body al medio, footer abajo */
+}
+
+/* Header fijo */
+.modal-busquedaOP-header {
+    padding: 20px;
+    border-bottom: 1px solid #333;
+    text-align: center;
+}
+
+/* Body con scroll */
+.modal-busquedaOP-body {
+    flex: 1;                    /* 👈 ocupa todo el espacio disponible */
+    padding: 20px;
+    overflow-y: auto;           /* 👈 solo el body se desplaza */
+    scrollbar-width: thin;
+    scrollbar-color: #55a630 #1e1e1e;
+}
+
+/* Scrollbar (Chrome, Edge, etc.) */
+.modal-busquedaOP-body::-webkit-scrollbar {
+    width: 6px;
+}
+.modal-busquedaOP-body::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+.modal-busquedaOP-body::-webkit-scrollbar-thumb {
+    background-color: #55a630;
+    border-radius: 10px;
+}
+
+/* Footer fijo con botones */
+.modal-botones {
+    padding: 15px;
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* Estilos de los botones */
+.modal-botones button {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+/* Botón Ir a la línea */
+#btnIrALinea {
+    background-color: #4a8c2a;
+    color: #000;
+}
+#btnIrALinea:hover {
+    background-color: #55a630;
+    color: #fff;
+}
+
+/* Botón Volver */
+#btnCerrarBuscarOP {
+    background-color: #555;
+    color: #fff;
+}
+#btnCerrarBuscarOP:hover {
+    background-color: #777;
+}
+
+/* Texto dentro del body */
+#modalBuscarOPTexto {
+    white-space: pre-line;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    margin: 15px 0 20px;
+    padding: 10px;
+    background: #2a2a2a;
+    border-radius: 8px;
+    border-left: 4px solid #55a630;
+    color: #dcdcdc;
+}
+.lista-op-partes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.op-parte {
+  background: #2a2a2a;
+  border: 2px solid #55a630;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.op-parte:hover {
+  background: #333;
+  border-color: #7cd67c;
+}
+
+
+
+/*modal confirmacion de ver linea*/
+.modal-confirmar {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 100000;
+}
+
+.modal-confirmar.mostrar {
+  display: flex;
+}
+
+.modal-confirmar-contenido {
+  background: #1e1e1e;
+  color: #e0e0e0;
+  padding: 20px 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(85,166,48,0.4);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal-botones {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-around;
+  gap: 12px;
+}
+
+.modal-botones button {
+  flex: 1;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+#btnConfirmarSi {
+  background-color: #4a8c2a;
+  color: #fff;
+}
+#btnConfirmarSi:hover {
+  background-color: #55a630;
+}
+
+#btnConfirmarNo {
+  background-color: #555;
+  color: #fff;
+}
+#btnConfirmarNo:hover {
+  background-color: #777;
+}
+
+
+.op-resaltada {
+  
+  
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.op-resaltada::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 100%
+  );
+  animation: scan 1.2s infinite;
+}
+
+
+@keyframes scan {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+
+
+/* BUSCAR OP  */
+.buscador-op {
+  display: flex;
+  align-items: center;
+  gap: 6px;                 
+  margin: 10px 0;
+  padding: 6px 8px;
+  background: #2a2a2a;      
+  border: 1px solid #5e5e5e;
+  border-radius: 6px;
+}
+
+.buscador-op input {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 12px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.buscador-op input:focus {
+  border-color: #0078d7;
+  box-shadow: 0 0 3px rgba(0,120,215,0.4);
+}
+
+.buscador-op button {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #0078d7;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.buscador-op button:hover {
+  background: #005a9e;
+}
+
+.buscador-op button:active {
+  transform: scale(0.95);
+}
