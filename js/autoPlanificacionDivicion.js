@@ -1694,6 +1694,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
 
   // Promise.all para consultas paralelas
   const opItems = await Promise.all(data.map(async (item) => {
+   // console.log("✅ ✅ ✅ ",item);
     const op = item.orden_produccion;
     const opItem = document.createElement("div");
 
@@ -1701,6 +1702,11 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     // console.log(">>>>>>>>>", item);
     const prioridad = (op.prioridad || "normal").toLowerCase();
     opItem.classList.add(prioridad);
+
+    opItem.dataset.fijada = item.fijada ? "true" : "false";
+    if (item.fijada) {
+      opItem.classList.add("op-fijada");
+    }
 
     opItem.draggable = true;
     opItem.dataset.origen_real = "linea-seleccionada";
@@ -1710,20 +1716,21 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     opItem.dataset.fijada = item.fijada ? "true" : "false";
 
     //console.log(" ✅ ✅ ✅ ",  opItem.dataset.id_orden_produccion);
-
-    const cantidadLotes = Array.isArray(op.ver_orden)
-      ? op.ver_orden.reduce((sum, v) => sum + (v.cantidad || 0), 0)
-      : 1;
-
-    const tiempoEstimado = calcularDuracion(item.hora_inicio, item.hora_fin);
-
+    
+    //const cantidadLotes = Array.isArray(op.ver_orden)
+    //  ? op.ver_orden.reduce((sum, v) => sum + (v.cantidad || 0), 0)
+    //  : 1;
+    const data = JSON.parse(item.cantidad_lotes);
+    const cantidadLotes = data.lotes_incluidos.length;
+    const tiempoEstimado = calcularDuracionHHMM(item.hora_inicio, item.hora_fin);
+    const lotesTotal = data.lotes_total; 
     const cantidadOV = await cantOVRelacionadas(op.id_orden_produccion);
     //console.log("===============",opItem);
     opItem.innerHTML = `
     <strong>${item.numero_op}</strong> - ${op.ver_orden?.[0]?.nombre || "Sin nombre"}<br>
       <small>
       
-        📦Lotes: <b>${cantidadLotes}</b> |
+        📦Lotes: <b>${cantidadLotes}</b> de <b>${lotesTotal}</b> |
         ⏳  Duración: <b>${tiempoEstimado}</b> |
         🧾 OV: <b>${cantidadOV}</b>
       </small>
@@ -1746,19 +1753,21 @@ document.getElementById("btnEditarPlanificacion").addEventListener("click", asyn
   await cargarOPsPendientes();
 });
 
-function calcularDuracion(horaInicio, horaFin) {
-  if (!horaInicio || !horaFin) {
-    return 0; // 👈 si alguna es null o undefined
-  }
-  try {
-    const [h1, m1] = horaInicio.split(":").map(Number);
-    const [h2, m2] = horaFin.split(":").map(Number);
-    return (h2 * 60 + m2) - (h1 * 60 + m1);
-  } catch (err) {
-    console.error("Error calculando duración:", err);
-    return 0;
-  }
+function calcularDuracionHHMM(horaInicio, horaFin) {
+  if (!horaInicio || !horaFin) return "00:00";
+
+  const [h1, m1] = horaInicio.split(":").map(Number);
+  const [h2, m2] = horaFin.split(":").map(Number);
+
+  let totalMin = (h2 * 60 + m2) - (h1 * 60 + m1);
+  if (totalMin < 0) totalMin += 24 * 60; // por si cruza medianoche
+
+  const horas = Math.floor(totalMin / 60);
+  const minutos = totalMin % 60;
+
+  return `${String(horas).padStart(2, "0")}h${String(minutos).padStart(2, "0")}m`;
 }
+
 
 async function cantOVRelacionadas(id_op) {
   try {

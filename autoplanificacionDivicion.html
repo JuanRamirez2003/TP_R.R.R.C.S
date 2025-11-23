@@ -139,6 +139,7 @@
       border-color: #aaa;
       background-color: #222;
     }
+
     #btnDividirOP,
     #btnPlanificar,
     #btnCambiarPlanificacion,
@@ -154,6 +155,7 @@
       border: none;
       transition: 0.3s;
     }
+
     #btnDividirOP:hover,
     #btnPlanificar:hover,
     #btnCambiarPlanificacion:hover,
@@ -279,6 +281,7 @@
 
 
     /* ===== Modal general ===== */
+
     .modal {
       display: none;
       position: fixed;
@@ -440,21 +443,22 @@
       background-color: #3b3b3b;
       border-color: #55a630;
     }
+
     .op-item.urgente {
       background-color: #ff0000;
     }
 
     .op-item.alta {
-      background-color: #ff8000; 
+      background-color: #ff8000;
     }
 
     .op-item.normal {
-      background-color: #ebeb08; 
-      color: #000;               
+      background-color: #ebeb08;
+      color: #000;
     }
 
     .op-item.baja {
-      background-color: #00cc66;   
+      background-color: #00cc66;
     }
 
     /* ===== Select y etiqueta ===== */
@@ -539,6 +543,72 @@
       background-color: #55a630;
     }
 
+    /* Modal de ayuda de colores — más compacto */
+    #modalAyudaColores.modal-ayuda {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    /* Contenido más pequeño que el modal normal */
+    #modalAyudaColores .modal-content {
+      background-color: #1e1e1e;
+      margin: 6% auto;
+      /* Más centrado verticalmente */
+      padding: 18px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 650px;
+      /* Más pequeño que el modal general */
+      max-height: 75vh;
+      /* Más bajo */
+      position: relative;
+      overflow-y: auto;
+      /* Scroll solo si se necesita */
+      color: #e0e0e0;
+      box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.6);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Botón cerrar (idéntico) */
+    #modalAyudaColores .close {
+      position: absolute;
+      right: 20px;
+      top: 10px;
+      font-size: 28px;
+      cursor: pointer;
+      color: #aaa;
+      transition: 0.3s;
+    }
+
+    #modalAyudaColores .close:hover {
+      color: #fff;
+    }
+
+    /* Título */
+    #modalAyudaColores .modal-content h2 {
+      color: #55a630;
+      text-align: center;
+      margin-bottom: 12px;
+      font-size: 20px;
+      /* Un toque más chico */
+    }
+
+    .leyenda-instrucciones {
+      margin: 0 0 12px 0;
+      padding-left: 18px;
+      /* 👈 agrega separación del borde */
+    }
+
+    .leyenda-instrucciones li {
+      margin-bottom: 6px;
+      /* 👈 separa un ítem del otro */
+    }
 
     /* ===== Encabezado del modal principal ===== */
     .header-modal {
@@ -585,6 +655,9 @@
       margin: 8px 0;
       font-size: 15px;
       line-height: 1.4;
+
+      margin-bottom: 10px;
+
     }
 
     .color-box {
@@ -617,7 +690,7 @@
     }
 
     .color-box.fijada {
-      background: #3399ff;
+      background: #3e3e3f;
     }
 
     #modalAyudaColores small {
@@ -685,25 +758,31 @@
     .close {
       z-index: 2000;
     }
+
     #c-ayuda {
       position: absolute;
       top: 12px;
       right: 18px;
       font-size: 28px;
       font-weight: bold;
-      color: #aaa;              /* gris claro sobre fondo oscuro */
+      color: #aaa;
+      /* gris claro sobre fondo oscuro */
       cursor: pointer;
       transition: transform 0.2s ease, color 0.2s ease;
-      z-index: 9999;            /* asegura que quede por encima */
+      z-index: 9999;
+      /* asegura que quede por encima */
     }
-
+    
     #c-ayuda:hover {
-      color: #eee;           /* rojo al pasar el mouse */
-      transform: scale(1.2);    /* efecto de zoom */
+      color: #eee;
+      /* rojo al pasar el mouse */
+      transform: scale(1.2);
+      /* efecto de zoom */
     }
 
     #c-ayuda:active {
-      transform: scale(0.9);    /* pequeño “click” visual */
+      transform: scale(0.9);
+      /* pequeño “click” visual */
     }
 
     /* ===================== MODAL DIVIDIR OP ===================== */
@@ -886,7 +965,7 @@
 
 
 
-/*#modalCancelarOP {
+    /*#modalCancelarOP {
   display: none;                oculto por defecto 
   position: fixed;
   top: 0; left: 0;
@@ -905,117 +984,134 @@
 }*/
 
 
-/* Fondo general del modal de confirmación */
-.modal-cancelarOP {
-    display: none;               /* oculto por defecto */
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-color: rgba(0, 0, 0, 0.6); /* fondo semitransparente */
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;              /* más alto que modalDetalle */
-}
+    /* Fondo general del modal de confirmación */
+    .modal-cancelarOP {
+      display: none;
+      /* oculto por defecto */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      /* fondo semitransparente */
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      /* más alto que modalDetalle */
+    }
 
-/* Mostrar modal con animación */
-.modal-cancelarOP.mostrar {
-    display: flex;
-    animation: aparecerModal 0.3s ease;
-}
+    /* Mostrar modal con animación */
+    .modal-cancelarOP.mostrar {
+      display: flex;
+      animation: aparecerModal 0.3s ease;
+    }
 
-/* Contenido del modal */
-.modal-cancelarOP > div {
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-    padding: 25px 35px;
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(85, 166, 48, 0.4);
-    text-align: center;
-    max-width: 400px;
-    width: 90%;
-    animation: scaleUp 0.25s ease-in-out;
-}
+    /* Contenido del modal */
+    .modal-cancelarOP>div {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      padding: 25px 35px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(85, 166, 48, 0.4);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      animation: scaleUp 0.25s ease-in-out;
+    }
 
-/* Título */
-.modal-cancelarOP h3 {
-    margin-bottom: 12px;
-    color: #55a630;
-    font-size: 1.4rem;
-}
+    /* Título */
+    .modal-cancelarOP h3 {
+      margin-bottom: 12px;
+      color: #55a630;
+      font-size: 1.4rem;
+    }
 
-/* Texto del mensaje */
-.modal-cancelarOP p {
-    margin-bottom: 20px;
-    font-size: 1rem;
-}
+    /* Texto del mensaje */
+    .modal-cancelarOP p {
+      margin-bottom: 20px;
+      font-size: 1rem;
+    }
 
-/* Contenedor de botones */
-.modal-cancelarOP-contenido {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
+    /* Contenedor de botones */
+    .modal-cancelarOP-contenido {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
 
-/* Botón confirmar */
-.btn-confirmarOP {
-    padding: 12px 26px;
-    background-color: #d00000; /* rojo para acción crítica */
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
-}
+    /* Botón confirmar */
+    .btn-confirmarOP {
+      padding: 12px 26px;
+      background-color: #d00000;
+      /* rojo para acción crítica */
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
 
-.btn-confirmarOP:hover {
-    background-color: #a00000;
-    transform: scale(1.05);
-}
+    .btn-confirmarOP:hover {
+      background-color: #a00000;
+      transform: scale(1.05);
+    }
 
-/* Botón cancelar */
-.btn-cancelarOP {
-    padding: 12px 26px;
-    background-color: #ccc;
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
-}
+    /* Botón cancelar */
+    .btn-cancelarOP {
+      padding: 12px 26px;
+      background-color: #ccc;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
 
-.btn-cancelarOP:hover {
-    background-color: #999;
-    color: #fff;
-    transform: scale(1.05);
-}
+    .btn-cancelarOP:hover {
+      background-color: #999;
+      color: #fff;
+      transform: scale(1.05);
+    }
 
-/* Animaciones reutilizadas */
-@keyframes aparecerModal {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
+    /* Animaciones reutilizadas */
+    @keyframes aparecerModal {
+      from {
+        opacity: 0;
+      }
 
-@keyframes scaleUp {
-    from { transform: scale(0.9); }
-    to { transform: scale(1); }
-}
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes scaleUp {
+      from {
+        transform: scale(0.9);
+      }
+
+      to {
+        transform: scale(1);
+      }
+    }
 
 
-.op-selected-touch {
-  outline: 3px solid #1e90ff;
-  border-radius: 6px;
-  background-color: rgba(30,144,255,0.18);
-  transition: 0.1s;
-}
+    .op-selected-touch {
+      outline: 3px solid #1e90ff;
+      border-radius: 6px;
+      background-color: rgba(30, 144, 255, 0.18);
+      transition: 0.1s;
+    }
 
-.lista-op.bloqueado {
-  opacity: 0.5;
-  pointer-events: none; /* evita que se pueda tocar */
-}
+    .lista-op.bloqueado {
+      opacity: 0.5;
+      pointer-events: none;
+      /* evita que se pueda tocar */
+    }
 
-/* .bloque-produccion.op-fijada {
+    /* .bloque-produccion.op-fijada {
   border: 8px solid #ffffff;  
   border-radius: 6px;
   animation: brilloFijado 1.5s infinite alternate; 
@@ -1031,7 +1127,7 @@
 }*/
 
 
-/*
+    /*
 .bloque-produccion.op-fijada {
   border: 4px solid #ffffff;
   border-radius: 6px;
@@ -1051,22 +1147,56 @@
   }
 }
 */
-.bloque-produccion.op-fijada {
-  border-radius: 6px;
-  padding: 8px; 
-  border: none; 
-  outline: 4px solid #f51414;
-  animation: outlinePulse 1s infinite alternate;
-}
+    .bloque-produccion.op-fijada {
+      border-radius: 6px;
+      padding: 8px;
+      border: none;
+      outline: 4px solid #f51414;
+      animation: outlinePulse 1s infinite alternate;
+    }
 
-@keyframes outlinePulse {
-  from {
-    outline-color: #fc0202; 
-  }
-  to {
-    outline-color: #ffffff;
-  }
-}
+    @keyframes outlinePulse {
+      from {
+        outline-color: #fc0202;
+      }
+
+      to {
+        outline-color: #ffffff;
+      }
+    }
+
+    .op-item.op-fijada {
+      border-radius: 6px;
+      padding: 8px;
+      border: none;
+      outline: 4px solid #f51414;
+      animation: outlinePulse 1s infinite alternate;
+    }
+
+
+    .color-box.fijada {
+      display: inline-block;
+      min-width: 70px;
+      text-align: center;
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      margin-right: 10px;
+      background: #313131;
+      outline: 4px solid #f51414;
+      animation: outlinePulse 1s infinite alternate;
+    }
+
+    @keyframes outlinePulse {
+      from {
+        outline-color: #fc0202;
+      }
+
+      to {
+        outline-color: #ffffff;
+      }
+    }
   </style>
 </head>
 
@@ -1123,11 +1253,11 @@
 
     <!-- Modal de confirmación -->
     <div id="modalCancelarOP" class="modal-cancelarOP">
-      <div >
+      <div>
         <h3>¿Está seguro de cancelar la OP?</h3>
         <p id="detalleConfirmacion"></p>
-        <div class="modal-cancelarOP-contenido" >
-          <button id="btnConfirmarCancelar"  class="btn-confirmarOP" >
+        <div class="modal-cancelarOP-contenido">
+          <button id="btnConfirmarCancelar" class="btn-confirmarOP">
             Confirmar
           </button>
           <button id="btnCerrarConfirmacion" class="btn-cancelarOP">
@@ -1210,25 +1340,32 @@
     <!-- ===================== MODAL AYUDA ===================== -->
     <div id="modalAyuda" class="modal">
       <div class="ayuda-content">
-        <span id="c-ayuda" >&times;</span>
-      <!--<span class="close-ayuda">&times;</span>-->
+        <span id="c-ayuda">&times;</span>
+        <!--<span class="close-ayuda">&times;</span>-->
 
-        <h2>Ayuda para el Editor de planificación</h2>
+        <h2>Ayuda</h2>
 
-        <p><strong>📋 Cómo usar el editor:</strong></p>
+        <p><strong>Cómo usar el editor:</strong></p>
         <ul>
-          <li>Seleccioná la línea de producción del día.</li>
-          <li>Usá el buscador para encontrar OPs pendientes.</li>
-          <li>Arrastrá OPs entre listas para reordenar.</li>
-          <li>Guardá los cambios cuando termines.</li>
+          <li>Elegí la línea del día.</li>
+          <li>Buscá la OP pendiente.</li>
+          <li>Arrastrá para reubicarla.</li>
+          <li>Guardá los cambios.</li>
         </ul>
 
-        <p><strong>🎨 Significado de colores:</strong></p>
-        <ul>
+        <p><strong>Significado de colores: </strong></p>
+        <p>Muestran la prioridad de cada OP según los días restantes para su entrega.</p>
+        <ul class="leyenda-colores">
           <li><span class="color-box urgente">Urgente</span> 0 días o vencidas.</li>
           <li><span class="color-box alta">Alta</span> 2 días.</li>
           <li><span class="color-box normal">Normal</span> 5 días. El color negro no significa nada.</li>
           <li><span class="color-box baja">Baja</span> más de 5 días. </li>
+
+
+          <li>
+            <span class="color-box fijada">OP Fijada</span>
+            Mantiene su posición; no se mueve sola. Solo se quita si la OP se cancela.
+          </li>
         </ul>
 
       </div>
@@ -1254,24 +1391,27 @@
     </div>
 
     <!-- ===================== MODAL AYUDA DE COLORES ===================== -->
-    <div id="modalAyudaColores" class="modal">
+    <div id="modalAyudaColores" class="modal-ayuda">
       <div class="modal-content">
 
         <span id="cerrarModalAyudaColores" class="cerrar">&times;</span>
 
-        <h2>Guía de Colores — Planificación de OP</h2>
+        <h2>Información de la Planificación </h2>
 
-        <p>Los colores indican la prioridad o estado de cada OP:</p>
+        <ul class="leyenda-instrucciones">
+          <li>Para ver el detalle, haga clic en la OP.</li>
+          <li>🧩 Señala que la OP fue dividida en partes.</li>
+        </ul>
 
         <ul class="leyenda-colores">
+          <p><strong>Significado de colores: </strong></p>
+          <p>Muestran la prioridad de cada OP según los días restantes para su entrega.</p>
           <li><span class="color-box urgente">Urgente</span> Prioridad máxima.</li>
           <li><span class="color-box alta">Alta</span> Falta 2 días.</li>
-          <li><span class="color-box normal">Normal</span> Falta 5 días. . Se usa texto de color negro porque el contraste con blanco dificultaría la lectura.</li>
+          <li><span class="color-box normal">Normal</span> Falta 5 días. Texto negro para mejor legibilidad.</li>
           <li><span class="color-box baja">Baja</span> Más de 5 días.</li>
-          <li>
-            <span class="color-box fijada">📌 / 🔒</span>
-            — OP fijada. Al re planificar la/s OP fijada/s no cambiaran de línea ni se dia de producción.
-          </li>
+          <li><span class="color-box fijada">OP Fijada</span> Mantiene su posición; no se mueve sola. Solo se quita si
+            la OP se cancela.</li>
         </ul>
 
       </div>
