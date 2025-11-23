@@ -15,7 +15,7 @@ window.tiempoPlanificadoLinea = 0;
 window.tiempoRequeridoOPUrgente = 0;
 window.tiempoTotal = 0;
 
-window.duracionJornadaLinea = 0; 
+window.duracionJornadaLinea = 0;
 // ---------------------- Inicialización ----------------------
 document.addEventListener("DOMContentLoaded", async () => {
   calcularFechas();
@@ -387,19 +387,19 @@ async function planificarSemana(modoAleatorio = false, aviso = true) {
       if (lotesRestantes <= 0) break;
 
       const fechaKey = fecha.toISOString().split("T")[0];
+      let seHaDividido = false;
 
       for (const cand of posibles) {
         if (lotesRestantes <= 0) break;
 
-        // 🔥 Capacidad real usando la mayor horas_jornada encontrada
         const capacidad = (horasPorLinea[cand.id_linea] ?? 8) * 60;
-
         const minutosUsados = carga[cand.id_linea][fechaKey];
         const espacioLibre = capacidad - minutosUsados;
 
         if (espacioLibre <= 0) continue;
 
         const duracionPorLote = cand.duracion;
+
         const lotesPosibles = Math.min(
           Math.floor(espacioLibre / duracionPorLote),
           lotesRestantes
@@ -409,14 +409,16 @@ async function planificarSemana(modoAleatorio = false, aviso = true) {
 
         const duracionTotal = lotesPosibles * duracionPorLote;
 
-        // 🔥 Rango correcto de lotes incluidos
+        // Si la parte asignada no es toda la OP → está dividida
+        if (lotesPosibles < cantidadLotes) {
+          seHaDividido = true;
+        }
+
+        // Rango de lotes asignados
         const inicio = siguienteLote;
         const fin = inicio + lotesPosibles - 1;
 
-        const lotesAsignados = Array.from(
-          { length: lotesPosibles },
-          (_, i) => inicio + i
-        );
+        const lotesAsignados = Array.from({ length: lotesPosibles }, (_, i) => inicio + i);
 
         siguienteLote = fin + 1;
 
@@ -427,9 +429,7 @@ async function planificarSemana(modoAleatorio = false, aviso = true) {
 
         planificaciones.push({
           id_op: op.id_orden_produccion,
-          numero_op:
-            op.numero_op +
-            (lotesRestantes > lotesPosibles ? " 🧩" : ""),
+          numero_op: op.numero_op + (seHaDividido ? " 🧩" : ""),
           id_linea: cand.id_linea,
           dia: fechaKey,
           hora_inicio: minutosToHora(minutosUsados),
@@ -1527,22 +1527,22 @@ function activarDragAndDrop() {
           }
 
           if (origenReal === "linea-seleccionada" &&
-              lineaOrigen === "linea-seleccionada" &&
-              lineaDestino === "pendientes") {
+            lineaOrigen === "linea-seleccionada" &&
+            lineaDestino === "pendientes") {
             window.tiempoPlanificadoLinea -= duracion;
           }
 
           if (origenReal === "linea-seleccionada" &&
-              lineaOrigen === "pendientes" &&
-              lineaDestino === "linea-seleccionada") {
+            lineaOrigen === "pendientes" &&
+            lineaDestino === "linea-seleccionada") {
             window.tiempoPlanificadoLinea += duracion;
           }
 
           window.tiempoRequeridoOPUrgente = Math.max(window.tiempoRequeridoOPUrgente, 0);
           window.tiempoPlanificadoLinea = Math.max(window.tiempoPlanificadoLinea, 0);
 
-            const idLineaSeleccionada = document.getElementById("filtroLineas").value;
-            validarTiempoTotal(idLineaSeleccionada);
+          const idLineaSeleccionada = document.getElementById("filtroLineas").value;
+          validarTiempoTotal(idLineaSeleccionada);
         }
 
         if (lineaDestino) {
@@ -1609,7 +1609,7 @@ function calcularTiempoEstimado(op, linea) {
 
 //////// ANDANIVEL DE LÍNEAS ////////////
 async function cargarLineas2() {
-  const { data, error } = await supabaseClient.from("linea_productos").select("*")  .eq("estado", "Activa");;
+  const { data, error } = await supabaseClient.from("linea_productos").select("*").eq("estado", "Activa");;
   //console.log("Líneas cargadas para filtro:", data);
   if (error) {
     console.error("Error al cargar líneas:", error);
@@ -1650,7 +1650,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
 
     return;
   }
-    
+
   // horas_jornada de la línea seleccionada
   const { data: lineaData, error: errorLinea } = await supabaseClient
     .from("linea_productos")
@@ -2227,7 +2227,7 @@ function resetearModalPlanificacion() {
 //|||||||||||||||||||INFO MODAL EDITAR PLANIFICACIÓN|||||||||||||||||||||
 const modalAyuda = document.getElementById("modalAyuda");
 const btnAyuda = document.getElementById("btnAyuda");
-const closeAyuda =  document.getElementById("c-ayuda");
+const closeAyuda = document.getElementById("c-ayuda");
 
 btnAyuda.addEventListener("click", () => {
   modalAyuda.style.display = "block";
