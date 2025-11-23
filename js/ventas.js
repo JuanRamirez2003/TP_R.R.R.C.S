@@ -8,6 +8,7 @@ function mostrarSeccion(seccionId) {
     document.getElementById('formCliente').style.display = 'none';
     document.getElementById('mensajeExitoCliente').style.display = 'none';
     document.getElementById('tablaClientesContainer').style.display = 'block';
+    document.getElementById("filtroClientes").parentElement.style.display = "block";
     listarClientes();
   }
 
@@ -33,15 +34,20 @@ function volverPanel() {
 // ===================== CLIENTES =====================
 function mostrarFormularioCliente() {
   resetBotonGuardar()
+  document.getElementById("id_cliente").value = "";
   document.getElementById('formCliente').style.display = 'block';
   document.getElementById('clienteForm').reset();
   document.getElementById('mensajeExitoCliente').style.display = 'none';
+  document.getElementById("filtroClientes").parentElement.style.display = "none";
   document.getElementById('tablaClientesContainer').style.display = 'none';
+  
 }
 
 function cancelarCliente() {
+  document.getElementById("id_cliente").value = "";
   document.getElementById('tablaClientesContainer').style.display = 'block';
   document.getElementById('formCliente').style.display = 'none';
+  document.getElementById("filtroClientes").parentElement.style.display = "block";
 }
 // ================== CAMBIO DINÁMICO LABEL DOCUMENTO ==================
 const tipoClienteSelect = document.getElementById("tipoCliente");
@@ -85,7 +91,7 @@ document.getElementById("clienteForm").addEventListener("submit", async function
   const email = document.getElementById("email").value.trim();
   const telefono = document.getElementById("telefono").value.trim();
   const direccion = document.getElementById("direccion").value.trim();
-  const estado = document.getElementById("estado").value;
+  //const estado = document.getElementById("estado").value;
 
   // ============ VALIDACIONES ============
   if (!nombre) return mostrarError("El nombre es obligatorio");
@@ -133,7 +139,7 @@ document.getElementById("clienteForm").addEventListener("submit", async function
       email,
       telefono,
       direccion,
-      estado,
+      //estado,
       audit_user_id: currentUserId
     };
 
@@ -145,7 +151,7 @@ document.getElementById("clienteForm").addEventListener("submit", async function
         .update(nuevoCliente)
         .eq('id_cliente', id_cliente);
       if (error) throw error;
-      document.getElementById("textoExitoCliente").innerText = "Cliente actualizado con éxito";
+      document.getElementById("textoExitoCliente").innerText = "Cliente guardado con éxito";
     } else {
       const { error } = await supabaseClient
         .from("clientes")
@@ -168,6 +174,7 @@ document.getElementById("clienteForm").addEventListener("submit", async function
 
 // ================== EDITAR CLIENTE ==================
 async function editarCliente(dni) {
+    document.getElementById("filtroClientes").parentElement.style.display = "none";
   try {
 
     const { data, error } = await supabaseClient
@@ -201,7 +208,7 @@ async function editarCliente(dni) {
     document.getElementById('email').value = data.email;
     document.getElementById('telefono').value = data.telefono;
     document.getElementById('preferenciaContacto').value = data.pref_cont;
-    document.getElementById('estado').value = data.estado;
+    //document.getElementById('estado').value = data.estado;
 
     document.getElementById('id_cliente').value = data.id_cliente;
 
@@ -301,14 +308,14 @@ async function listarClientes() {
         <td>${cliente.pref_cont}</td>
         <td>${cliente.direccion}</td>
         <td>${cliente.estado}</td>
-        <td>${cliente.alta_id_emp}</td>
+       
         <td>
           <div class="acciones-clientes">
            <button class="btn-editar" onclick="editarCliente('${cliente.dni_cuil}')">Editar</button>
            <button class="btn-eliminar" onclick="bajaCliente('${cliente.dni_cuil}')">Eliminar</button>
           </div>
         </td>
-      `;
+      `;// <td>${cliente.alta_id_emp}</td>
       tbody.appendChild(tr);
     });
   } catch (err) {
@@ -1096,3 +1103,39 @@ function mostrarErrorFacturacion(mensaje) {
     if (e.target === modal) modal.classList.remove('mostrar');
   };
 }
+
+
+//========FILTRO PARA TEBLA CLIENTES =============
+
+document.addEventListener("DOMContentLoaded", () => {
+  const inputFiltro = document.getElementById("filtroClientes");
+  const tbody = document.querySelector("#tablaClientes tbody");
+
+  const mensajeNoResultados = document.createElement("p");
+  mensajeNoResultados.id = "mensajeNoResultadosClientes";
+  mensajeNoResultados.style.display = "none";
+  mensajeNoResultados.style.textAlign = "center";
+  mensajeNoResultados.style.marginTop = "10px";
+  mensajeNoResultados.textContent = "⚠️ No se encontraron resultados.";
+  document.querySelector("#tablaClientes").parentElement.appendChild(mensajeNoResultados);
+
+  inputFiltro.addEventListener("input", function () {
+    const filtro = this.value.toLowerCase();
+    const filas = tbody.querySelectorAll("tr");
+    let visibles = 0;
+
+    filas.forEach(fila => {
+      const celdas = Array.from(fila.cells)
+        .map((c, i) => ({ index: i, texto: c.textContent.toLowerCase() }))
+        .filter(c => [0, 1, 2, 7].includes(c.index))
+        .map(c => c.texto);
+
+      const coincide = celdas.some(texto => texto.includes(filtro));
+      fila.style.display = coincide ? "" : "none";
+
+      if (coincide) visibles++;
+    });
+
+    mensajeNoResultados.style.display = visibles === 0 ? "block" : "none";
+  });
+});
