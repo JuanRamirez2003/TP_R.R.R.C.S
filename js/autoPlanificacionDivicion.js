@@ -1609,7 +1609,7 @@ function calcularTiempoEstimado(op, linea) {
 
 //////// ANDANIVEL DE LÍNEAS ////////////
 async function cargarLineas2() {
-  const { data, error } = await supabaseClient.from("linea_productos").select("*");
+  const { data, error } = await supabaseClient.from("linea_productos").select("*")  .eq("estado", "Activa");;
   //console.log("Líneas cargadas para filtro:", data);
   if (error) {
     console.error("Error al cargar líneas:", error);
@@ -1672,6 +1672,7 @@ document.getElementById("filtroLineas").addEventListener("change", async (e) => 
     .from("planificacion_semanal")
     .select("*, orden_produccion(numero_op, ver_orden, prioridad, id_orden_produccion)")
     .eq("id_linea", idLinea)
+    .eq("fijada", true)
     .eq("dia", hoy);
 
   if (error) {
@@ -1745,19 +1746,20 @@ document.getElementById("btnEditarPlanificacion").addEventListener("click", asyn
   await cargarOPsPendientes();
 });
 
-function calcularDuracion(hora_inicio, hora_fin) {
-  const [h1, m1] = hora_inicio.split(":").map(Number);
-  const [h2, m2] = hora_fin.split(":").map(Number);
-
-  const minutosInicio = h1 * 60 + m1;
-  const minutosFin = h2 * 60 + m2;
-
-  const duracionMin = minutosFin - minutosInicio;
-  const horas = Math.floor(duracionMin / 60);
-  const minutos = duracionMin % 60;
-
-  return `${horas}h ${minutos}m`;
+function calcularDuracion(horaInicio, horaFin) {
+  if (!horaInicio || !horaFin) {
+    return 0; // 👈 si alguna es null o undefined
+  }
+  try {
+    const [h1, m1] = horaInicio.split(":").map(Number);
+    const [h2, m2] = horaFin.split(":").map(Number);
+    return (h2 * 60 + m2) - (h1 * 60 + m1);
+  } catch (err) {
+    console.error("Error calculando duración:", err);
+    return 0;
+  }
 }
+
 async function cantOVRelacionadas(id_op) {
   try {
     const { data, error, count } = await supabaseClient
@@ -2097,14 +2099,45 @@ document.getElementById("btnGuardarLinea").addEventListener("click", async () =>
 document.getElementById("btnGuardarLinea").disabled = (window.tiempoPlanificadoLinea + window.tiempoRequeridoOPUrgente) > window.duracionJornadaLinea;
 
 async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
+
+  console.log("================ IDs recibidos =", ids);
+
   let huboError = false;
   const currentUserId = localStorage.getItem("currentUserId");
+
   if (!currentUserId) {
     mostrarAviso("No se pudo identificar al usuario para auditoría.", "error");
     return;
   }
 
+  const idsFiltrados = [];
+
   for (const id_op of ids) {
+    const { data: partes, error } = await supabaseClient
+      .from("planificacion_semanal")
+      .select("fijada")
+      .eq("id_op", id_op);
+
+    if (error) {
+      console.error(`Error consultando partes de OP ${id_op}:`, error);
+      continue;
+    }
+
+    const tieneParteFijada = partes.some(p => p.fijada === true);
+
+    if (!tieneParteFijada) {
+      idsFiltrados.push(id_op);
+    } else {
+      console.log(`⛔ OP ${id_op} ignorada porque tiene partes fijadas`);
+    }
+  }
+
+  console.log("👉 IDs que realmente se van a fijar =", idsFiltrados);
+
+  if (idsFiltrados.length === 0) return true;
+
+  for (const id_op of idsFiltrados) {
+
     const { data, error } = await supabaseClient
       .from("planificacion_semanal")
       .select("id_linea, dia")
@@ -2123,26 +2156,33 @@ async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
     const planificacionFutura = data.find(p => new Date(p.dia) > hoyDate);
 
     try {
+
       if (planificacionHoy) {
         await supabaseClient
           .from("planificacion_semanal")
           .update({
-            id_linea: idLineaSeleccionada, fijada: true,
+            id_linea: idLineaSeleccionada,
+            fijada: true,
             audit_user_id: currentUserId
           })
           .eq("id_op", id_op)
           .eq("dia", hoyISO);
-      } else if (planificacionFutura) {
+      }
+
+      else if (planificacionFutura) {
         await supabaseClient
           .from("planificacion_semanal")
           .update({
-            dia: hoyISO, id_linea: idLineaSeleccionada, fijada: true,
+            dia: hoyISO,
+            id_linea: idLineaSeleccionada,
+            fijada: true,
             audit_user_id: currentUserId
           })
           .eq("id_op", id_op)
           .eq("dia", planificacionFutura.dia);
-      } else {
+      }
 
+      else {
         await supabaseClient
           .from("planificacion_semanal")
           .insert({
@@ -2153,6 +2193,7 @@ async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
             audit_user_id: currentUserId
           });
       }
+
     } catch (e) {
       console.error(`Error al fijar OP ${id_op}:`, e);
       huboError = true;
@@ -2161,6 +2202,7 @@ async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
 
   return !huboError;
 }
+
 document.querySelector("#modalEditarPlanificacion .close").addEventListener("click", () => {
   resetearModalPlanificacion();
   document.getElementById("modalEditarPlanificacion").style.display = "none";
