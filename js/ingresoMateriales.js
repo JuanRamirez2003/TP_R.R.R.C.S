@@ -236,12 +236,13 @@ document.getElementById('MaterialesForm')?.addEventListener('submit', async (e) 
 // ============================
 async function cargarMaterial() {
     try {
-        const { data: materias, error } = await supabaseClient.from('materiales').select(`*, lote_mp(cantidad_disponible)`);
+        const { data: materias, error } = await supabaseClient.from('materiales').select(`*, lote_mp(cantidad_disponible)`) .order('id_mp', { ascending: true }); //
         if (error) throw error;
 
-        const { data: proveedores } = await supabaseClient.from('proveedor').select('id_proveedor,nombre');
+        const { data: proveedores } = await supabaseClient.from('proveedor').select('id_proveedor,nombre').order('id_proveedor', { ascending: true });
         const tbody = document.querySelector('#tablaMateriales tbody');
         tbody.innerHTML = '';
+     
 
         materias.forEach(material => {
             const stock = material.lote_mp?.reduce((acc, l) => acc + l.cantidad_disponible, 0) || 0;
@@ -276,7 +277,7 @@ async function verLotes(idMaterial) {
         const material = materialData.find(m => m.id_mp == idMaterial);
         document.getElementById('tituloLotes').textContent = `Lotes de ${material?.nombre || 'Material'}`;
 
-        const { data: lotes, error: errorLotes } = await supabaseClient.from('lote_mp').select('*').eq('id_mp', idMaterial);
+        const { data: lotes, error: errorLotes } = await supabaseClient.from('lote_mp').select('*').eq('id_mp', idMaterial).order('id_lote', { ascending: true });
         if (errorLotes) throw errorLotes;
 
         const idsProveedores = [...new Set(lotes.map(l => l.id_proveedor))];
@@ -292,15 +293,18 @@ async function verLotes(idMaterial) {
             tr.innerHTML = `   
                 <td data-label="ID Lote">${lote.id_lote}</td>
                 <td data-label="Lote">${lote.lote}</td>
-                <td data-label="Cantidad">${lote.cantidad_disponible}</td>
+                
                 <td data-label="Fecha Ingreso">${lote.fecha_ingreso}</td>
                 <td data-label="Fecha Caducidad">${lote.fecha_caducidad}</td>
                 <td data-label="Estado">${lote.estado}</td>
                 <td data-label="Cant Disponible">${lote.cantidad_disponible}</td>
-                <td data-label="Cant Consumida">${lote.cantidad_consumida}</td>
+                <td data-label="Cant Disponible">${lote.cantidad_reservada}</td>
+
                 <td data-label="Proveedor">${nomProveedor}</td>
-                <td data-label="Acciones">No Disponible</td>
-            `;
+                
+            `; //<td data-label="Cant Consumida">${lote.cantidad_consumida}</td>
+            //<td data-label="Acciones">No Disponible</td>
+            // <td data-label="Cantidad">${lote.cantidad_disponible}</td>
             tbody.appendChild(tr);
         });
 
@@ -318,3 +322,76 @@ function volverMateriales() {
 }
 
 document.addEventListener('DOMContentLoaded', cargarMateriales);
+
+
+
+
+//======================FINTROS DE TABLA MATERIAL==========================
+document.addEventListener("DOMContentLoaded", () => {
+  const inputFiltro = document.getElementById("filtroProveedores");
+  const tbody = document.querySelector("#tablaMateriales tbody");
+
+  const mensajeNoResultados = document.createElement("p");
+  mensajeNoResultados.id = "mensajeNoResultados";
+  mensajeNoResultados.style.display = "none";
+  mensajeNoResultados.style.textAlign = "center";
+  mensajeNoResultados.style.marginTop = "10px";
+  mensajeNoResultados.textContent = "No se encontraron resultados.";
+
+  document.querySelector("#tablaMateriales").parentElement.appendChild(mensajeNoResultados);
+
+  inputFiltro.addEventListener("input", function () {
+    const filtro = this.value.toLowerCase();
+    const filas = tbody.querySelectorAll("tr");
+    let visibles = 0;
+
+    filas.forEach(fila => {
+      const celdas = Array.from(fila.cells)
+        .map((c, i) => ({ index: i, texto: c.textContent.toLowerCase() }))
+        .filter(c => ![3, 4, 7].includes(c.index))
+        .map(c => c.texto);
+
+      const coincide = celdas.some(texto => texto.includes(filtro));
+      fila.style.display = coincide ? "" : "none";
+
+      if (coincide) visibles++;
+    });
+
+    mensajeNoResultados.style.display = visibles === 0 ? "block" : "none";
+  });
+});
+
+//======================FINTROS DE TABLA LOTES==========================
+
+document.addEventListener("DOMContentLoaded", () => {
+  const inputFiltro = document.getElementById("filtroLoteMaterial");
+  const tbody = document.querySelector("#tablaLotes tbody");
+
+  const mensajeNoResultados = document.createElement("p");
+  mensajeNoResultados.id = "mensajeNoResultadosLotes";
+  mensajeNoResultados.style.display = "none";
+  mensajeNoResultados.style.textAlign = "center";
+  mensajeNoResultados.style.marginTop = "10px";
+  mensajeNoResultados.textContent = "No se encontraron resultados.";
+  document.querySelector("#tablaLotes").parentElement.appendChild(mensajeNoResultados);
+
+  inputFiltro.addEventListener("input", function () {
+    const filtro = this.value.toLowerCase();
+    const filas = tbody.querySelectorAll("tr");
+    let visibles = 0;
+
+    filas.forEach(fila => {
+      const celdas = Array.from(fila.cells)
+        .map((c, i) => ({ index: i, texto: c.textContent.toLowerCase() }))
+        .filter(c => [0, 2, 3, 4, 7].includes(c.index))
+        .map(c => c.texto);
+
+      const coincide = celdas.some(texto => texto.includes(filtro));
+      fila.style.display = coincide ? "" : "none";
+
+      if (coincide) visibles++;
+    });
+
+    mensajeNoResultados.style.display = visibles === 0 ? "block" : "none";
+  });
+});
