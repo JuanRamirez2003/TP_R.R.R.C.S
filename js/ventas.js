@@ -1,3 +1,5 @@
+let facturaActual = null;
+
 // ===================== FUNCIONES GENERALES =====================
 // Mostrar una sección y ocultar las demás
 function mostrarSeccion(seccionId) {
@@ -714,54 +716,46 @@ async function listarOrdenes() {
 // ===================== LISTAR FACTURAS =====================
 async function listarFacturas() {
   try {
-    // Consulta principal a la tabla factura
     const { data, error } = await supabaseClient
-      .from('factura')
-      .select('id, id_orden, id_cliente, fecha, total')
-      .order('fecha', { ascending: false });
+      .from("factura")
+      .select(`
+        id,
+        id_orden,
+        fecha,
+        total,
+        clientes:clientes ( nombre )
+      `)
+      .order("id", { ascending: false });
 
     if (error) throw error;
 
-    const tbody = document.querySelector('#tablaFacturas tbody');
-    tbody.innerHTML = '';
+    const tbody = document.querySelector("#tablaFacturas tbody");
+    tbody.innerHTML = "";
 
-    // Recorremos cada factura
-    for (const f of data) {
-      // Buscar el nombre del cliente correspondiente
-      let clienteNombre = '-';
-      if (f.id_cliente) {
-        const { data: clienteData, error: clienteError } = await supabaseClient
-          .from('clientes')
-          .select('nombre')
-          .eq('id_cliente', f.id_cliente)
-          .single();
+    data.forEach(f => {
+      const clienteNombre = f.clientes?.nombre ?? "-";
 
-        if (!clienteError && clienteData) {
-          clienteNombre = clienteData.nombre;
-        }
-      }
-
-      // Crear fila en la tabla
-      const tr = document.createElement('tr');
+      const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${f.id}</td>
         <td>${f.id_orden}</td>
         <td>${clienteNombre}</td>
-        <td>${f.fecha ? new Date(f.fecha).toLocaleDateString() : '-'}</td>
-        <td>${f.total !== null ? parseFloat(f.total).toFixed(2) : '0.00'}</td>
-        <td>
-          <button class="btn-ver" onclick="verFactura(${f.id})">Ver</button>
-        </td>
+        <td>${f.fecha ? new Date(f.fecha).toLocaleDateString("es-AR") : "-"}</td>
+        <td>${f.total !== null ? parseFloat(f.total).toFixed(2) : "0.00"}</td>
+        <td><button class="btn-ver" onclick="verFactura(${f.id})">Ver</button></td>
       `;
       tbody.appendChild(tr);
-    }
+    });
+
   } catch (err) {
-    console.error('Error listando facturas:', JSON.stringify(err, null, 2));
-    mostrarErrorFacturacion('Ocurrió un error al cargar las facturas.');//alert ('Ocurrió un error al cargar las facturas. Ver consola para más detalles.');
+    console.error("Error listando facturas:", err);
+    mostrarAviso("Ocurrió un error al cargar las facturas.");
   }
 }
 
+
 async function verFactura(idFactura) {
+  facturaActual = idFactura;
   try {
     const { data, error } = await supabaseClient
       .from('factura')
@@ -784,7 +778,8 @@ async function verFactura(idFactura) {
 
     if (error) throw error;
     if (!data) {
-      mostrarErrorFacturacion('Factura no encontrada');//alert('Factura no encontrada');
+      //mostrarErrorFacturacion('Factura no encontrada');//alert('Factura no encontrada');
+      mostrarAviso("Factura no encontrada.");
       return;
     }
 
@@ -973,7 +968,8 @@ async function verFactura(idFactura) {
 
   } catch (err) {
     console.error("Error al ver factura:", err);
-    mostrarErrorFacturacion("Ocurrió un error al cargar la factura. Ver consola para más detalles.");//alert("Ocurrió un error al cargar la factura. Ver consola para más detalles.");
+    //mostrarErrorFacturacion("Ocurrió un error al cargar la factura. Ver consola para más detalles.");//alert("Ocurrió un error al cargar la factura. Ver consola para más detalles.");
+    mostrarAviso("Ocurrió un error al cargar la factura.");
   }
 }
 
@@ -998,13 +994,19 @@ function loadImageAsBase64(url) {
 
 // ==== Modal y descarga ====
 function cerrarModalFacturaPDF() {
+  facturaActual = null;
   document.getElementById("modalFacturaPDF").style.display = "none";
   document.getElementById("iframeFactura").src = "";
   window._pdfFactura = null;
 }
 function descargarFacturaPDF() {
-  if (window._pdfFactura) window._pdfFactura.save("factura.pdf");
-  else mostrarErrorFacturacion("PDF no disponible para descarga.");//alert("PDF no disponible para descarga.");
+  if (window._pdfFactura) {
+    const nombreArchivo = `Factura_${facturaActual}.pdf`;
+    window._pdfFactura.save(nombreArchivo);
+  } else {
+    //mostrarErrorFacturacion("PDF no disponible para descarga.");
+    mostrarAviso("PDF no disponible para descarga.");
+  }
 }
 
 
@@ -1174,6 +1176,64 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Mostrar/ocultar mensaje
+    mensajeNoResultados.style.display = visibles === 0 ? "block" : "none";
+  });
+});
+
+function mostrarAviso(mensaje) {
+  const modal = document.getElementById('modalAviso');
+  const mensajeP = document.getElementById('mensajeAvisoTexto');
+  const btnCerrar = document.getElementById('btnCerrarAviso');
+
+  if (!modal || !mensajeP || !btnCerrar) {
+    console.error("⚠️ No se encontró el modal de aviso");
+    return alert(mensaje);
+  }
+
+  mensajeP.innerHTML = mensaje;
+  modal.classList.add('mostrar');
+
+  btnCerrar.onclick = () => modal.classList.remove('mostrar');
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.classList.remove('mostrar');
+  };
+}
+//===========FILTRO DE FACTURA ======================
+document.addEventListener("DOMContentLoaded", () => {
+  const inputFiltro = document.getElementById("filtroFacturas");
+  const tbody = document.querySelector("#tablaFacturas tbody");
+
+  // Crear mensaje de "sin resultados"
+  const mensajeNoResultados = document.createElement("p");
+  mensajeNoResultados.id = "mensajeNoResultadosFacturas";
+  mensajeNoResultados.style.display = "none";
+  mensajeNoResultados.style.textAlign = "center";
+  mensajeNoResultados.style.marginTop = "10px";
+  mensajeNoResultados.style.color = "#ccc";
+  mensajeNoResultados.textContent = "No se encontraron resultados.";
+  
+  document.querySelector("#tablaFacturas").parentElement.appendChild(mensajeNoResultados);
+
+  // Filtro
+  inputFiltro.addEventListener("input", function () {
+    const filtro = this.value.toLowerCase();
+    const filas = tbody.querySelectorAll("tr");
+    let visibles = 0;
+
+    filas.forEach(fila => {
+      // Filtrar solo columnas: ID Factura (0), Cliente (2), Fecha (3)
+      const celdas = Array.from(fila.cells)
+        .map((c, i) => ({ index: i, texto: c.textContent.toLowerCase() }))
+        .filter(c => [0, 2, 3].includes(c.index))
+        .map(c => c.texto);
+
+      const coincide = celdas.some(texto => texto.includes(filtro));
+      fila.style.display = coincide ? "" : "none";
+
+      if (coincide) visibles++;
+    });
+
+    // Mostrar mensaje si no hay coincidencias
     mensajeNoResultados.style.display = visibles === 0 ? "block" : "none";
   });
 });
