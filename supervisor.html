@@ -7,7 +7,6 @@
   <title>Panel de Supervisor - Local</title>
   <link rel="stylesheet" href="css/ventas.css">
   <style>
-    
     /* Fondo del modal: ocupa toda la pantalla y centra el contenido */
     .modal {
       position: fixed;
@@ -58,6 +57,120 @@
     .cerrar:hover {
       color: #ff0000;
     }
+
+    #proveedor .btn-submit {
+      background-color: #55a630;
+      margin-bottom: 15px;
+    }
+    #proveedor .btn-submit:hover {
+    background-color: #4a8c2a;
+      color: #fff;    }
+
+    .btn-agregarM {
+      grid-column: span 2;
+      padding: 12px;
+      background-color: #007bff;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .btn-agregarM:hover {
+      background-color: #0056b3;
+      color: #fff;
+    }
+
+    .btn-guardarOP {
+    grid-column: span 2;
+    padding: 12px;
+    background-color: #4a8c2a;
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-guardarOP:hover {
+    background-color: #4a8c2a;
+    color: #fff;
+}
+
+
+
+
+
+/* ==========================
+   BOTÓN CREAR OP
+   ========================== */
+.crearOP-btn {
+  background: #4a8c2a;
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.2rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+   width: 100%;  
+  min-width: 140px;
+  transition: 0.25s ease;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  margin: 10px 0;  
+}
+
+.crearOP-btn:hover:not(:disabled) {
+  background: #4a8c2a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+}
+
+.crearOP-btn:disabled {
+  background: #4b8c2a9d;
+  cursor: not-allowed;
+  opacity: 0.8;
+  box-shadow: none;
+  transform: none;
+}
+
+.cancelarOP-btn {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.2rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+   width: 100%;  
+  min-width: 140px;
+  transition: 0.25s ease;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+.cancelarOP-btn:hover {
+  background: #a71d2a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+}
+
+/* ==========================
+    PANTALLAS CHICAS
+   ========================== */
+@media (max-width: 480px) {
+  .CrearOP-btn,
+  .cancelarOP-btn {
+    width: 100%;     
+    min-width: unset;   
+    padding: 0.9rem;    
+    font-size: 0.95rem;
+    margin-bottom: 10px;  
+  }
+}
   </style>
 </head>
 <!-- Icono de notificaciones -->
@@ -79,10 +192,12 @@
     <aside class="sidebar">
       <h2>Supervisor</h2>
       <ul>
-        <li><button id="btnMenuCreacionOP">Creación OP</button></li>
+        <li><button id="btnMenuCreacionOP" onclick="mostrarSeccion('ordenProduccion'); prepararNuevaOP()">Creación
+            OP</button></li>
         <li><button onclick="mostrarSeccion('seguimientoOP'); cargarOP()">Seguimiento OP</button></li>
         <li><button onclick="mostrarSeccion('proveedor')">Gestión de Proveedores</button></li>
-        <li><button onclick="window.location.href='panel_parametrizacion.html'">Ver Parametrizacion de Produccion</button></li>
+        <li><button onclick="window.location.href='panel_parametrizacion.html'">Ver Parametrizacion de
+            Produccion</button></li>
         <li><button onclick="window.location.href='lote_mp.html'">Ver Gestion de Lote MP</button></li>
         <li><button class="btn-logout" onclick="window.location.href='panel_alertas.html'">Avisos</button></li>
         <li><button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button></li>
@@ -98,6 +213,12 @@
         <h2>Gestión de Proveedores</h2>
         <button class="btn-submit" onclick="mostrarFormularioProveedor()">➕ Nuevo Proveedor</button>
 
+        <!-- Filtro proveedores-->
+        <div style="margin-bottom:10px;">
+          <input type="text" id="filtroGProveedores" placeholder="Buscar Proveedores..."
+            style="padding:8px; width:100%; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0;">
+        </div>
+
         <div id="tablaProveedorContainer" class="table-wrapper" style="margin-top:20px;">
           <table id="tablaProveedor">
             <thead>
@@ -110,7 +231,7 @@
                 <th>Preferencia Contacto</th>
                 <th>Dirección</th>
                 <th>Estado</th>
-                <th>Alta por Empleado</th>
+                <!-- <th>Alta por Empleado</th>-->
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -165,7 +286,7 @@
             </div>
 
             <div class="form-group" style="margin-top:10px;">
-              <label for="direccion" style="font-weight:bold; color:white;">Dirección:</label>
+              <label for="direccion">Dirección:</label>
               <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
                 <input type="text" id="direccion" name="direccion" placeholder="Ej: Calle Falsa 123, Springfield"
                   required
@@ -177,16 +298,18 @@
               </div>
               <div id="resultadosDireccion" style="margin-top:8px;"></div>
             </div>
-            
-            <div class="form-group">
+            <div id="materialesContainer"></div>
+            <button type="button" onclick="agregarMaterial()" class="btn-agregarM">➕ Agregar Material</button>
+
+            <!--<div class="form-group">
               <label for="estado">Estado:</label>
               <select id="estado" name="estado">
                 <option value="activo">Activo</option>
                 <option value="inactivo">Inactivo</option>
               </select>
-            </div>
-            <button type="submit" class="btn-submit">Guardar</button>
-            <button type="button" onclick="cancelarProveedor()" class="btn-submit">Cancelar</button>
+            </div>-->
+            <button type="submit" class="btn-guardarOP">Guardar</button>
+            <button type="button" onclick="cancelarProveedor()" class="btn-eliminar">Cancelar</button>
           </form>
         </div>
 
@@ -257,8 +380,8 @@
             </select>
           </div>
 
-          <button type="submit" id="btnCrearOP" class="btn-submit" disabled>Crear OP</button>
-          <button type="button" onclick="cancelarOP()" class="btn-eliminar">Cancelar</button>
+          <button type="submit" id="btnCrearOP" class="crearOP-btn" disabled>Crear OP</button>
+          <button type="button" onclick="cancelarOP()" class="cancelarOP-btn">Cancelar</button>
         </form>
       </div>
       <!--Mensaje de éxito-->
@@ -316,7 +439,7 @@
     </div>
   </div>
 
-    <!-- Modal de Confirmación -->
+  <!-- Modal de Confirmación -->
   <div id="modalConfirmacion" class="modal-confirmacion">
     <div class="modal-confirmacion-contenido">
       <h2>⚠️ Confirmar Baja OP</h2>
@@ -328,7 +451,7 @@
     </div>
   </div>
 
-    <!-- Modal de Aviso Genérico -->
+  <!-- Modal de Aviso Genérico -->
   <div id="modalAviso" class="modal-aviso">
     <div class="modal-aviso-contenido">
       <h2>Aviso</h2>
@@ -399,7 +522,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="js/supervisor.js"></script>
   <script src="js/altaProveedor.js"></script>
-  <script src="js/normalizarDireccion.js"></script>
+  <!--<script src="js/normalizarDireccion.js"></script>-->
 </body>
 
 </html>

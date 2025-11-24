@@ -11,15 +11,22 @@ function mostrarSeccion(seccionId) {
     document.getElementById('formProveedor').style.display = 'none';
     document.getElementById('mensajeExitoProveedor').style.display = 'none';
     document.getElementById('tablaProveedorContainer').style.display = 'block';
+    document.getElementById("filtroGProveedores").style.display = "block";
     listarProveedores();
   }
 
   if (seccionId === 'ordenes') {
-    document.getElementById('formOrden').style.display = 'none';
+    document.getElementById('opForm').style.display = 'none';
     document.getElementById('mensajeExitoOrden').style.display = 'none';
     document.getElementById('tablaOrdenesContainer').style.display = 'block';
     listarOrdenes();
   }
+  if (seccionId === "ordenProduccion") {
+    document.getElementById('opForm').style.display = 'block';
+    document.getElementById('mensajeExitoOrden').style.display = 'none';
+    document.getElementById('tablaOrdenesContainer').style.display = 'block';
+    listarOrdenes();
+  };
 }
 
 function volverPanel() {
@@ -28,16 +35,26 @@ function volverPanel() {
 }
 
 // ===================== PROVEEDORES =====================
-function mostrarFormularioProveedor() {
+function mostrarFormularioProveedor() { 
+    const submitBtn = document.querySelector("#proveedorForm button[type='submit']");
+  submitBtn.disabled = false;
+  
+  document.getElementById("id_proveedor").value = "";
   document.getElementById('formProveedor').style.display = 'block';
   document.getElementById('proveedorForm').reset();
   document.getElementById('mensajeExitoProveedor').style.display = 'none';
   document.getElementById('tablaProveedorContainer').style.display = 'none';
+  document.getElementById("filtroGProveedores").style.display = "none";
+  const container = document.getElementById("materialesContainer");
+  container.innerHTML = "";
+  agregarMaterial();
+
 }
 
 function cancelarProveedor() {
   document.getElementById('tablaProveedorContainer').style.display = 'block';
   document.getElementById('formProveedor').style.display = 'none';
+  document.getElementById("filtroGProveedores").style.display = "block";
 }
 
 async function listarProveedores() {
@@ -59,14 +76,14 @@ async function listarProveedores() {
         <td>${proveedor.pref_cont}</td>
         <td>${proveedor.direccion}</td>
         <td>${proveedor.estado}</td>
-        <td>${proveedor.alta_id_emp || '-'}</td>
+        
         <td>
           <div class="acciones-proveedor">
-            <button class="btn-editar" onclick="editarProveedor('${proveedor.dni_cuil}')">✏️Editar</button>
-            <button class="btn-eliminar" onclick="bajaProveedor('${proveedor.dni_cuil}')">❌Eliminar</button>
+            <button class="btn-editar" onclick="editarProveedor('${proveedor.dni_cuil}')">Editar</button>
+            <button class="btn-eliminar" onclick="bajaProveedor('${proveedor.dni_cuil}')">Eliminar</button>
           </div>
       </td>
-      `;
+      `;//<td>${proveedor.alta_id_emp || '-'}</td>
       tbody.appendChild(tr);
     });
   } catch (err) {
@@ -249,6 +266,7 @@ document.addEventListener("DOMContentLoaded", inicializarNormalizacionDireccion)
 document.getElementById("proveedorForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
+
   const submitBtn = this.querySelector('button[type="submit"]');
   submitBtn.disabled = true; // Desactiva el botón al hacer submit
 
@@ -264,17 +282,17 @@ document.getElementById("proveedorForm").addEventListener("submit", async functi
 
   // Validaciones
   if (!nombre || !tipo_proveedor || !validarCUIT(dni_cuil, tipo_proveedor) ||
-      !pref_cont || !validarEmail(email) || !validarTelefono(telefono) || 
-      !direccionEsValida(direccion)) {
+    !pref_cont || !validarEmail(email) || !validarTelefono(telefono) ||
+    !direccionEsValida(direccion)) {
     submitBtn.disabled = false; // Rehabilitar si hay error de validación
     return mostrarAviso("Revisar campos. Hay datos inválidos.");
   }
   const currentUserId = localStorage.getItem("currentUserId");
-if (!currentUserId) {
-  console.warn("⚠️ No hay usuario logueado en localStorage");
-  mostrarAviso("No se pudo identificar al usuario para auditoría");
-  return;
-}
+  if (!currentUserId) {
+    console.warn("⚠️ No hay usuario logueado en localStorage");
+    mostrarAviso("No se pudo identificar al usuario para auditoría");
+    return;
+  }
   try {
     const { data: existente } = await supabaseClient
       .from('proveedor')
@@ -298,7 +316,7 @@ if (!currentUserId) {
       //estado
     };
 
-    console.log("$$$$$$$$$$$$$$",currentUserId);
+    //console.log("$$$$$$$$$$$$$$",currentUserId);
 
     if (id_proveedor) {
       const { error } = await supabaseClient
@@ -306,13 +324,60 @@ if (!currentUserId) {
         .update(nuevoProveedor)
         .eq('id_proveedor', id_proveedor);
       if (error) throw error;
-      document.getElementById("textoExitoProveedor").innerText = "Proveedor actualizado con éxito";
+
+      await supabaseClient
+        .from("materiaprima_proveedor")
+        .delete()
+        .eq("id_proveedor", id_proveedor);
+
+      const materialSelects = document.querySelectorAll(".materialSelect");
+
+      for (const select of materialSelects) {
+        const id_mp = select.value;
+        if (!id_mp) continue;
+
+        const { error: errRel } = await supabaseClient
+          .from("materiaprima_proveedor")
+          .insert({
+            id_mp,
+            id_proveedor: id_proveedor
+          });
+
+        if (errRel) throw errRel;
+      }
+
+
+      //document.getElementById("textoExitoProveedor").innerText = "Proveedor actualizado con éxito";
+      mostrarAviso("Proveedor actualizado con éxito");
+      
     } else {
-      const { error } = await supabaseClient
+      const { data: provCreado, error } = await supabaseClient
         .from("proveedor")
-        .insert([nuevoProveedor]);
+        .insert([nuevoProveedor])
+        .select("id_proveedor")
+        .single();
+
       if (error) throw error;
-      document.getElementById("textoExitoProveedor").innerText = "Proveedor creado con éxito";
+      const proveedorId = provCreado.id_proveedor;
+
+      const materialSelects = document.querySelectorAll(".materialSelect");
+
+      for (const select of materialSelects) {
+        const id_mp = select.value;
+        if (!id_mp) continue;
+
+        const { error: errRel } = await supabaseClient
+          .from("materiaprima_proveedor")
+          .insert({
+            id_mp,
+            id_proveedor: proveedorId
+          });
+
+        if (errRel) throw errRel;
+      }
+
+      //document.getElementById("textoExitoProveedor").innerText = "Proveedor creado con éxito";
+      mostrarAviso("Proveedor creado con éxito");
     }
 
     document.getElementById("formProveedor").style.display = "none";
@@ -325,15 +390,18 @@ if (!currentUserId) {
     submitBtn.disabled = false; // Se vuelve a habilitar si hubo error
   }
 });
+
 // ================== EDITAR / BAJA ==================
 async function editarProveedor(dni) {
+
+  document.getElementById("filtroGProveedores").style.display = "none";
   try {
     const { data, error } = await supabaseClient
-    .from('proveedor')
-    .select('*')
-    .eq('dni_cuil', dni)
-    
-    .single();
+      .from('proveedor')
+      .select('*')
+      .eq('dni_cuil', dni)
+
+      .single();
     if (error) throw error;
 
     tipoProveedorSelect.value = data.tipo_proveedor;
@@ -348,6 +416,7 @@ async function editarProveedor(dni) {
 
     document.getElementById('formProveedor').style.display = 'block';
     document.getElementById('tablaProveedorContainer').style.display = 'none';
+    cargarMaterialesDeProveedor(data.id_proveedor);
   } catch (err) {
     console.error(err);
     mostrarAviso('Error al cargar datos del proveedor');
@@ -367,3 +436,133 @@ async function bajaProveedor(dni) {
     mostrarAviso('Error al dar de baja el proveedor');
   }
 }
+async function cargarMaterialesDeProveedor(idProveedor) {
+  const container = document.getElementById("materialesContainer");
+  container.innerHTML = "";
+  const { data, error } = await supabaseClient
+    .from("materiaprima_proveedor")
+    .select("id_mp")
+    .eq("id_proveedor", idProveedor);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  for (const row of data) {
+    await agregarMaterial();
+    const selects = document.querySelectorAll(".materialSelect");
+    const last = selects[selects.length - 1];
+    last.value = row.id_mp;
+    $(last).trigger("change");
+  }
+}
+//===========FILTRO DE TABLA PROVEEDORES ======================
+document.addEventListener("DOMContentLoaded", () => {
+  const inputFiltro = document.getElementById("filtroGProveedores");
+  const tbody = document.querySelector("#tablaProveedor tbody");
+
+  const mensajeNoResultados = document.createElement("p");
+  mensajeNoResultados.id = "mensajeNoResultadosProveedores";
+  mensajeNoResultados.style.display = "none";
+  mensajeNoResultados.style.textAlign = "center";
+  mensajeNoResultados.style.marginTop = "10px";
+  mensajeNoResultados.style.color = "#ccc";
+  mensajeNoResultados.textContent = "No se encontraron proveedores.";
+
+  document.querySelector("#tablaProveedor").parentElement.appendChild(mensajeNoResultados);
+
+  inputFiltro.addEventListener("input", function () {
+    const filtro = this.value.toLowerCase();
+    const filas = tbody.querySelectorAll("tr");
+    let visibles = 0;
+
+    filas.forEach(fila => {
+      const celdas = Array.from(fila.cells)
+        .map((c, i) => ({ index: i, texto: c.textContent.toLowerCase() }))
+        .filter(c => [0, 1, 2, 7].includes(c.index))
+        .map(c => c.texto);
+
+      const coincide = celdas.some(texto => texto.includes(filtro));
+      fila.style.display = coincide ? "" : "none";
+
+      if (coincide) visibles++;
+    });
+
+    mensajeNoResultados.style.display = visibles === 0 ? "block" : "none";
+  });
+});
+
+
+async function agregarMaterial() {
+  try {
+    const container = document.getElementById("materialesContainer");
+
+    const div = document.createElement("div");
+    div.className = "material-item";
+    div.style.display = "flex";
+    div.style.gap = "10px";
+    div.style.marginBottom = "10px";
+    div.style.alignItems = "flex-end";
+
+    div.innerHTML = `
+      <div class="form-group" style="flex:1;">
+        <label>Material Suministrado:</label>
+        <select class="materialSelect" required></select>
+      </div>
+      <div>
+      <button type="button" onclick="quitarMaterial(this)" class="btn-eliminar">❌ Quitar</button></div>
+    `;
+
+    container.appendChild(div);
+
+    const select = div.querySelector(".materialSelect");
+
+    const { data, error } = await supabaseClient
+      .from("materiales")
+      .select("id_mp, nombre")
+      .order("nombre", { ascending: true });
+
+    if (error) throw error;
+
+    select.innerHTML = '<option value="">Seleccione material...</option>';
+
+    data.forEach(m => {
+      const option = document.createElement("option");
+      option.value = m.id_mp;
+      option.textContent = m.nombre;
+      select.appendChild(option);
+    });
+
+    // ---- Activar Select2 ----
+    $(select).select2({
+      placeholder: "Buscar material...",
+      allowClear: true,
+      dropdownParent: $(container),
+      width: "100%"
+    });
+
+  } catch (err) {
+    console.error("Error agregando material:", err);
+    mostrarAviso("Ocurrió un error al agregar el material.");
+  }
+}
+
+function quitarMaterial(btn) {
+  const container = document.getElementById("materialesContainer");
+  const item = btn.closest(".material-item");
+  const items = container.querySelectorAll(".material-item");
+
+  if (items.length === 1) {
+    mostrarAviso("Debe haber al menos un material.");
+    return;
+  }
+
+  const select = item.querySelector(".materialSelect");
+  if (select) {
+    $(select).select2("destroy");
+  }
+
+  item.remove();
+}
+

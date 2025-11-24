@@ -15,6 +15,7 @@ function mostrarSeccion(id) {
   // ✅ Ocultar el mensaje de éxito de OP si estaba visible
   const textoExito = document.getElementById('textoExitoOP');
   if (textoExito) textoExito.style.display = 'none';
+  document.getElementById('proveedor').style.display = 'none';
 
   if (id === "ordenProduccion") {
 
