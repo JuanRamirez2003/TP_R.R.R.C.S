@@ -7,6 +7,88 @@
     <link rel="stylesheet" href="css/ventas.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+<style>
+/* ===================== SELECT + CHOICES ESTILO OSCURO TOTAL ===================== */
+
+/* Contenedor general */
+.choices {
+    background-color: #1e1e1e !important;
+    color: #55a630 !important;
+    border-radius: 8px !important;
+    border: 1px solid #444 !important;
+}
+
+/* Caja interna del select */
+.choices__inner {
+    background-color: #1e1e1e !important;
+    color: #55a630 !important;
+    border: 1px solid #444 !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
+    min-height: 48px;
+}
+
+/* Texto dentro del select */
+.choices__inner .choices__item {
+    color: #55a630 !important;
+}
+
+/* Placeholder */
+.choices[data-type*=select-one] .choices__inner .choices__placeholder {
+    color: #55a630 !important;
+    opacity: 0.7 !important;
+}
+
+/* Input de búsqueda dentro del select */
+.choices__input {
+    background-color: #1e1e1e !important;
+    color: #55a630 !important;
+}
+
+/* Dropdown */
+.choices__list--dropdown {
+    background-color: #1e1e1e !important;
+    border: 1px solid #444 !important;
+}
+
+/* Opción normal */
+.choices__list--dropdown .choices__item--selectable {
+    background-color: #1e1e1e !important;
+    color: #e0e0e0 !important;
+}
+
+/* Opción hover */
+.choices__item--selectable:hover {
+    background-color: #333 !important;
+    color: #55a630 !important;
+}
+
+/* Borde verde al hacer focus */
+.is-focused .choices__inner,
+.is-open .choices__inner {
+    border-color: #55a630 !important;
+    box-shadow: 0 0 6px rgba(85, 166, 48, 0.4) !important;
+}
+
+/* Flechita del select */
+.choices[data-type*=select-one]::after {
+    border-color: #55a630 transparent transparent transparent !important;
+}
+
+/* Flecha invertida cuando se abre */
+.choices[data-type*=select-one].is-open::after {
+    border-color: transparent transparent #55a630 transparent !important;
+}
+
+/* Deshabilitado */
+.choices.is-disabled .choices__inner {
+    background-color: #2a2a2a !important;
+    color: #777 !important;
+    border-color: #333 !important;
+}
+</style>
+
+
 <body>
     <div class="dashboard">
          <!-- Logo superior derecho -->
@@ -87,6 +169,8 @@
     </div>
     <!-- Cargar EmailJS v3 en navegador -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
   // Inicializar EmailJS
   emailjs.init("-HiKvbHc9IPjCjerU"); // Tu public key
