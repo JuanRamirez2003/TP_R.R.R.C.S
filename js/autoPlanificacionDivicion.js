@@ -2323,6 +2323,17 @@ document.getElementById("btnDividirOP").addEventListener("click", async () => {
         ${op.numero_op} - Lotes pendientes: ${libres}
     </option>`;
   });
+  // Activar buscador en el select
+if (window.selectOPDividirChoices) {
+  window.selectOPDividirChoices.destroy();
+}
+
+window.selectOPDividirChoices = new Choices("#selectOPDividir", {
+  searchEnabled: true,
+  itemSelectText: "",
+  shouldSort: false,
+  searchPlaceholderValue: "Buscar OP...",
+});
 
   const modal = document.getElementById("modalDividirOP");
   modal.style.display = "flex";

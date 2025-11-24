@@ -8,6 +8,99 @@
 
   <link rel="stylesheet" href="css/planificacionOP.css">
   <style>
+/* ===================== MODAL OSCURO ESTILO SISTEMA ===================== */
+
+#modalDividirOP {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.75); /* igual tono que tu theme */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* Caja interna del modal */
+#modalDividirOP .modal-content {
+    background-color: #1e1e1e; /* mismo fondo que tu .container */
+    color: #55a630;            /* verde de acento */
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+/* Títulos */
+#modalDividirOP h2,
+#modalDividirOP h3 {
+    color: #55a630;
+}
+
+/* Inputs, selects, incluir Choices.js */
+#modalDividirOP input,
+#modalDividirOP select,
+#modalDividirOP textarea {
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    color: #e0e0e0;
+    padding: 10px;
+    border-radius: 8px;
+    width: 100%;
+}
+
+/* Focus igual que tus inputs */
+#modalDividirOP input:focus,
+#modalDividirOP select:focus,
+#modalDividirOP textarea:focus {
+    border-color: #55a630;
+    box-shadow: 0 0 5px rgba(85, 166, 48, 0.3);
+    outline: none;
+}
+
+/* ===================== ESTILO PARA Choices.js ===================== */
+
+.choices,
+.choices__inner {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #444 !important;
+    border-radius: 8px !important;
+    padding: 0 !important;
+}
+
+.choices__input {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+}
+
+.choices__list--dropdown {
+    background-color: #1e1e1e !important;
+    border: 1px solid #444 !important;
+}
+
+.choices__item--selectable {
+    color: #e0e0e0 !important;
+}
+
+.choices__item--selectable:hover {
+    background-color: #333 !important;
+    color: #55a630 !important;
+}
+
+/* Botón de cerrar */
+#modalDividirOP .btn-cerrar {
+    background-color: #4f4f4f;
+    border-radius: 8px;
+    color: #e0e0e0;
+    padding: 10px 20px;
+}
+
+#modalDividirOP .btn-cerrar:hover {
+    background-color: #3e3e3e;
+}
 
   </style>
 </head>
@@ -287,6 +380,8 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/autoPlanificacionDivicion.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 </body>
 
 </html>
