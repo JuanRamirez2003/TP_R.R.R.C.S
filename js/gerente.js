@@ -794,7 +794,7 @@ async function descargarTrazabilidadPDF() {
 
     // ---------------- NOMBRE DEL ARCHIVO ----------------
     const hoy = new Date().toISOString().split("T")[0];
-    const nombreArchivo = `reporte_de_trazabilidad_${hoy}.pdf`;
+    const nombreArchivo = `Reporte_de_Trazabilidad_${hoy}.pdf`;
     try {
         // 🔹 Traer todas las OP
         const { data: ops, error: opError } = await supabaseClient.from('orden_produccion').select('*');

@@ -449,8 +449,8 @@ async function cargarQuejas() {
         <td>${r.id}</td>
         <td>${r.cliente?.nombre || "-"}</td>
         <td>${r.id_factura || "-"}</td>
-        <td><button onclick="abrirModalVerTexto('${r.queja}', 'Queja')">Ver</button></td>
-        <td>${r.respuesta ? `<button onclick="abrirModalVerTexto('${r.respuesta}', 'Respuesta')">Ver</button>` : "-"}</td>
+        <td><button class="btn-ver-tabla" onclick="abrirModalVerTexto('${r.queja}', 'Queja')">Ver</button></td>
+        <td>${r.respuesta ? `<button class="btn-ver-tabla" onclick="abrirModalVerTexto('${r.respuesta}', 'Respuesta')">Ver</button>` : "-"}</td>
         <td>${r.estado || "Pendiente"}</td>
         <td>${new Date(r.create_at).toLocaleDateString()}</td>
       </tr>
@@ -482,8 +482,8 @@ async function cargarResponder() {
       <tr>
         <td>${r.id}</td>
         <td>${r.cliente?.nombre || "-"}</td>
-        <td><button onclick="abrirModalVerTexto('${r.queja}', 'Queja')">Ver</button></td>
-        <td><button onclick="abrirModalResponder(${r.id})">Responder</button></td>
+        <td><button class="btn-ver-tabla" onclick="abrirModalVerTexto('${r.queja}', 'Queja')">Ver</button></td>
+        <td><button class="btn-ver-respuesta" onclick="abrirModalResponder(${r.id})">Responder</button></td>
       </tr>
     `;
   });
