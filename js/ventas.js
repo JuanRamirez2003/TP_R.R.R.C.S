@@ -40,7 +40,7 @@ function mostrarFormularioCliente() {
   document.getElementById('mensajeExitoCliente').style.display = 'none';
   document.getElementById("filtroClientes").parentElement.style.display = "none";
   document.getElementById('tablaClientesContainer').style.display = 'none';
-  
+
 }
 
 function cancelarCliente() {
@@ -174,7 +174,7 @@ document.getElementById("clienteForm").addEventListener("submit", async function
 
 // ================== EDITAR CLIENTE ==================
 async function editarCliente(dni) {
-    document.getElementById("filtroClientes").parentElement.style.display = "none";
+  document.getElementById("filtroClientes").parentElement.style.display = "none";
   try {
 
     const { data, error } = await supabaseClient
@@ -216,8 +216,7 @@ async function editarCliente(dni) {
     document.getElementById('formCliente').style.display = 'block';
 
     document.getElementById('tablaClientesContainer').style.display = 'none';
-    
-    // 🔥 Reiniciar estado del botón Guardar
+
     const boton = document.querySelector('#clienteForm button[type="submit"]');
     boton.disabled = false;
     boton.textContent = "Guardar";
@@ -273,8 +272,10 @@ async function bajaCliente(dni) {
 
     const { error } = await supabaseClient
       .from('clientes')
-      .update({ estado: 'inactivo',
-                audit_user_id: currentUserId })
+      .update({
+        estado: 'inactivo',
+        audit_user_id: currentUserId
+      })
       .eq('dni_cuil', dni);
 
     if (error) throw error;
@@ -381,8 +382,6 @@ async function mostrarOrdenes() {
 }
 
 function nuevaOrden() {
-
-  
   document.getElementById('formOrden').style.display = 'block';
   document.getElementById('ordenForm').reset();
   document.getElementById('mensajeExitoOrden').style.display = 'none';
@@ -401,7 +400,6 @@ function cancelarOrden() {
 }
 
 async function cargarClientesDropdown() {
-    
   try {
     const { data, error } = await supabaseClient
       .from('clientes')
@@ -413,7 +411,7 @@ async function cargarClientesDropdown() {
     select.innerHTML = '<option value="">Seleccione...</option>';
 
     data.forEach(c => {
-      select.innerHTML += `<option value="${c.id_cliente}">${c.id_cliente} - ${c.nombre}</option>`;
+      select.innerHTML += `<option value="${c.id_cliente}">${c.nombre}</option>`;
     });
 
     $('#clienteOrden').select2({
@@ -432,9 +430,6 @@ async function cargarClientesDropdown() {
     console.error('Error cargando clientes:', err);
   }
 
- 
-
-
 }
 
 async function agregarProducto() {
@@ -448,23 +443,29 @@ async function agregarProducto() {
     div.style.alignItems = 'center';
 
     div.innerHTML = `
-      <div class="form-group" style="width:300px;">
+  
+      <div class="form-group producto-col">
         <label>Producto:</label>
-        <select class="productoSelect" required style="width:100%; padding:8px; margin-top:5px; border:1px solid #ccc; border-radius:5px;"></select>
+        <select class="productoSelect" required></select>
       </div>
-      <div class="form-group" style="width:120px;">
+
+      <div class="form-group cantidad-col">
         <label>Cant. Cajas:</label>
-        <input type="number" class="cantidadInput" min="1" placeholder="Cantidad" required style="width:100%; padding:8px; margin-top:5px; border:1px solid #ccc; border-radius:5px;">
+        <input type="number" class="cantidadInput" min="1" placeholder="Cantidad" required>
       </div>
-      <div class="form-group" style="width:150px;">
-        <label>Precio Unitario:</label>
+
+      <div class="form-group precio-col">
+        <label>P. Unitario:</label>
         <input type="text" class="precioUnitarioInput" readonly placeholder="0.00">
       </div>
-      <div class="form-group" style="width:150px;">
-        <label>Total:</label>
+
+      <div class="form-group total-col">
+        <label>Total ($ARS):</label>
         <input type="text" class="precioTotalInput" readonly placeholder="0.00">
       </div>
-      <button type="button" onclick="quitarProducto(this)" class="btn-submit" style="background-color:#e74c3c; padding:8px 12px; margin-top:22px;">❌ Quitar</button>
+
+      <button type="button" onclick="quitarProducto(this)" class="btn-submit btn-quitar">❌ Quitar</button>
+     
     `;
 
     container.appendChild(div);
@@ -519,10 +520,10 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
   botonSubmit.textContent = 'Guardando...';
 
   const currentUserId = localStorage.getItem("currentUserId");
-    if (!currentUserId) {
-      mostrarErrorOC("No se pudo identificar al usuario para auditoría");
-      return;
-    }
+  if (!currentUserId) {
+    mostrarErrorOC("No se pudo identificar al usuario para auditoría");
+    return;
+  }
 
 
   try {
@@ -570,56 +571,56 @@ document.getElementById('ordenForm').addEventListener('submit', async (e) => {
     }
 
     // === Crear orden de productos con stock (facturable) ===
-let ordenFacturable = null;
-if (productosConStock.length > 0) {
+    let ordenFacturable = null;
+    if (productosConStock.length > 0) {
 
-  // 🔹 FECHA ESTIMADA = HOY
-  const hoyStr = new Date().toISOString().split('T')[0];
+      // 🔹 FECHA ESTIMADA = HOY
+      const hoyStr = new Date().toISOString().split('T')[0];
 
-  const { data: ordenData, error: ordenError } = await supabaseClient
-    .from('orden_ventas')
-    .insert([{
-      id_cliente: parseInt(cliente),
-      fecha: new Date().toISOString(),
-      estado: 'completada',
-      fecha_estimada_entrega: hoyStr,// <-- AGREGADO AQUÍ
-      audit_user_id: currentUserId 
-    }])
-    .select()
-    .single();
+      const { data: ordenData, error: ordenError } = await supabaseClient
+        .from('orden_ventas')
+        .insert([{
+          id_cliente: parseInt(cliente),
+          fecha: new Date().toISOString(),
+          estado: 'completada',
+          fecha_estimada_entrega: hoyStr,// <-- AGREGADO AQUÍ
+          audit_user_id: currentUserId
+        }])
+        .select()
+        .single();
 
-  if (ordenError) throw ordenError;
-  ordenFacturable = ordenData;
+      if (ordenError) throw ordenError;
+      ordenFacturable = ordenData;
 
-  // Guardar los detalles facturados con fecha estimada HOY
-  for (const p of productosConStock) {
-    await supabaseClient
-      .from('detalle_ordenes')
-      .insert([{
-        id_orden: ordenData.id_orden,
-        id_producto: p.id_producto,
-        cantidad: p.cantidad,
-        estado_detalle_ov: 'facturado',
-        fecha_estimada_entrega: hoyStr // <-- AGREGADO AQUÍ TAMBIÉN
-      }]);
+      // Guardar los detalles facturados con fecha estimada HOY
+      for (const p of productosConStock) {
+        await supabaseClient
+          .from('detalle_ordenes')
+          .insert([{
+            id_orden: ordenData.id_orden,
+            id_producto: p.id_producto,
+            cantidad: p.cantidad,
+            estado_detalle_ov: 'facturado',
+            fecha_estimada_entrega: hoyStr // <-- AGREGADO AQUÍ TAMBIÉN
+          }]);
 
-    await supabaseClient
-      .from('productos')
-      .update({ stock: p.stock_actual - p.cantidad, audit_user_id: currentUserId })
-      .eq('id_producto', p.id_producto);
-  }
+        await supabaseClient
+          .from('productos')
+          .update({ stock: p.stock_actual - p.cantidad, audit_user_id: currentUserId })
+          .eq('id_producto', p.id_producto);
+      }
 
-  // Crear factura
-  const totalFactura = productosConStock.reduce((sum, p) => sum + p.cantidad * p.precio_unitario, 0);
-  await supabaseClient
-    .from('factura')
-    .insert([{
-      id_orden: ordenData.id_orden,
-      id_cliente: parseInt(cliente),
-      fecha: new Date().toISOString(),
-      total: totalFactura
-    }]);
-}
+      // Crear factura
+      const totalFactura = productosConStock.reduce((sum, p) => sum + p.cantidad * p.precio_unitario, 0);
+      await supabaseClient
+        .from('factura')
+        .insert([{
+          id_orden: ordenData.id_orden,
+          id_cliente: parseInt(cliente),
+          fecha: new Date().toISOString(),
+          total: totalFactura
+        }]);
+    }
 
     // === Crear orden pendiente para productos sin stock ===
     let ordenPendiente = null;
@@ -1136,6 +1137,43 @@ document.addEventListener("DOMContentLoaded", () => {
       if (coincide) visibles++;
     });
 
+    mensajeNoResultados.style.display = visibles === 0 ? "block" : "none";
+  });
+});
+
+//========FILTRO PARA TEBLA Orden Ventas =============
+document.addEventListener("DOMContentLoaded", () => {
+  const inputFiltro = document.getElementById("filtroOV");
+  const tbody = document.querySelector("#tablaOrdenes tbody");
+
+  // Mensaje cuando no hay resultados
+  const mensajeNoResultados = document.createElement("p");
+  mensajeNoResultados.id = "mensajeNoResultadosOV";
+  mensajeNoResultados.style.display = "none";
+  mensajeNoResultados.style.textAlign = "center";
+  mensajeNoResultados.style.marginTop = "10px";
+  mensajeNoResultados.textContent = "No se encontraron resultados.";
+  document.querySelector("#tablaOrdenes").parentElement.appendChild(mensajeNoResultados);
+
+  inputFiltro.addEventListener("input", function () {
+    const filtro = this.value.toLowerCase();
+    const filas = tbody.querySelectorAll("tr");
+    let visibles = 0;
+
+    filas.forEach(fila => {
+      const celdas = Array.from(fila.cells)
+        .map((c, i) => ({ index: i, texto: c.textContent.toLowerCase() }))
+        // Solo columnas: 0 (ID Orden), 1 (Cliente), 2 (Productos), 3 (Fecha Estimada), 4 (Estado)
+        .filter(c => [0, 1, 2, 3, 4].includes(c.index))
+        .map(c => c.texto);
+
+      const coincide = celdas.some(texto => texto.includes(filtro));
+      fila.style.display = coincide ? "" : "none";
+
+      if (coincide) visibles++;
+    });
+
+    // Mostrar/ocultar mensaje
     mensajeNoResultados.style.display = visibles === 0 ? "block" : "none";
   });
 });

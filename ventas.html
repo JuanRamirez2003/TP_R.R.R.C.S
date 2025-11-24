@@ -183,10 +183,217 @@
     }
 
     #mensajeErrorTexto {
-  white-space: pre-line;   /* respeta saltos de línea \n */
-  line-height: 1.5;        /* más aire entre renglones */
-  color: #ffffff;          /* rojo para destacar */
+  white-space: pre-line; 
+  line-height: 1.5; 
+  color: #ffffff;
   font-weight: 500;
+}
+
+.table-wrapper-ordenes {
+  width: 100%;
+  overflow-x: auto;  
+  margin-top: 10px;
+}
+
+#tablaOrdenes {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background-color: #2a2a2a;
+  border-radius: 6px;
+}
+
+#tablaOrdenes th,
+#tablaOrdenes td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #333;
+  color: #e0e0e0;
+  white-space: nowrap; 
+}
+
+#tablaOrdenes th {
+  background-color: #1e1e1e;
+}
+
+#tablaOrdenes tr:hover {
+  background-color: #3e3e3e;
+}
+
+/* ESTILO DE FORMULARIO OV */
+#formOrden {
+  background-color: #1e1e1e;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 2px 8px rgba(0,0,0,0.5);
+  margin-bottom: 20px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Formulario de Ordenes */
+#ordenForm {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;   
+}
+
+/* Grupo de campos */
+#ordenForm .form-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;   
+}
+
+/* Labels */
+#ordenForm .form-group label {
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #e0e0e0;
+}
+
+/* Inputs y selects */
+#ordenForm .form-group input,
+#ordenForm .form-group select {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  font-size: 14px;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;  
+  box-sizing: border-box;
+}
+
+#ordenForm .form-group input:focus,
+#ordenForm .form-group select:focus {
+  border-color: #55a630;
+  box-shadow: 0 0 5px rgba(85,166,48,0.3);
+}
+
+/* Botones */
+#ordenForm .btn-submit,
+#ordenForm .btn-eliminar {
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+  width: 100%;
+}
+
+#ordenForm .btn-submit {
+  background-color: #55a630;
+  color: #000;
+  border: none;
+}
+
+#ordenForm .btn-submit:hover {
+  background-color: #4a8c2a;
+  color: #fff;
+}
+
+#ordenForm .btn-eliminar {
+  background-color: #fc2b3c;
+  color: #000000;
+  border: none;
+}
+#ordenForm .btn-eliminar:hover {
+  background-color: #a71d2a;
+  color: #fff;
+  
+}
+
+/* ===================================== */
+/* ===================================== */
+
+/* Tablets: distribuir campos en 2 columnas cuando haya espacio */
+@media (min-width: 600px) {
+  #ordenForm {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  #ordenForm .form-group {
+    width: calc(50% - 10px); 
+  }
+}
+
+/* Pantallas grandes: 3 columnas */
+@media (min-width: 900px) {
+  #ordenForm .form-group {
+    width: calc(33.33% - 10px);
+  }
+}
+
+
+.producto-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.producto-col,
+.cantidad-col,
+.precio-col,
+.total-col {
+  flex: 1; 
+  min-width: 150px;
+}
+
+.btn-quitar {
+  background-color: #e74c3c !important;
+  margin-top: 22px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.producto-item input,
+.producto-item select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #333;
+  border-radius: 5px;
+  background-color: #2a2a2a;
+  color: #eee;
+}
+
+@media (max-width: 500px) {
+  .producto-col,
+  .cantidad-col,
+  .precio-col,
+  .total-col {
+    min-width: 100%; 
+  }
+
+  .btn-quitar {
+    width: 100%;
+    margin-top: 10px;
+  }
+}
+
+.producto-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 15px;
+  border: 1px solid #ffffff55;   
+  border-radius: 10px;
+  background-color: #1c1c1c;  
+  margin-bottom: 15px;
+}
+
+.btn-agregar {
+  background-color: #007bff !important; 
+  color: #fff;
+  border: none;
+}
+
+.btn-agregar:hover {
+  background-color: #0056b3 !important;
 }
   </style>
 </head>
@@ -362,7 +569,7 @@
 
             <div id="productosContainer"></div>
 
-            <button type="button" class="btn-submit" onclick="agregarProducto()">➕ Agregar Producto</button>
+            <button type="button" class="btn-submit btn-agregar" onclick="agregarProducto()">➕ Agregar Producto</button>
             <button type="submit" class="btn-submit">Guardar Orden</button>
             <button type="button" onclick="cancelarOrden()" class="btn-eliminar">Cancelar</button>
           </form>
@@ -373,7 +580,12 @@
           <button onclick="volverPanel()" class="btn-submit">Volver al panel</button>
         </div>
 
-        <div id="tablaOrdenesContainer" style="margin-top:20px;">
+        <div id="tablaOrdenesContainer"  class="table-wrapper-ordenes">
+          <!-- Filtro solo para ORDENES VENTAS -->
+          <div style="margin-bottom:10px;">
+            <input type="text" id="filtroOV" placeholder="Buscar OV..."
+             style="padding:8px; width:100%; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0;">
+          </div>
           <table id="tablaOrdenes">
             <thead>
               <tr>
@@ -382,7 +594,7 @@
                 <th>Productos</th>
                 <th>Fecha Estimada</th>
                 <th>Estado</th>
-                <th>Total</th>
+               <th>Total ($ARS)</th>
               </tr>
             </thead>
             <tbody></tbody>
