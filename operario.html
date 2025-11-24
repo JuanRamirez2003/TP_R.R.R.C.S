@@ -8,6 +8,90 @@
     <link rel="stylesheet" href="css/ventas.css">
     <link rel="stylesheet" href="css/lineasProduccion.css">
     <style>
+        /* Fondo general del modal */
+.modal-aviso {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* Mostrar modal */
+.modal-aviso.mostrar {
+    display: flex;
+    animation: aparecerModal 0.3s ease;
+}
+
+/* Contenido del modal */
+.modal-aviso-contenido {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    padding: 25px 35px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(85, 166, 48, 0.4);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: scaleUp 0.25s ease-in-out;
+}
+
+/* Título */
+.modal-aviso-contenido h2 {
+    margin-bottom: 12px;
+    color: #55a630;
+    font-size: 1.5rem;
+}
+
+/* Texto del mensaje */
+.modal-aviso-contenido p {
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+
+/* Botón cerrar */
+.modal-aviso-contenido button {
+    padding: 12px 26px;
+    background-color: #4a8c2a;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.modal-aviso-contenido button:hover {
+    background-color: #55a630;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+/* Animaciones */
+@keyframes aparecerModal {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.9);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
         /* Contenedores de tablas con scroll horizontal */
         table {
             width: 100%;
