@@ -306,40 +306,28 @@
   
 }
 
-/* ===================================== */
-/* ===================================== */
-
-/* Tablets: distribuir campos en 2 columnas cuando haya espacio */
-@media (min-width: 600px) {
-  #ordenForm {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  #ordenForm .form-group {
-    width: calc(50% - 10px); 
-  }
+/* ==========================
+   PRODUCTOS
+   ========================== */
+#productosContainer {
+  width: 100%;       /* siempre ocupa toda la fila */
+  margin-top: 10px;  /* separación del cliente */
+  display: block;    /* siempre debajo */
 }
-
-/* Pantallas grandes: 3 columnas */
-@media (min-width: 900px) {
-  #ordenForm .form-group {
-    width: calc(33.33% - 10px);
-  }
-}
-
 
 .producto-item {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 15px;
+  padding: 15px;
+  border: 1px solid #ffffff55;
+  border-radius: 10px;
+  background-color: #1c1c1c;
+  margin-bottom: 15px;
 }
 
-.producto-col,
-.cantidad-col,
-.precio-col,
-.total-col {
-  flex: 1; 
+.producto-item .form-group {
+  flex: 1;
   min-width: 150px;
 }
 
@@ -361,12 +349,10 @@
   color: #eee;
 }
 
+/* Responsive para pantallas pequeñas */
 @media (max-width: 500px) {
-  .producto-col,
-  .cantidad-col,
-  .precio-col,
-  .total-col {
-    min-width: 100%; 
+  .producto-item .form-group {
+    min-width: 100%;
   }
 
   .btn-quitar {
@@ -375,16 +361,6 @@
   }
 }
 
-.producto-item {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  padding: 15px;
-  border: 1px solid #ffffff55;   
-  border-radius: 10px;
-  background-color: #1c1c1c;  
-  margin-bottom: 15px;
-}
 
 .btn-agregar {
   background-color: #007bff !important; 
