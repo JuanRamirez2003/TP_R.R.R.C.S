@@ -228,22 +228,22 @@ function iniciarLinea(n, opId, opTexto, tiempoTotal, cinta, btn, estadoCont, est
 // ------------------- Finalizar línea ---------------------
 async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null) {
 
+    let mensajes = []; // <<<<<< NUEVO
+
     const cinta = document.getElementById(`cinta${n}`);
     const btn = document.getElementById(`btn-linea-${n}`);
     const estadoCont = document.getElementById(`estadoCont-${n}`);
     const estadoText = document.getElementById(`estado-linea-${n}`);
     const opInfo = document.getElementById(`opInfo-${n}`);
 
-
-
-
     try {
 
         const currentUserId = localStorage.getItem("currentUserId");
         if (!currentUserId) {
-        mostrarError("No se pudo identificar al usuario para auditoría");
-        return;
+            mostrarError("No se pudo identificar al usuario para auditoría");
+            return;
         }
+
         // detener animaciones
         cancelAnimationFrame(animaciones[n]);
         clearTimeout(timers[n]);
@@ -277,8 +277,9 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
         // actualizar lotes terminados
         await supabaseClient
             .from('orden_produccion')
-            .update({ lotes_terminados: nuevosTerminados,
-                      audit_user_id: currentUserId
+            .update({
+                lotes_terminados: nuevosTerminados,
+                audit_user_id: currentUserId
             })
             .eq('id_orden_produccion', opId);
 
@@ -290,9 +291,10 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
         if (idPlanificacion) {
             await supabaseClient
                 .from('planificacion_semanal')
-                .update({ estado: 'finalizada',
-                        audit_user_id: currentUserId
-                    })
+                .update({
+                    estado: 'finalizada',
+                    audit_user_id: currentUserId
+                })
                 .eq('id', idPlanificacion);
         }
 
@@ -322,7 +324,8 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
 
             await supabaseClient
                 .from('orden_produccion')
-                .update({ estado: 'finalizada',
+                .update({
+                    estado: 'finalizada',
                     audit_user_id: currentUserId
                 })
                 .eq('id_orden_produccion', opId);
@@ -364,7 +367,7 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
 
             if (!opsOV || opsOV.length === 0) {
 
-                console.log(`OP ${opId} sin OV asociadas → actualizar stock y marcar como FINALIZADO`);
+                mensajes.push(`OP ${opId} sin OV asociadas → actualizar stock y marcar como FINALIZADO`);
 
                 // A) Actualizar stock
                 if (opData.id_producto) {
@@ -381,25 +384,29 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
 
                         await supabaseClient
                             .from('productos')
-                            .update({ stock: prod.stock + cantidadASumar,
+                            .update({
+                                stock: prod.stock + cantidadASumar,
                                 audit_user_id: currentUserId
                             })
                             .eq('id_producto', opData.id_producto);
 
-                        console.log(`📦 Stock actualizado +${cantidadASumar}`);
+                        mensajes.push(`📦 Stock actualizado +${cantidadASumar}`);
                     }
                 }
 
                 // B) Marcar OP finalizada
                 await supabaseClient
                     .from('orden_produccion')
-                    .update({ estado: 'finalizado',
-                            audit_user_id: currentUserId })
+                    .update({
+                        estado: 'finalizado',
+                        audit_user_id: currentUserId
+                    })
                     .eq('id_orden_produccion', opId);
 
-                console.log(`✔ OP ${opId} marcada como FINALIZADO (sin OV)`);
+                mensajes.push(`✔ OP ${opId} marcada como FINALIZADO (sin OV)`);
 
-                return; // terminado
+                mostrarAviso(mensajes); // <<<<<< NUEVO
+                return;
             }
 
             // -------------------------------
@@ -454,8 +461,10 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
 
                     await supabaseClient
                         .from('orden_ventas')
-                        .update({ estado: 'completada',
-                                audit_user_id: currentUserId })
+                        .update({
+                            estado: 'completada',
+                            audit_user_id: currentUserId
+                        })
                         .eq('id_orden', idOrden);
 
                     const { data: ovData } = await supabaseClient
@@ -464,28 +473,53 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
                         .eq('id_orden', idOrden)
                         .single();
 
-                    const { error: factErr } = await supabaseClient
-                        .from('factura')
-                        .insert([{
-                            id_orden: idOrden,
-                            id_cliente: ovData.id_cliente,
-                            fecha: new Date()
-                        }]);
+                    // =====================================================
+// CALCULAR TOTAL FACTURA
+// =====================================================
+const { data: detConProd } = await supabaseClient
+    .from('detalle_ordenes')
+    .select(`
+        cantidad,
+        productos (
+            precio_unitario
+        )
+    `)
+    .eq('id_orden', idOrden);
 
-                    if (!factErr) {
-                        console.log(`📄 Factura generada para la Orden de Venta #${idOrden}`);
+let totalFactura = 0;
 
-                        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                        // MARCAR DETALLES DE LA OV COMO FACTURADOS
-                        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                        await supabaseClient
-                            .from('detalle_ordenes')
-                            .update({ estado_detalle_ov: 'facturado' })
-                            .eq('id_orden', idOrden);
+if (detConProd && detConProd.length > 0) {
+    totalFactura = detConProd.reduce((acc, d) => {
+        const precio = d.productos?.precio_unitario || 0;
+        return acc + d.cantidad * precio;
+    }, 0);
+}
 
-                        console.log(`🧾 Detalles de OV #${idOrden} marcados como 'facturado'`);
-                        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                    }
+// =====================================================
+// INSERTAR FACTURA CON TOTAL
+// =====================================================
+const { error: factErr } = await supabaseClient
+    .from('factura')
+    .insert([{
+        id_orden: idOrden,
+        id_cliente: ovData.id_cliente,
+        fecha: new Date().toISOString(),
+        total: totalFactura
+    }]);
+
+if (!factErr) {
+
+    mensajes.push(`📄 Factura generada para OV #${idOrden} — Total: $${totalFactura}`);
+
+    // Marcar detalles como facturados
+    await supabaseClient
+        .from('detalle_ordenes')
+        .update({ estado_detalle_ov: 'facturado' })
+        .eq('id_orden', idOrden);
+
+    mensajes.push(`🧾 Detalles de OV #${idOrden} marcados como 'facturado'`);
+}
+
                 }
             }
         }
@@ -526,6 +560,9 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
         });
 
         actualizarSelectsOP();
+
+        // >>>>>> MOSTRAR MENSAJES EN EL MODAL <<<<<<
+        if (mensajes.length > 0) mostrarAviso(mensajes);
 
     } catch (err) {
         console.error("❌ Error finalizando OP:", err);
@@ -807,6 +844,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Estructura final
         linea.append(header, planDiv, opSelect, opInfo, cinta, actions);
         contenedor.appendChild(linea);
+        // --- Activar buscador en el select (Choices.js) ---
+new Choices(opSelect, {
+    searchEnabled: true,
+    searchPlaceholderValue: 'Buscar OP...',
+    shouldSort: false,
+    itemSelectText: '',
+});
+        
 
         // Recuperar estado previo
         recuperarEstadoLinea(i, opSelect, cinta, btn, estadoCont, estadoText, opInfo);
@@ -954,6 +999,27 @@ function mostrarError(mensaje) {
     modal.onclick = (e) => {
         if (e.target === modal) modal.classList.remove('mostrar');
     };
+}
+
+function mostrarAviso(mensajes = []) {
+    const modal = document.getElementById("modalAviso");
+    const contenido = document.getElementById("modalAvisoContenido");
+    const texto = document.getElementById("modalAvisoTexto");
+
+    if (!modal || !contenido || !texto) return;
+
+    // Convertir array de mensajes en HTML
+    texto.innerHTML = mensajes
+        .map(m => `• ${m}`)
+        .join("<br>");
+
+    modal.classList.add("mostrar");
+}
+
+// cerrar modal
+function cerrarAviso() {
+    const modal = document.getElementById("modalAviso");
+    modal.classList.remove("mostrar");
 }
 
 window.toggleLinea = toggleLinea;
