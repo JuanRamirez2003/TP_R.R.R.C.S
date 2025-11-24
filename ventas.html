@@ -442,8 +442,14 @@
         <li><button onclick="mostrarSeccion('clientes')">Gestión de Clientes</button></li>
         <li><button onclick="mostrarSeccion('ordenes')">Órdenes de Ventas</button></li>
         <li><button onclick="mostrarSeccion('facturas')">Facturación</button></li>
+         <li><button id="btnGenerarOP" 
+            style="background-color:#17a2b8; color:white; padding:8px 15px; border:none; border-radius:6px; cursor:pointer;"
+            onclick="generarOrdenesProduccionAutomatica()">
+            ⚙️ Generar Ordenes
+          </button> </li>
       </ul>
       <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
+      
     </aside>
 
     <!-- Contenido principal -->
@@ -735,11 +741,6 @@ Modal Órdenes de Producción -->
 
 
         <div style="margin-top:20px;">
-          <button id="btnGenerarOP" class="btn-submit"
-            style="background-color:#17a2b8; color:white; padding:8px 15px; border:none; border-radius:6px; cursor:pointer;"
-            onclick="generarOrdenesProduccionAutomatica()">
-            ⚙️ Generar Facturas
-          </button>
         </div>
         <div id="modalOP">
           <div class="modal-content">

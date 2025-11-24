@@ -1098,7 +1098,7 @@ async function cargarOP() {
       <td>${op.prioridad}</td>
       <td>
         ${op.estado === 'Pendiente'
-        ? `<button onclick="editarOP(${op.id_orden_produccion})" class="btn-editar">✏️ Editar</button>
+        ? `
              <button onclick="eliminarOP(${op.id_orden_produccion})" class="btn-eliminar">❌Dar Baja</button>`
         : 'No disponible'}
       </td>
