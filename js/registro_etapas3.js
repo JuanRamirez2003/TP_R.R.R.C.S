@@ -473,25 +473,53 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
                         .eq('id_orden', idOrden)
                         .single();
 
-                    const { error: factErr } = await supabaseClient
-                        .from('factura')
-                        .insert([{
-                            id_orden: idOrden,
-                            id_cliente: ovData.id_cliente,
-                            fecha: new Date()
-                        }]);
+                    // =====================================================
+// CALCULAR TOTAL FACTURA
+// =====================================================
+const { data: detConProd } = await supabaseClient
+    .from('detalle_ordenes')
+    .select(`
+        cantidad,
+        productos (
+            precio_unitario
+        )
+    `)
+    .eq('id_orden', idOrden);
 
-                    if (!factErr) {
+let totalFactura = 0;
 
-                        mensajes.push(`📄 Factura generada para la Orden de Venta #${idOrden}`);
+if (detConProd && detConProd.length > 0) {
+    totalFactura = detConProd.reduce((acc, d) => {
+        const precio = d.productos?.precio_unitario || 0;
+        return acc + d.cantidad * precio;
+    }, 0);
+}
 
-                        await supabaseClient
-                            .from('detalle_ordenes')
-                            .update({ estado_detalle_ov: 'facturado' })
-                            .eq('id_orden', idOrden);
+// =====================================================
+// INSERTAR FACTURA CON TOTAL
+// =====================================================
+const { error: factErr } = await supabaseClient
+    .from('factura')
+    .insert([{
+        id_orden: idOrden,
+        id_cliente: ovData.id_cliente,
+        fecha: new Date().toISOString(),
+        total: totalFactura
+    }]);
 
-                        mensajes.push(`🧾 Detalles de OV #${idOrden} marcados como 'facturado'`);
-                    }
+if (!factErr) {
+
+    mensajes.push(`📄 Factura generada para OV #${idOrden} — Total: $${totalFactura}`);
+
+    // Marcar detalles como facturados
+    await supabaseClient
+        .from('detalle_ordenes')
+        .update({ estado_detalle_ov: 'facturado' })
+        .eq('id_orden', idOrden);
+
+    mensajes.push(`🧾 Detalles de OV #${idOrden} marcados como 'facturado'`);
+}
+
                 }
             }
         }
