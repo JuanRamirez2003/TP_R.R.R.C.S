@@ -807,6 +807,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Estructura final
         linea.append(header, planDiv, opSelect, opInfo, cinta, actions);
         contenedor.appendChild(linea);
+        // --- Activar buscador en el select (Choices.js) ---
+new Choices(opSelect, {
+    searchEnabled: true,
+    searchPlaceholderValue: 'Buscar OP...',
+    shouldSort: false,
+    itemSelectText: '',
+});
+        
 
         // Recuperar estado previo
         recuperarEstadoLinea(i, opSelect, cinta, btn, estadoCont, estadoText, opInfo);
