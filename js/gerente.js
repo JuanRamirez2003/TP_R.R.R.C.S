@@ -788,9 +788,13 @@ function loadImage(url) {
 async function descargarTrazabilidadPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF("p", "mm", "a4");
+
     let y = 10;
     const saltoPagina = 270;
 
+    // ---------------- NOMBRE DEL ARCHIVO ----------------
+    const hoy = new Date().toISOString().split("T")[0];
+    const nombreArchivo = `reporte_de_trazabilidad_${hoy}.pdf`;
     try {
         // 🔹 Traer todas las OP
         const { data: ops, error: opError } = await supabaseClient.from('orden_produccion').select('*');
@@ -893,7 +897,7 @@ async function descargarTrazabilidadPDF() {
             console.log(`OP ${op.numero_op || op.id_orden_produccion} procesada`);
         }
 
-        doc.save("Trazabilidad_OP.pdf");
+        doc.save(nombreArchivo);
         console.log("PDF generado correctamente");
 
     } catch (error) {
