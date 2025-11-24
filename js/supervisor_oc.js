@@ -96,6 +96,11 @@ document.getElementById('pedidoForm').addEventListener('submit', async e => {
         mensajeError.style.display = "block";
         return;
     }
+     if (500 <= cantidad) {
+        mensajeError.textContent = "La cantidad debe ser menor a 500.";
+        mensajeError.style.display = "block";
+        return;
+    }
     const currentUserId = localStorage.getItem("currentUserId");
     if (!currentUserId) {
     mensajeError.textContent = "No se pudo identificar al usuario para auditoría.";
@@ -156,7 +161,7 @@ if (typeof emailjs !== 'undefined') {
 });
 
 // ================== Tabla Pedidos ==================
-async function cargarTablaPedidos() {
+async function cargarTablaPedidos(filtro = "") {
     try {
         const { data, error } = await supabaseClient.from('orden_compra_mp').select('*');
         if (error) throw error;
@@ -169,21 +174,32 @@ async function cargarTablaPedidos() {
             return;
         }
 
-        data.forEach(d => {
-            const color = d.estado === 'Pendiente' ? '#FFA94D'  // naranja pastel
-            : d.estado === 'Aprobado' ? '#51CF66'  // verde suave
-            : d.estado === 'Recibido' ? '#339AF0'  // azul más agradable
-            : '#FF6B6B';                           // rojo coral suave
+        // --- FILTRO (buscador) ---
+        const busqueda = filtro.toLowerCase();
+        const filtrados = data.filter(d =>
+            d.id.toString().includes(busqueda) ||
+            d.materia_prima.toLowerCase().includes(busqueda) ||
+            d.proveedor.toLowerCase().includes(busqueda) ||
+            d.estado.toLowerCase().includes(busqueda)
+        );
+
+        filtrados.forEach(d => {
+            const color = d.estado === 'Pendiente' ? '#FFA94D'
+                : d.estado === 'Aprobado' ? '#51CF66'
+                : d.estado === 'Recibido' ? '#339AF0'
+                : '#FF6B6B';
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${d.id}</td>
                 <td>${d.materia_prima}</td>
                 <td>${d.proveedor}</td>
-                <td>${d.cantidad}</td>
+                <td>${d.cantidad} kg</td>
                 <td style="color:${color}; font-weight:bold;">${d.estado}</td>
             `;
             tbody.appendChild(tr);
         });
+
     } catch (err) {
         console.error("Error cargando tabla de pedidos:", err);
     }

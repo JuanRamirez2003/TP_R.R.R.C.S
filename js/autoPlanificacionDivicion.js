@@ -2323,6 +2323,17 @@ document.getElementById("btnDividirOP").addEventListener("click", async () => {
         ${op.numero_op} - Lotes pendientes: ${libres}
     </option>`;
   });
+  // Activar buscador en el select
+if (window.selectOPDividirChoices) {
+  window.selectOPDividirChoices.destroy();
+}
+
+window.selectOPDividirChoices = new Choices("#selectOPDividir", {
+  searchEnabled: true,
+  itemSelectText: "",
+  shouldSort: false,
+  searchPlaceholderValue: "Buscar OP...",
+});
 
   const modal = document.getElementById("modalDividirOP");
   modal.style.display = "flex";
@@ -2341,8 +2352,9 @@ document.getElementById("selectOPDividir").addEventListener("change", async (e) 
   const idProducto = Number(e.target.selectedOptions[0].getAttribute("data-producto"));
 
   const { data: lineas, error } = await supabaseClient
-    .from("linea_productos")
-    .select("id_linea");
+  .from("linea_productos")
+  .select("id_linea, estado")
+  .eq("estado", "Activa");
   if (error) return mostrarAviso("Error al cargar líneas");
 
   lineas.sort((a, b) => a.id_linea - b.id_linea);

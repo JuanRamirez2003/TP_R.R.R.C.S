@@ -142,6 +142,9 @@ async function startFaceVerification() {
                 case "Operario": window.location.href = "operario.html"; break;
                 case "Supervisor": window.location.href = "supervisor.html"; break;
                 case "Gerente General": window.location.href = "gerente.html"; break;
+                case "Atencion al Cliente": window.location.href = "areaQuejas.html"; break;
+                case "Deposito": window.location.href = "preparacion.html"; break;
+
                 default: window.location.href = "dashboard.html";
               }
             } catch (err) {

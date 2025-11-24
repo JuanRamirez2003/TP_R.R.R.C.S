@@ -7,6 +7,26 @@
     <link rel="stylesheet" href="css/ventas.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+<style>
+#buscadorPedidos {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#buscadorPedidos:focus {
+    border-color: #55a630;
+    box-shadow: 0 0 5px rgba(85, 166, 48, 0.2);
+    outline: none;
+}
+</style>
+
 <body>
     <div class="dashboard">
          <!-- Logo superior derecho -->
@@ -65,28 +85,40 @@
                 <div id="mensajeError" class="mensaje error"></div>
             </div>
 
-            <!-- Sección Ver Pedidos -->
-            <div id="vistaPedidos" class="seccion" style="display:none;">
-                <h2>Pedidos Registrados</h2>
-                <div class="table-wrapper">
-                    <table id="tablaPedidos">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Material</th>
-                                <th>Proveedor</th>
-                                <th>Cantidad</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
+           <!-- Sección Ver Pedidos -->
+<div id="vistaPedidos" class="seccion" style="display:none;">
+
+    <h2>Pedidos Registrados</h2>
+
+    <!-- BUSCADOR -->
+    <input 
+        type="text" 
+        id="buscadorPedidos" 
+        placeholder="Buscar pedido..."
+    >
+
+    <div class="table-wrapper">
+        <table id="tablaPedidos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Material</th>
+                    <th>Proveedor</th>
+                    <th>Cantidad (kg)</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</div>
         </main>
     </div>
     <!-- Cargar EmailJS v3 en navegador -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
   // Inicializar EmailJS
   emailjs.init("-HiKvbHc9IPjCjerU"); // Tu public key
@@ -109,5 +141,16 @@
             mostrarSeccion('pedidoMP'); // Mostrar sección inicial
         });
     </script>
+    <script>
+document.getElementById("buscadorPedidos").addEventListener("input", function () {
+    const filtro = this.value.toLowerCase();
+    const filas = document.querySelectorAll("#tablaPedidos tbody tr");
+
+    filas.forEach(fila => {
+        const textoFila = fila.textContent.toLowerCase();
+        fila.style.display = textoFila.includes(filtro) ? "" : "none";
+    });
+});
+</script>
 </body>
 </html>

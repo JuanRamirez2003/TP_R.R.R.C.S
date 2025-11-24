@@ -98,7 +98,6 @@ function renderAlertas(alertas) {
       </div>
       <div class="alerta-info">
         <p><b>Producto:</b> ${alerta.producto}</p>
-        <p><b>Motivo:</b> ${alerta.motivo}</p>
         <p><b>Fecha estimada:</b> ${new Date(alerta.fecha).toLocaleDateString()}</p>
         <p><b>Estado:</b> ${alerta.estadoFecha}</p>
       </div>
@@ -140,6 +139,10 @@ function aplicarFiltros() {
 // ================== Eventos ==================
 document.getElementById("buscador").addEventListener("input", aplicarFiltros);
 document.getElementById("filtro-estado").addEventListener("change", aplicarFiltros);
-
+document.getElementById("btnVolver").addEventListener("click", () => {
+  window.location.href = "supervisor.html";
+});
 // ================== Iniciar ==================
 cargarAlertas();
+
+
