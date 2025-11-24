@@ -6,164 +6,189 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     /* ===========================
-       PANEL DE ALERTAS - ESTILO OSCURO
-       =========================== */
-    body {
-      background-color: #0a0a0a;
-      color: #c8ffc8;
-      font-family: "Segoe UI", sans-serif;
-      margin: 0;
-      padding-top: 120px; /* espacio para la barra fija */
-    }
+   PANEL DE ALERTAS - DARK UI
+   =========================== */
+body {
+  background-color: #121212;
+  color: #e0e0e0;
+  font-family: "Roboto", sans-serif;
+  margin: 0;
+  padding-top: 120px;
+}
 
-    /* ---------- ENCABEZADO FIJO ---------- */
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background-color: #0f2f0f;
-      border-bottom: 2px solid #00ff80;
-      box-shadow: 0 0 15px rgba(0, 255, 128, 0.4);
-      z-index: 100;
-      padding: 15px 20px;
-    }
+/* ---------- ENCABEZADO FIJO ---------- */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #1e1e1e;
+  border-bottom: 2px solid #55a630;
+  box-shadow: 0 0 10px rgba(85, 166, 48, 0.25);
+  z-index: 100;
+  padding: 15px 20px;
+}
 
-    header h2 {
-      color: #00ff80;
-      font-size: 1.8rem;
-      text-shadow: 0 0 8px #00ff80;
-      text-align: center;
-      margin: 0 0 10px 0;
-    }
+header h2 {
+  color: #ffffff;
+  font-size: 1.7rem;
+  text-align: center;
+  margin: 0 0 10px 0;
+  font-weight: 500;
+}
 
-    .filtros {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
+/* ---------- FILTROS ---------- */
+.filtros {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
-    .filtros input,
-    .filtros select {
-      background-color: #101b10;
-      color: #a0ffa0;
-      border: 1px solid #00ff80;
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 1rem;
-      outline: none;
-      transition: box-shadow 0.2s ease, background 0.2s ease;
-    }
+.filtros input,
+.filtros select {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
 
-    .filtros input::placeholder {
-      color: #66cc66;
-    }
+.filtros input::placeholder {
+  color: #bdbdbd;
+}
 
-    .filtros input:focus,
-    .filtros select:focus {
-      box-shadow: 0 0 8px #00ff80;
-      background-color: #122812;
-    }
+.filtros input:focus,
+.filtros select:focus {
+  border-color: #55a630;
+  box-shadow: 0 0 5px rgba(85, 166, 48, 0.25);
+  outline: none;
+}
 
-    /* ---------- Contenido ---------- */
-    #contador-alertas {
-      text-align: center;
-      color: #88ff88;
-      font-size: 1.1rem;
-      margin-top: 10px;
-    }
+/* ---------- Contador ---------- */
+#contador-alertas {
+  text-align: center;
+  color: #bdbdbd;
+  font-size: 1.1rem;
+  margin-top: 10px;
+}
 
-    .alertas-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 15px;
-      margin: 20px;
-    }
+/* ---------- GRID ---------- */
+.alertas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+  margin: 20px;
+}
 
-    /* ---------- Tarjetas ---------- */
-    .alerta {
-      background-color: #101b10;
-      border-left: 6px solid;
-      border-radius: 8px;
-      padding: 15px;
-      box-shadow: 0 0 10px rgba(0, 255, 128, 0.1);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
+/* ---------- TARJETA DE ALERTA ---------- */
+.alerta {
+  background-color: #1e1e1e;
+  border-left: 6px solid;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
-    .alerta:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 15px rgba(0, 255, 128, 0.3);
-    }
+.alerta:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+}
 
-    /* ---------- Colores según urgencia ---------- */
-    .alerta.baja {
-      border-color: #00ff80;
-    }
+/* ---------- COLORES DE ESTADOS ---------- */
+.alerta.baja {
+  border-color: #55a630;
+}
 
-    .alerta.media {
-      border-color: #ffaa00;
-      color: #fff4c2;
-    }
+.alerta.media {
+  border-color: #ffaa00;
+}
 
-    .alerta.alta {
-      border-color: #ff4444;
-      color: #ffcccc;
-    }
+.alerta.alta {
+  border-color: #dc3545;
+}
 
-    /* ---------- Responsividad ---------- */
-    @media (max-width: 600px) {
-      header h2 {
-        font-size: 1.4rem;
-      }
-
-      .filtros {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .filtros input,
-      .filtros select {
-        width: 90%;
-      }
-
-      body {
-        padding-top: 150px;
-      }
-      .alerta-header {
+/* ---------- HEADER DE ALERTA ---------- */
+.alerta-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   font-size: 1.1rem;
-  margin-bottom: 6px;
-  color: #a0ffa0;
+  margin-bottom: 8px;
+  color: #ffffff;
 }
 
 .alerta .estado {
   font-size: 0.85rem;
-  background: rgba(0, 255, 128, 0.15);
-  border: 1px solid #00ff80;
-  border-radius: 4px;
+  border-radius: 5px;
   padding: 2px 6px;
   text-transform: uppercase;
+  font-weight: 500;
 }
 
-.alerta-info p {
-  margin: 4px 0;
-  font-size: 0.95rem;
-  color: #ccffcc;
-}
-
-.alerta.alta .estado {
-  border-color: #ff4444;
-  background: rgba(255, 68, 68, 0.2);
+.alerta.baja .estado {
+  background: rgba(85,166,48,0.2);
+  border: 1px solid #55a630;
+  color: #a8ffb0;
 }
 
 .alerta.media .estado {
-  border-color: #ffaa00;
-  background: rgba(255, 170, 0, 0.2);
+  background: rgba(255,170,0,0.2);
+  border: 1px solid #ffaa00;
+  color: #ffe4b3;
 }
-    }
+
+.alerta.alta .estado {
+  background: rgba(220,53,69,0.2);
+  border: 1px solid #dc3545;
+  color: #ffb4b4;
+}
+
+/* ---------- INFO ---------- */
+.alerta-info p {
+  margin: 4px 0;
+  font-size: 0.95rem;
+  color: #cfcfcf;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 600px) {
+  header h2 {
+    font-size: 1.4rem;
+  }
+  .filtros {
+    flex-direction: column;
+    align-items: center;
+  }
+  .filtros input,
+  .filtros select {
+    width: 90%;
+  }
+  body {
+    padding-top: 150px;
+  }
+}
+.btn-volver {
+  position: fixed;
+  top: 15px;
+  left: 20px;
+  padding: 10px 18px;
+  background-color: #333;
+  border: 1px solid #555;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #e0e0e0;
+  cursor: pointer;
+  z-index: 9999;
+  transition: background 0.3s ease;
+}
+
+.btn-volver:hover {
+  background-color: #444;
+}
+
   </style>
 </head>
 
@@ -187,6 +212,7 @@
   </header>
 
   <h3 id="contador-alertas"></h3>
+  <button id="btnVolver" class="btn-volver">⬅️ Volver</button>
   <div id="contenedor-alertas" class="alertas-grid"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
