@@ -1,59 +1,56 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Crear Materia Prima</title>
   <link rel="stylesheet" href="css/crearMP.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+
 <body>
 
   <div class="container">
-    <h1>📦 Gestión de Materias Primas</h1>
+    <h1>Gestión de Materias Primas</h1>
 
-    <!-- Botón para abrir modal -->
-    <button id="btnAbrirModal" class="btn-primary">🧾 Registrar Materia Prima</button>
-    <button onclick="window.location.href='supervisor.html'" class="btn-primary">Volver</button>
+    <div class="acciones-superior">
+      <button id="btnAbrirModal" class="btn-principal">Registrar Materia Prima</button>
+      <button class="btn-volver" onclick="window.location.href='supervisor.html'">← Volver</button>
+    </div>
 
     <p id="mensaje"></p>
 
-    <!-- 📋 LISTADO DE MATERIALES REGISTRADOS -->
-    <h2>📋 Materiales Registrados</h2>
-
-    <input 
-      type="text" 
-      id="buscarMaterial" 
-      placeholder="🔍 Buscar material por nombre, unidad, tipo o proveedor..." 
-      class="buscar-input"
-    />
+    <input type="text" id="buscarMaterial" placeholder="🔍 Buscar material por nombre, unidad, tipo o proveedor..."
+      class="buscar-input" />
 
     <table id="tablaMateriales" class="tabla-materiales">
-  <thead>
-    <tr>
-      <th>Nombre</th>
-      <th>Descripción</th>
-      <th>Peso</th>
-      <th>Tipo</th>
-      <th>Stock Total</th>
-      <th>Stock Mínimo</th>
-      <th>Proveedor Principal</th>
-      <th>Proveedor Secundario</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody id="tbodyMateriales">
-    <!-- Se genera dinámicamente desde JS -->
-  </tbody>
-</table>
-
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Peso</th>
+          <th>Tipo</th>
+          <th>Stock Total</th>
+          <th>Stock Mínimo</th>
+          <th>Proveedor Principal</th>
+          <th>Proveedor Secundario</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyMateriales">
+        <!-- Se llena desde JS -->
+      </tbody>
+    </table>
   </div>
+
 
   <!-- MODAL FORMULARIO -->
   <div class="modal" id="modalForm">
     <div class="modal-content">
       <span class="close" id="btnCerrarModal">&times;</span>
-      <h2>🧾 Registrar Nueva Materia Prima</h2>
+      <h2>Registrar Nueva Materia Prima</h2>
 
       <form id="formMp" class="form-grid">
         <div class="form-group">
@@ -88,8 +85,18 @@
           </select>
         </div>
 
-        <button type="submit" id="btnGuardar" class="btn-guardar">💾 Guardar</button>
+        <button type="submit" id="btnGuardar" class="btn-guardar">Guardar</button>
       </form>
+    </div>
+  </div>
+  <div id="modalConfirmDelete" class="modal-confirm">
+    <div class="modal-content-confirm">
+      <p id="mensajeConfirm"></p>
+      <div class="modal-buttons-confirm">
+        <button class="btn-eliminar-confirm">Eliminar</button>
+        <button class="btn-cancelar">Cancelar</button>
+
+      </div>
     </div>
   </div>
 
@@ -107,4 +114,5 @@
     });
   </script>
 </body>
+
 </html>

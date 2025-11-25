@@ -72,18 +72,32 @@ function validarFormulario() {
 }
 
 function mostrarError(texto, campo) {
-  mensaje.textContent = "❌ " + texto;
-  mensaje.style.color = "red";
-  if (campo) campo.focus();
+  Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: texto,
+    confirmButtonColor: "#dc3545",
+    background: "#1e1e1e",
+    color: "#e0e0e0"
+  }).then(() => {
+    if (campo) campo.focus();
+  });
 }
+
 
 // ==================== GUARDAR / EDITAR MATERIAL ====================
 formMp.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!validarFormulario()) return;
 
-  mensaje.textContent = "⏳ Guardando...";
-  mensaje.style.color = "blue";
+  Swal.fire({
+    title: "Guardando...",
+    text: "Procesando la información",
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading(),
+    background: "#1e1e1e",
+    color: "#e0e0e0"
+  });
 
   const material = {
     nombre: nombre.value.trim(),
@@ -100,23 +114,42 @@ formMp.addEventListener("submit", async (e) => {
 
   try {
     if (formMp.dataset.editId) {
-      // Editar
       await supabaseClient.from("materiales").update(material).eq("id_mp", formMp.dataset.editId);
       delete formMp.dataset.editId;
-      mensaje.textContent = "✅ Actualizado correctamente";
+
+      Swal.fire({
+        icon: "success",
+        title: "Actualizado",
+        text: "El material fue actualizado correctamente",
+        timer: 2000,
+        showConfirmButton: false,
+        background: "#1e1e1e",
+        color: "#e0e0e0"
+      });
+
     } else {
-      // Nuevo
       await supabaseClient.from("materiales").insert([material]);
-      mensaje.textContent = "✅ Guardado correctamente";
+
+      Swal.fire({
+        icon: "success",
+        title: "Guardado",
+        text: "El material fue guardado correctamente",
+        timer: 2000,
+        showConfirmButton: false,
+        background: "#1e1e1e",
+        color: "#e0e0e0"
+      });
     }
-    mensaje.style.color = "green";
-    formMp.reset();
+
     modal.style.display = "none";
+    formMp.reset();
     cargarMateriales();
+
   } catch (err) {
     mostrarError("Error: " + err.message);
   }
 });
+
 
 // ==================== CARGAR MATERIALES ====================
 async function cargarMateriales() {
@@ -142,8 +175,8 @@ function mostrarMateriales(materiales) {
       <td>${proveedoresCache[mat.id_proveedor] || mat.id_proveedor || "-"}</td>
       <td>${proveedoresCache[mat.id_proveedorsec] || mat.id_proveedorsec || "-"}</td>
       <td>
-        <button onclick="editarMaterial(${mat.id_mp})">✏️ Editar</button>
-        <button onclick="eliminarMaterial(${mat.id_mp}, '${mat.nombre}')">🗑️ Eliminar</button>
+        <button class="btn-edit" onclick="editarMaterial(${mat.id_mp})">Editar</button>
+        <button class="btn-delete" onclick="eliminarMaterial(${mat.id_mp}, '${mat.nombre}')">Eliminar</button>
       </td>
     </tr>
   `).join("");
@@ -152,7 +185,16 @@ function mostrarMateriales(materiales) {
 // ==================== EDITAR / ELIMINAR ====================
 window.editarMaterial = async function(id) {
   const { data, error } = await supabaseClient.from("materiales").select("*").eq("id_mp", id).single();
-  if (error) return alert("Error al obtener material: " + error.message);
+  if (error) {
+    return Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudo cargar el material",
+      confirmButtonColor: "#dc3545",
+      background: "#1e1e1e",
+      color: "#e0e0e0"
+    });
+  }
 
   modal.style.display = "flex";
   nombre.value = data.nombre;
@@ -162,14 +204,51 @@ window.editarMaterial = async function(id) {
   proveedorSelect.value = data.id_proveedor || "";
   proveedorSecSelect.value = data.id_proveedorsec || "";
   formMp.dataset.editId = id;
-}
+};
 
-window.eliminarMaterial = async function(id, nombre) {
-  if (!confirm(`¿Seguro quieres eliminar "${nombre}"?`)) return;
+
+window.eliminarMaterial = async function (id, nombre) {
+  const resultado = await Swal.fire({
+    title: `¿Eliminar "${nombre}"?`,
+    text: "Esta acción no se puede deshacer.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Eliminar",
+    cancelButtonText: "Cancelar",
+    reverseButtons: true,
+    confirmButtonColor: "#28a745", // Verde
+    cancelButtonColor: "#dc3545", // Rojo
+    background: "#1e1e1e",
+    color: "#e0e0e0"
+  });
+    if (!resultado.isConfirmed) return;
+
   const { error } = await supabaseClient.from("materiales").delete().eq("id_mp", id);
-  if (error) return alert("Error al eliminar: " + error.message);
+
+  if (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: error.message,
+      confirmButtonColor: "#dc3545",
+      background: "#1e1e1e",
+      color: "#e0e0e0"
+    });
+    return;
+  }
+
+  Swal.fire({
+    icon: "success",
+    title: "Eliminado",
+    text: `"${nombre}" fue eliminado correctamente.`,
+    timer: 2000,
+    showConfirmButton: false,
+    background: "#1e1e1e",
+    color: "#e0e0e0"
+  });
+
   cargarMateriales();
-}
+};
 
 // ==================== BUSCADOR ====================
 buscarInput.addEventListener("input", function () {

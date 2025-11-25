@@ -1,181 +1,300 @@
-/* ====== ESTILO GENERAL ====== */
+/* === ESTILO GENERAL === */
 body {
-  font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #eef0f4;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
 }
 
 .container {
-  width: 90%;
-  max-width: 1000px;
-  margin: 40px auto;
-  background: white;
-  padding: 25px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  max-width: 1200px;
+  margin: 30px auto;
+  background-color: #1e1e1e;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
 }
 
-h1, h2 {
+h1 {
   text-align: center;
-  color: #333;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  color: #55a630;
+  font-weight: 600;
 }
 
-/* ====== BUSCADOR ====== */
-#buscarMaterial {
+/* === BUSCADOR === */
+.buscar-input {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
   margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  font-size: 14px;
 }
 
-/* ====== BOTONES ====== */
-button.btn-primary {
-  background: #007bff;
-  color: white;
-  padding: 10px 18px;
+/* === BOTONES PRINCIPALES === */
+button,
+.btn-principal,
+.btn-volver {
   border: none;
-  border-radius: 4px;
+  padding: 10px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  margin-bottom: 15px;
-  display: inline-block;
+  transition: 0.3s;
+  font-weight: bold;
+  font-size: 14px;
 }
 
-button.btn-primary:hover {
-  background: #0056b3;
+.btn-principal,
+.btn-volver {
+  background-color: #55a630;
+  color: #121212;
 }
 
-button.btn-guardar {
-  background: #28a745;
+.btn-principal:hover,
+.btn-volver:hover {
+  background-color: #4a8c2a;
   color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
 }
 
-button.btn-guardar:hover {
-  background: #1e7e34;
-}
-
-/* ====== TABLA ====== */
-table {
+/* === TABLA === */
+.tabla-materiales {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  font-size: 14px;
+  background-color: #2a2a2a;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-table, th, td {
-  border: 1px solid #ddd;
-}
-
-th {
-  background: #f7f7f7;
-  font-weight: bold;
-  color: #333;
-}
-
-th, td {
+.tabla-materiales th,
+.tabla-materiales td {
   padding: 10px;
-  text-align: left;
+  text-align: center;
+  border-bottom: 1px solid #333;
+  color: #e0e0e0;
 }
 
-tr:hover {
-  background-color: #f1f1f1;
+.tabla-materiales th {
+  background-color: #1e1e1e;
+  font-weight: 600;
 }
 
-/* ====== MENSAJES ====== */
-#mensaje {
-  margin-top: 10px;
+.tabla-materiales tr:hover {
+  background-color: #3e3e3e;
+}
+
+/* === BOTONES DE ACCIONES === */
+.btn-edit {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
   font-weight: bold;
 }
+.btn-edit:hover { background-color: #0056b3; }
 
-/* ====== MODAL ====== */
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+.btn-delete:hover { background-color: #a71d2a; }
+
+/* === MODAL DE EDICIÓN === */
 .modal {
   display: none;
   position: fixed;
-  z-index: 10;
+  z-index: 9999;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.6);
+  background-color: rgba(0,0,0,0.75);
   justify-content: center;
   align-items: center;
-}
-
-.modal-content {
-  background: white;
-  padding: 25px;
-  width: 450px;
-  max-width: 90%;
-  border-radius: 8px;
-  position: relative;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
   animation: fadeIn 0.3s ease-in-out;
 }
 
+.modal-content {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  padding: 25px 35px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 0 25px rgba(85, 166, 48, 0.4);
+  animation: scaleUp 0.3s ease-in-out;
+}
+
 .close {
-  position: absolute;
-  right: 12px;
-  top: 10px;
+  float: right;
+  font-size: 24px;
   cursor: pointer;
-  font-size: 22px;
-  color: #333;
+  color: #aaa;
 }
+.close:hover { color: #fff; }
 
-.close:hover {
-  color: #000;
-}
-
-/* ====== FORMULARIO INTERNO ====== */
-#formMp input,
-#formMp select,
-#formMp textarea {
+/* === MODAL DE CONFIRMACIÓN === */
+/* === MODAL DE CONFIRMACIÓN ELIMINAR (FRONTEND FINAL) === */
+.modal-confirm {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  top: 0;
+  left: 0;
   width: 100%;
-  padding: 8px;
+  height: 100%;
+  background-color: rgba(0,0,0,0.75);
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-confirm-content {
+  background-color: #1e1e1e;
+  color: white;
+  padding: 35px 45px;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 430px;
+  text-align: center;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.15);
+  animation: scaleUp 0.3s ease-in-out;
+  border: 1px solid #444;
+}
+
+.modal-confirm-content h3 {
+  font-size: 18px;
+  margin-bottom: 25px;
+  font-weight: 600;
+  color: #f1f1f1;
+}
+
+/* === BOTÓN CONFIRMAR (ELIMINAR) — VERDE === */
+.btn-confirmar,
+.btn-eliminar-confirm {
+  background-color: #28a745 !important;
+  color: white !important;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-right: 10px;
+  transition: 0.3s ease;
+}
+.btn-confirmar:hover,
+.btn-eliminar-confirm:hover {
+  background-color: #218838 !important;
+}
+
+/* === BOTÓN CANCELAR — ROJO === */
+.btn-cancelar-modal,
+.btn-cancelar {
+  background-color: #dc3545 !important;
+  color: white !important;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s ease;
+}
+.btn-cancelar-modal:hover,
+.btn-cancelar:hover {
+  background-color: #a71d2a !important;
+}
+
+
+
+/* === FORMULARIO === */
+.form-group {
   margin-bottom: 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 5px;
+  color: #bbb;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  transition: 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #55a630;
+  box-shadow: 0 0 5px rgba(85, 166, 48, 0.3);
+}
+
+/* === ALERTAS (tipo lote_mp.css) === */
+.alert {
+  padding: 12px 18px;
+  border-radius: 6px;
   font-size: 14px;
+  font-weight: 600;
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  animation: fadeIn 0.3s ease-in-out;
 }
 
-/* Animación modal */
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
+.alert-success { background-color: #4a8c2a; color: #fff; }
+.alert-error   { background-color: #dc3545; color: #fff; }
+.alert-warning { background-color: #b58900; color: #fff; }
+.alert-info    { background-color: #007bff; color: #fff; }
 
-
-/* ====== BOTONES DE ACCIONES ====== */
-.tabla-materiales button {
-  padding: 5px 10px;
-  margin: 2px;
+/* === BOTÓN GUARDAR === */
+.btn-guardar {
+  background-color: #28a745;
+  color: white;
+  padding: 8px 14px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  transition: 0.2s;
+  font-weight: bold;
+  text-transform: capitalize;
+  transition: 0.3s;
+}
+.btn-guardar:hover { background-color: #218838; }
+
+/* === ANIMACIONES === */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Botón Editar */
-.tabla-materiales button:nth-child(1) {
-  background-color: #ffc107; /* amarillo */
-  color: #212529;
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-.tabla-materiales button:nth-child(1):hover {
-  background-color: #e0a800;
-}
-
-/* Botón Eliminar */
-.tabla-materiales button:nth-child(2) {
-  background-color: #dc3545; /* rojo */
-  color: white;
-}
-
-.tabla-materiales button:nth-child(2):hover {
-  background-color: #c82333;
+@keyframes fadeInAlert {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }
