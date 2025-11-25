@@ -260,13 +260,13 @@
 #logoEmpresa {
   position: fixed;
   top: 15px;
-  right: 20px;
+  left: 20px;          /* Cambiado de right a left */
   width: 100px;
   height: auto;
-  background-color: white;      /* Fondo claro detrás */
-  border-radius: 12px;          /* Esquinas redondeadas */
-  padding: 6px;                 /* Espaciado interno */
-  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+  background: none;    /* Sin fondo */
+  padding: 0;          /* Sin relleno */
+  border-radius: 0;    /* Ya no hace falta */
+  box-shadow: none;    /* Sin sombra */
   z-index: 10000;
   transition: transform 0.2s ease-in-out;
 }

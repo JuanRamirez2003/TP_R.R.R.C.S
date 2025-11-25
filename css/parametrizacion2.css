@@ -496,3 +496,19 @@ tr:hover {
   height: auto;
  
 }
+#logoEmpresa {
+  position: fixed;
+  top: 10px;          /* Margen superior */
+  left: 10px;         /* Arriba a la izquierda */
+  width: 150px;       /* Más grande */
+  height: auto;
+  background: none;
+  padding: 0;
+  box-shadow: none;
+  z-index: 10000;
+  transition: transform 0.2s ease-in-out;
+}
+
+#logoEmpresa:hover {
+  transform: scale(1.08); /* Efecto suave */
+}

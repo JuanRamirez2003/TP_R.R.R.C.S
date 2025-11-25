@@ -101,13 +101,29 @@
 #modalDividirOP .btn-cerrar:hover {
     background-color: #3e3e3e;
 }
+#logoEmpresa {
+  position: relative;
+  display: block;
+  margin: 30px auto 0 auto; /* Centrado arriba */
+  width: 150px;
+  height: auto;
 
+  background: none;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+#logoEmpresa:hover {
+  transform: scale(1.06);
+}
   </style>
 </head>
+  <!-- Logo -->
+  <img src="LOGOPNG.png" alt="Logo de la empresa" id="logoEmpresa">
 
 <body>
-  <!-- Logo -->
-  <img src="logo.png" alt="Logo de la empresa" id="logoEmpresa">
+
 
   <div class="main-content">
     <h2>Planificación Semanal de Producción</h2>
@@ -377,6 +393,7 @@
       }
     });
   </script>
+  
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/autoPlanificacionDivicion.js"></script>

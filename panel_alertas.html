@@ -188,15 +188,28 @@ header h2 {
 .btn-volver:hover {
   background-color: #444;
 }
+/* LOGO DENTRO DEL ENCABEZADO */
+#logoEmpresa {
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);  /* Lo centra verticalmente dentro del header */
+  height: 60px;                 /* Ajustá el tamaño a gusto */
+  width: auto;
+  cursor: pointer;
+}
 
   </style>
 </head>
 
 
 <body>
+    
   
   <header>
     <h2>⚠️ Panel de Alertas</h2>
+    <!-- Logo superior derecho -->
+        <img src="LOGOPNG.png" alt="Logo de la empresa" id="logoEmpresa">
     <div class="filtros">
       <input 
         type="text" 
