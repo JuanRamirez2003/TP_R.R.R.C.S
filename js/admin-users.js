@@ -101,7 +101,7 @@ async function guardarEdicion() {
       return;
     }
 
-    const areasValidas = ["Ventas", "Recursos Humanos", "TI", "Operario", "Supervisor", "Gerente General"];
+    const areasValidas = ["Ventas", "Recursos Humanos", "TI", "Operario", "Supervisor", "Gerente General","Deposito","Atencion al Cliente"];
     if (!areasValidas.includes(area)) {
       mensajeModal.textContent = 'Área de trabajo inválida';
       return;
