@@ -96,21 +96,23 @@ document.getElementById("clienteForm").addEventListener("submit", async function
   //const estado = document.getElementById("estado").value;
 
   // ============ VALIDACIONES ============
-  if (!nombre) return mostrarError("El nombre es obligatorio");
-  if (!tipo_cliente) return mostrarError("Debe seleccionar el tipo de cliente");
+  if (!nombre){resetBotonGuardar();  return mostrarError("El nombre es obligatorio");}
+  if (!tipo_cliente){resetBotonGuardar();  return mostrarError("Debe seleccionar el tipo de cliente");}
 
   if (tipo_cliente === "consumidor final" && !validarDNI(dni_cuil)) {
+    resetBotonGuardar();
     return mostrarError("Formato incorrecto de DNI. Ej: 12345678");
   }
 
   if (tipo_cliente === "comercial" && !validarCUIL(dni_cuil)) {
+    resetBotonGuardar();
     return mostrarError("Formato incorrecto de CUIL. Ej: 20-12345678-3");
   }
 
-  if (!pref_cont) return mostrarError("Debe seleccionar la preferencia de contacto");
-  if (!validarEmail(email)) return mostrarError("El email no tiene un formato válido");
-  if (!validarTelefono(telefono)) return mostrarError("Formato incorrecto de teléfono. Solo números, Ej: 1123456789");
-  if (!direccionEsValida(direccion)) return mostrarError("Debe seleccionar una dirección de la lista de direcciones validadas");
+  if (!pref_cont) {resetBotonGuardar(); return mostrarError("Debe seleccionar la preferencia de contacto");}
+  if (!validarEmail(email)) {resetBotonGuardar();return mostrarError("El email no tiene un formato válido");}
+  if (!validarTelefono(telefono)){resetBotonGuardar(); return mostrarError("Formato incorrecto de teléfono. Solo números, Ej: 1123456789");}
+  if (!direccionEsValida(direccion)){resetBotonGuardar(); return mostrarError("Debe seleccionar una dirección de la lista de direcciones validadas");}
 
   try {
     // ============ VERIFICAR DUPLICADOS ============
@@ -122,11 +124,14 @@ document.getElementById("clienteForm").addEventListener("submit", async function
 
     // Permite que el mismo cliente mantenga su DNI/CUIL
     if (existente && Number(id_cliente) !== existente.id_cliente) {
+      resetBotonGuardar();
       throw new Error("Ya existe un cliente con ese DNI/CUIL");
+      
     }
 
     const currentUserId = localStorage.getItem("currentUserId");
     if (!currentUserId) {
+      resetBotonGuardar();
       mostrarError("No se pudo identificar al usuario para auditoría");
       return;
     }
@@ -169,6 +174,7 @@ document.getElementById("clienteForm").addEventListener("submit", async function
 
   } catch (err) {
     console.error("Error:", err);
+    resetBotonGuardar();
     mostrarError(err.message || "Error al procesar el cliente");
   }
 });
@@ -223,6 +229,7 @@ async function editarCliente(dni) {
     boton.disabled = false;
     boton.textContent = "Guardar";
   } catch (err) {
+    //resetBotonGuardar();
     console.error(err);
     mostrarError('Error al cargar datos del cliente');
   }
