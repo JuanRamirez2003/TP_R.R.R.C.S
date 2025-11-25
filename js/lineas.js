@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("formGestionProducto").addEventListener("submit", guardarProducto);
 });
 
+/* === CARGAR LÍNEAS === */
 async function cargarLineas() {
   try {
     const { data: lineas, error } = await supabaseClient
@@ -62,7 +63,11 @@ async function cargarLineas() {
     }
   } catch (err) {
     console.error(err);
-    alert("❌ Error al cargar líneas.");
+    Swal.fire({
+      icon: "error",
+      title: "Error al cargar líneas",
+      text: "No se pudieron cargar los datos.",
+    });
   }
 }
 
@@ -81,15 +86,33 @@ async function guardarLinea(e) {
   const descripcion = document.getElementById("descripcionLinea").value.trim();
   const capacidad = parseFloat(document.getElementById("capacidadLinea").value);
 
-  if (!codigo || !descripcion || isNaN(capacidad))
-    return alert("⚠️ Complete los campos correctamente.");
+  if (!codigo || !descripcion || isNaN(capacidad)) {
+    return Swal.fire({
+      icon: "warning",
+      title: "Campos incompletos",
+      text: "Por favor, complete todos los datos.",
+    });
+  }
 
   const { error } = await supabaseClient
     .from("linea_productos")
     .insert([{ codigo_linea: codigo, descripcion, capacidad_teorica: capacidad, estado: "Activa" }]);
 
-  if (error) return alert("❌ Error al agregar línea.");
-  alert("✅ Línea agregada.");
+  if (error) {
+    return Swal.fire({
+      icon: "error",
+      title: "Error al agregar",
+      text: "No se pudo guardar la línea.",
+    });
+  }
+
+  Swal.fire({
+    icon: "success",
+    title: "Línea agregada",
+    showConfirmButton: false,
+    timer: 1400
+  });
+
   cerrarModalAgregar();
   cargarLineas();
 }
@@ -110,6 +133,7 @@ function cerrarModalEditar() {
   document.getElementById("modalEditar").style.display = "none";
 }
 
+/* === EDITAR LÍNEA === */
 async function actualizarLinea(e) {
   e.preventDefault();
   const id = parseInt(document.getElementById("editarIdLinea").value);
@@ -123,17 +147,69 @@ async function actualizarLinea(e) {
     .update({ codigo_linea: codigo, descripcion, capacidad_teorica: capacidad, estado })
     .eq("id_linea", id);
 
-  if (error) return alert("❌ Error al actualizar línea.");
-  alert("✅ Línea actualizada.");
+  if (error) {
+    return Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudo actualizar la línea.",
+    });
+  }
+
+  Swal.fire({
+    icon: "success",
+    title: "Línea actualizada",
+    timer: 1500,
+    showConfirmButton: false
+  });
+
   cerrarModalEditar();
   cargarLineas();
 }
 
-/* === ELIMINAR LÍNEA === */
-function abrirModalEliminar(id) {
-  idEliminar = id;
-  document.getElementById("modalConfirmar").style.display = "flex";
+/* === CONFIRMACIÓN DE ELIMINAR === */
+async function abrirModalEliminar(id) {
+  const confirmacion = await Swal.fire({
+    title: "¿Eliminar línea?",
+    text: "Esta acción no se puede deshacer.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6c757d",
+  });
+
+  if (confirmacion.isConfirmed) {
+    idEliminar = id;
+    eliminarLineaConfirmado();
+  }
 }
+
+/* === ELIMINAR DEFINITIVO === */
+async function eliminarLineaConfirmado() {
+  const { error } = await supabaseClient
+    .from("linea_productos")
+    .delete()
+    .eq("id_linea", idEliminar);
+
+  if (error) {
+    return Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudo eliminar la línea.",
+    });
+  }
+
+  Swal.fire({
+    icon: "success",
+    title: "Línea eliminada",
+    showConfirmButton: false,
+    timer: 1400
+  });
+
+  cargarLineas();
+}
+
 function cerrarModalEliminar() {
   idEliminar = null;
   document.getElementById("modalConfirmar").style.display = "none";
@@ -142,7 +218,7 @@ async function eliminarLineaConfirmado() {
   if (!idEliminar) return;
   const { error } = await supabaseClient.from("linea_productos").delete().eq("id_linea", idEliminar);
   if (error) return alert("❌ Error al eliminar línea.");
-  alert("❌ Línea eliminada.");
+  alert(" Línea eliminada.");
   cerrarModalEliminar();
   cargarLineas();
 }
@@ -216,6 +292,7 @@ function abrirModalAgregarProducto() {
   document.getElementById("modalGestionProducto").style.display = "flex";
 }
 
+/* === VALIDACIONES EN GUARDAR PRODUCTO === */
 async function guardarProducto(e) {
   e.preventDefault();
   const idEditar = document.getElementById("idProductoEditar").value;
@@ -225,19 +302,24 @@ async function guardarProducto(e) {
   const stock = parseInt(document.getElementById("stockProducto").value);
   const estado = document.getElementById("estadoProducto").value;
 
-  if (!nombre || isNaN(precio) || isNaN(stock))
-    return alert("⚠️ Complete todos los campos correctamente.");
+  if (!nombre || isNaN(precio) || isNaN(stock)) {
+    return Swal.fire({
+      icon: "warning",
+      title: "Campos incompletos",
+      text: "Complete todos los datos correctamente.",
+    });
+  }
 
   if (idEditar) {
     await supabaseClient.from("productos").update({ nombre, precio_unitario: precio, stock, estado }).eq("id_producto", idEditar);
-    alert("✅ Producto actualizado.");
+    Swal.fire({ icon: "success", title: "Producto actualizado", timer: 1400, showConfirmButton: false });
   } else {
     await supabaseClient.from("productos").insert([{ nombre, precio_unitario: precio, stock, estado, id_linea: idLinea }]);
-    alert("✅ Producto agregado.");
+    Swal.fire({ icon: "success", title: "Producto agregado", timer: 1400, showConfirmButton: false });
   }
 
   cerrarModalGestionProducto();
-  verProductosLinea(idLinea, descripcionLineaSeleccionada); // ← Corrección
+  verProductosLinea(idLinea, descripcionLineaSeleccionada);
 }
 
 async function editarProducto(idProducto) {
@@ -253,10 +335,41 @@ async function editarProducto(idProducto) {
   document.getElementById("modalGestionProducto").style.display = "flex";
 }
 
+/* === PRODUCTO: ELIMINACIÓN MEJORADA === */
 async function eliminarProducto(idProducto) {
-  if (!confirm("⚠️ ¿Eliminar producto?")) return;
-  await supabaseClient.from("productos").delete().eq("id_producto", idProducto);
-  alert("❌ Producto eliminado.");
+  const confirmacion = await Swal.fire({
+    title: "¿Eliminar producto?",
+    text: "Esta acción no se puede deshacer.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Eliminar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+  });
+
+  if (!confirmacion.isConfirmed) return;
+
+  const { error } = await supabaseClient
+    .from("productos")
+    .delete()
+    .eq("id_producto", idProducto);
+
+  if (error) {
+    return Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudo eliminar el producto.",
+    });
+  }
+
+  Swal.fire({
+    icon: "success",
+    title: "Producto eliminado",
+    timer: 1400,
+    showConfirmButton: false
+  });
+
   verProductosLinea(lineaSeleccionada, document.getElementById("tituloLinea").innerText);
 }
 
