@@ -580,6 +580,15 @@ if (!factErr) {
     } catch (err) {
         console.error("❌ Error finalizando OP:", err);
     }
+    finally {
+    // <<< actualizar UI siempre >>>
+    if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Iniciar';
+    }
+    const stopBtn = document.getElementById(`stop-linea-${n}`);
+    if (stopBtn) stopBtn.remove();
+}
 }
 
 
