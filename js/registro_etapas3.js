@@ -235,7 +235,12 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
     const estadoCont = document.getElementById(`estadoCont-${n}`);
     const estadoText = document.getElementById(`estado-linea-${n}`);
     const opInfo = document.getElementById(`opInfo-${n}`);
-
+    
+    const currentUserId = localStorage.getItem("currentUserId");
+    if (!currentUserId) {
+        mostrarError("No se pudo identificar al usuario para auditoría.");
+        return;
+    }
     try {
 
         const currentUserId = localStorage.getItem("currentUserId");
@@ -329,6 +334,14 @@ async function finalizarLinea(n, opId, opTexto, cant = 1, idPlanificacion = null
                     audit_user_id: currentUserId
                 })
                 .eq('id_orden_produccion', opId);
+
+                await supabaseClient
+                    .from("op_ov")
+                    .update({
+                    linea_produccion: n,
+                    audit_user_id: currentUserId  
+                    })
+                    .eq("id_op", opId);
 
             // Calcular lotes producidos reales
             let totalProducidos = 0;
