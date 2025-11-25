@@ -424,16 +424,25 @@ async function editarProveedor(dni) {
 }
 
 async function bajaProveedor(dni) {
-  if (!confirm('¿Desea dar de baja este proveedor?')) return;
+  // Mostramos confirmación al usuario
+  const confirmado = await mostrarConfirmacion('¿Desea dar de baja este proveedor?');
+  if (!confirmado) return; // Si el usuario cancela, salimos
+
   try {
-    const { error } = await supabaseClient.from('proveedor')
+    const { error } = await supabaseClient
+      .from('proveedor')
       .update({ estado: 'inactivo' })
       .eq('dni_cuil', dni);
+
     if (error) throw error;
+
     listarProveedores();
+
+    mostrarAviso('Proveedor dado de baja con éxito.');
+    
   } catch (err) {
     console.error(err);
-    mostrarAviso('Error al dar de baja el proveedor');
+    mostrarAviso('Error al dar de baja el proveedor.');
   }
 }
 async function cargarMaterialesDeProveedor(idProveedor) {
