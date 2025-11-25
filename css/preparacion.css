@@ -279,3 +279,10 @@ h1 {
   font-weight: bold;
   font-size: 18px; /* podés poner 18px si lo querés aún más grande */
 }
+.logo-sidebar {
+  display: block;
+  margin: 0 auto 15px auto;
+  max-width: 160px;
+  height: auto;
+ 
+}

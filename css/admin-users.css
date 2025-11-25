@@ -467,3 +467,11 @@
     }
 }
 /* MODAL AVISO - SIN USAR <- */
+
+.logo-sidebar {
+  display: block;
+  margin: 0 auto 15px auto;
+  max-width: 160px;
+  height: auto;
+ 
+}
