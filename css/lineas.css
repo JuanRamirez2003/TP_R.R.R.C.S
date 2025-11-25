@@ -277,3 +277,81 @@ tr:hover {
         transform: scale(1);
     }
 }
+/* === INPUTS UNIFICADOS PARA NUEVA LÍNEA, EDITAR LÍNEA Y GESTIONAR PRODUCTO === */
+.modal-content input,
+.modal-content textarea,
+.modal-content select {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    background-color: #2b2b2b;
+    color: #f0f0f0;
+    font-size: 15px;
+    transition: 0.3s ease-in-out;
+}
+
+.modal-content textarea {
+    resize: vertical;
+    min-height: 80px;
+    max-height: 200px;
+}
+
+/* === FOCO PROFESIONAL === */
+.modal-content input:focus,
+.modal-content textarea:focus,
+.modal-content select:focus {
+    border-color: #55a630;
+    box-shadow: 0 0 8px rgba(85,166,48,0.4);
+    outline: none;
+}
+
+/* === LABELS === */
+.modal-content label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #bdbdbd;
+    font-weight: 500;
+}
+
+/* === TITULOS DE MODALES (Todos unificados) === */
+.modal-content h2 {
+    text-align: center;
+    color: #55a630;
+    margin-bottom: 18px;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+}
+
+/* === BOTONES DE FORMULARIOS MEJORADOS === */
+.modal-content .btn-guardar {
+    background-color: #4a8c2a;
+    color: #fff;
+    font-weight: bold;
+    padding: 10px 18px;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+
+.modal-content .btn-guardar:hover {
+    background-color: #55a630;
+}
+
+.modal-content .btn-cancelar {
+    background-color: #dc3545;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+
+.modal-content .btn-cancelar:hover {
+    background-color: #b02a37;
+}
+
+/* === MEJORA DE ESPACIADO ENTRE CAMPOS === */
+.form-group {
+    margin-bottom: 18px;
+}

@@ -388,3 +388,83 @@ button {
   color: #fff;                  /* Texto blanco al hover */
 }
 
+/* === SWEETALERT2 (Alertas de Confirmación / Error) === */
+
+/* Siempre por encima de modales y backdrop */
+.swal2-container {
+    z-index: 500000 !important;
+}
+
+.swal2-popup {
+    z-index: 500001 !important;
+    background-color: #2a2a2a !important; /* Fondo oscuro para integrarse */
+    color: #e0e0e0 !important;
+    border-radius: 10px !important;
+    padding: 25px 30px !important;
+    box-shadow: 0 0 18px rgba(255,255,255,0.15) !important;
+}
+
+/* Botones personalizados, sin dibujitos, limpios */
+.swal2-confirm {
+    background-color: #55a630 !important;
+    color: #000 !important;
+    font-weight: bold;
+    border-radius: 6px !important;
+    padding: 10px 18px !important;
+    border: none !important;
+}
+
+.swal2-confirm:hover {
+    background-color: #4a8c2a !important;
+    color: #fff !important;
+}
+
+.swal2-cancel {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+    font-weight: bold;
+    border-radius: 6px !important;
+    padding: 10px 18px !important;
+    border: none !important;
+}
+
+.swal2-cancel:hover {
+    background-color: #a71d2a !important;
+}
+
+/* Fondo borroso elegante al fondo */
+.swal2-backdrop-show {
+    backdrop-filter: blur(3px);
+}
+
+/* Íconos coherentes con tu diseño oscuro */
+.swal2-icon {
+    border-color: #55a630 !important;
+}
+
+.swal2-icon.swal2-error {
+    border-color: #dc3545 !important;
+    color: #dc3545 !important;
+}
+
+.swal2-icon.swal2-warning {
+    border-color: #e67e22 !important;
+    color: #e67e22 !important;
+}
+
+.swal2-icon.swal2-success {
+    border-color: #55a630 !important;
+    color: #55a630 !important;
+}
+
+/* Texto centrado y responsive */
+.swal2-title {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    color: #fff !important;
+}
+
+.swal2-html-container {
+    font-size: 15px !important;
+    color: #ccc !important;
+}

@@ -239,71 +239,53 @@ function cerrarModalBaja() {
   document.getElementById("modalBaja").style.display = "none";
 }
 
-/* Confirmar baja (VERSIÓN CORREGIDA) */
+/* Confirmar baja */
 async function confirmarBaja() {
   try {
     const idLote = Number(document.getElementById("bajaIdLote").value);
     const cantidadBaja = parseFloat(document.getElementById("bajaCantidad").value);
     const motivo = document.getElementById("bajaMotivo").value.trim();
 
-    if (isNaN(cantidadBaja) || cantidadBaja <= 0) {
-      return Swal.fire("Error", "Cantidad inválida.", "error");
-    }
-    if (!motivo) {
-      return Swal.fire("Error", "Especificá un motivo.", "warning");
-    }
+    if (isNaN(cantidadBaja) || cantidadBaja <= 0) return Swal.fire("Error", "Cantidad inválida.", "error");
+    if (!motivo) return Swal.fire("Error", "Especificá un motivo.", "warning");
 
-    // Obtener datos actuales del lote
     const { data: lote, error: loteErr } = await supabaseClient
       .from("lote_mp")
       .select("*")
       .eq("id_lote", idLote)
       .single();
+    if (loteErr || !lote) return Swal.fire("Error", "No se pudo obtener el lote.", "error");
 
-    if (loteErr || !lote) {
-      console.error("Error obteniendo lote:", loteErr);
-      return Swal.fire("Error", "No se pudo obtener el lote seleccionado.", "error");
-    }
-
-    const disponibleActual = Number(lote.cantidad_disponible ?? 0);
-
-    // Validar cantidad disponible
-    if (cantidadBaja > disponibleActual) {
-      return Swal.fire(
-        "Cantidad insuficiente",
-        `Intentás dar de baja ${cantidadBaja} pero sólo hay ${disponibleActual} disponibles.`,
-        "warning"
-      );
-    }
-
-    // Confirmación visual
     const confirmacion = await Swal.fire({
       title: "Confirmar baja",
-      html: `Se dará de baja <b>${cantidadBaja}</b> unidades del lote <b>${lote.lote}</b>.<br><br>Motivo: <i>${motivo}</i>`,
+      text: `Se dará de baja ${cantidadBaja} unidades del lote ${lote.lote}.`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Sí, confirmar",
       cancelButtonText: "Cancelar"
     });
-
     if (!confirmacion.isConfirmed) return;
 
-    // Calcular nuevos valores
-    const nuevaCantidadDisponible = Math.max(0, disponibleActual - cantidadBaja);
-    const nuevaCantidadConsumida = Number(lote.cantidad_consumida ?? 0) + cantidadBaja;
-
-    // Calcular nuevo estado/disponibilidad (usa tu función existente)
+    const cantidadFinal = Math.max(0, (lote.cantidad_disponible ?? 0) - cantidadBaja);
     const { text: nuevaDisponibilidad } = calcularEstadoLote({
-      cantidad_disponible: nuevaCantidadDisponible,
+      cantidad_disponible: cantidadFinal,
       fecha_caducidad: lote.fecha_caducidad
     });
 
-    // Obtener usuario actual (puede ser null)
+    const { error: errorUpdate } = await supabaseClient
+      .from("lote_mp")
+      .update({
+        cantidad_disponible: cantidadFinal,
+        cantidad_consumida: (Number(lote.cantidad_consumida ?? 0) + cantidadBaja),
+        disponibilidad: nuevaDisponibilidad
+      })
+      .eq("id_lote", idLote);
+    if (errorUpdate) return Swal.fire("Error", "No se pudo actualizar el lote.", "error");
+
     const usuarioActual = JSON.parse(localStorage.getItem("usuarioActual") || "null");
     const idUsuario = usuarioActual?.id ?? null;
 
-    // 1) Insertar registro en baja_mp
-    const { error: insertErr } = await supabaseClient
+    await supabaseClient
       .from("baja_mp")
       .insert([{
         id_lote: idLote,
@@ -315,37 +297,12 @@ async function confirmarBaja() {
         estado_nuevo: nuevaDisponibilidad
       }]);
 
-    if (insertErr) {
-      console.error("Error insertando en baja_mp:", insertErr);
-      return Swal.fire("Error", "No se pudo registrar la baja en el historial.", "error");
-    }
-
-    // 2) Actualizar lote en lote_mp (cantidad_disponible, cantidad_consumida, disponibilidad)
-    const { error: updErr } = await supabaseClient
-      .from("lote_mp")
-      .update({
-        cantidad_disponible: nuevaCantidadDisponible,
-        cantidad_consumida: nuevaCantidadConsumida,
-        disponibilidad: nuevaDisponibilidad
-      })
-      .eq("id_lote", idLote);
-
-    if (updErr) {
-      console.error("Error actualizando lote_mp:", updErr);
-      // Intentamos revertir la inserción en baja_mp? (opcional)
-      return Swal.fire("Error", "No se pudo actualizar el lote después de registrar la baja.", "error");
-    }
-
-    // 3) Éxito: notificar, cerrar modal y recargar lista
     Swal.fire("Hecho", "Baja registrada correctamente.", "success");
     cerrarModalBaja();
-    await cargarLotes();
-    // Actualizar notificaciones también
-    actualizarNotificaciones();
-
+    cargarLotes();
   } catch (err) {
     console.error("Error confirmarBaja:", err);
-    Swal.fire("Error", "Ocurrió un error al procesar la baja. Revisa la consola.", "error");
+    Swal.fire("Error", "Ocurrió un error al procesar la baja.", "error");
   }
 }
 
