@@ -9,6 +9,12 @@ body {
     background-color: #121212;
     color: #e0e0e0;
 }
+h1 {
+    text-align: left;   /* antes: center */
+    margin-bottom: 5px;
+    color: #f8f8f8;
+    padding-left: 10px; /* opcional: agrega separación del borde */
+}
 
 /* Dashboard */
 .dashboard {
@@ -243,4 +249,33 @@ body {
   max-width: 160px;
   height: auto;
  
+}
+
+/* Contenedor que envuelve la tabla */
+.tabla-scroll {
+    max-width: 100%;
+    max-height: 70vh;
+    
+    overflow-y: auto;   /* scroll vertical */
+  
+}
+
+/* La tabla puede ser más ancha que el contenedor */
+.table-wrapper {
+    width: max-content;  /* permite que la tabla crezca */
+    min-width: 100%;     /* pero mínimo ocupa el ancho disponible */
+    border-collapse: collapse;
+}
+
+#sinResultados {
+    display: none;
+    padding: 10px;
+    color: #bbb;
+    text-align: center;
+}
+
+
+.filtro-label {
+  font-weight: bold;
+  font-size: 18px; /* podés poner 18px si lo querés aún más grande */
 }

@@ -205,13 +205,6 @@ async function finalizarLinea(n, opId, opTexto, cant = 1) {
     const opInfo = document.getElementById(`opInfo-${n}`);
     const registroTable = document.querySelector("#registroTable tbody");
 
-    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        const currentUserId = localStorage.getItem("currentUserId");
-        if (!currentUserId) {
-             mostrarError("No se pudo identificar al usuario para auditoría.");
-        return;
-    }
-
     try {
         cancelAnimationFrame(animaciones[n]);
         clearTimeout(timers[n]);
@@ -233,17 +226,6 @@ async function finalizarLinea(n, opId, opTexto, cant = 1) {
             .eq('id_orden_produccion', opId)
             .single();
         if (opError) throw opError;
-
-        console.log("###############", n);
-        console.log("&&&&&&&&&&&&",currentUserId);
-        console.log("======",opId);
-        await supabaseClient
-            .from("op_ov")
-            .update({
-            linea_produccion: n,
-            audit_user_id: currentUserId  
-            })
-            .eq("id_op", opId);
 
         // Revisar OV asociadas
         const { data: opsOV } = await supabaseClient

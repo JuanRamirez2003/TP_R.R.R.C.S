@@ -15,56 +15,64 @@
         <img src="logo.png" alt="Logo de la empresa" id="logoEmpresa">-->
         <!-- Menú lateral -->
         <aside class="sidebar">
-              <img src="LOGOPNG.png" alt="Logo de preparación" class="logo-sidebar">
-  
+            <img src="LOGOPNG.png" alt="Logo de preparación" class="logo-sidebar">
 
-           <!-- <h2>Preparación</h2>-->
+
+            <!-- <h2>Preparación</h2>-->
             <ul>
                 <li><button class="sidebar-btn" onclick="mostrarSeccion('preparacionPedido')">Gestion de
                         Preparación</button></li>
             </ul>
             <button class="btn-logout" onclick="window.location.href='index.html'">Cerrar sesión</button>
         </aside>
-        
-           
-        <div id="preparacionPedido" class="seccion" style="display:none;">
-            <h2>Preparacion de Pedido</h2>
-            <!-- Filtro solo para Detalle OV -->
-            <div style="margin-bottom:10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <input type="text" id="filtroDetalleOV" placeholder="Buscar OV..." oninput="filtrarPreparacion()"
-                    style="padding:8px; flex: 1; min-width: 200px; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0;">
 
-                <select id="filtroEstado" onchange="filtrarPreparacion()"
-                    style="padding:8px; width:170px; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0;">
-                    <option value="">Todos</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="preparacion">En preparación</option>
-                    <option value="preparado">Preparado</option>
-                </select>
-            </div>
+        <main class="main-content">
 
-            <!-- Tabla de Preparacion de pedido -->
-            <div style="margin-top:20px;">
-                <table id="tablaPreparacionPedido" class="table-wrapper" style="width:100%; border-collapse: collapse;">
-                    <thead>
-                        <tr data-ov="112" data-estado="Pendiente" style="background-color:#f2f2f2;">
-                            <th>Orden de Venta</th>
-                            <th>Producto</th>
-                            <th>Cantidad de Cajas</th>
-                            <th>Fecha Estimada de Entrega</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <div id="sinResultados" style="display:none; padding: 10px; color: #bbb; text-align:center;">
-                    No se encontraron resultados...
+            <h1>Área de Deposito</h1>
+
+            <div id="preparacionPedido" class="seccion" style="display:none;">
+                <h2>Preparacion de Pedido</h2>
+                <!-- Filtro solo para Detalle OV -->
+                <div style="margin-bottom:10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="filtroDetalleOV" placeholder="Buscar OV..." oninput="filtrarPreparacion()"
+                        style="padding:8px; flex: 1; min-width: 200px; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0;">
+
+                    <div class="filtro-bloque">
+                        <label for="filtroEstado" class="filtro-label">Estado:</label>
+                        <select id="filtroEstado" onchange="filtrarPreparacion()"
+                            style="padding:8px; width:170px; border-radius:4px; border:1px solid #333; background:#2a2a2a; color:#e0e0e0;">
+                            <option value="">Todos</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="preparacion">En preparación</option>
+                            <option value="preparado">Preparado</option>
+                        </select>
+                    </div>
                 </div>
 
-            </div>
-        </div>
-    </div>
+                <!-- Tabla de Preparacion de pedido -->
+                <div class="tabla-scroll">
+                    <table id="tablaPreparacionPedido" class="table-wrapper">
+                        <thead>
+                            <tr data-ov="112" data-estado="Pendiente">
+                                <th>OV</th>
+                                <th>Producto</th>
+                                <th>Cant. Cajas</th>
+                                <th>F. Entrega</th>
+                                <th>OP</th>
+                                <th>Linea</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
 
+                    <div id="sinResultados">
+                        No se encontraron resultados...
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/preparacion.js"></script>
 
