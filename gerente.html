@@ -106,7 +106,15 @@ tbody td {
 .btn-download:hover {
     background-color: #1d4ed8;
 }
+.table-container {
+  width: 100%;
+  overflow-x: auto;   /* ← Activa scroll horizontal */
+  overflow-y: hidden;
+}
 
+#tablaLotes {
+  min-width: 700px;   /* ← Ajustá según lo ancho que necesite tu tabla */
+}
 </style>
 </head>
 <body>
@@ -405,6 +413,8 @@ tbody td {
     <small class="kpi-desc">Listado resumen de los lotes registrados con su materia prima y proveedor</small>
     <h2>Resumen de Lotes</h2>
     <table id="tablaLotes">
+
+    <table id="tablaLotes">
       <thead>
         <tr>
           <th>Lote</th>
@@ -418,6 +428,7 @@ tbody td {
       <tbody></tbody>
     </table>
   </div>
+
 </section>
 
   </main>
