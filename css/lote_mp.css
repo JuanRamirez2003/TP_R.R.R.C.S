@@ -1,379 +1,390 @@
 /* === ESTILO GENERAL === */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #121212;
-  color: #fff;
-  margin: 0;
+    margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .container {
-  max-width: 1200px;
-  margin: 30px auto;
-  background: #1e1e1e;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    max-width: 1200px;
+    margin: 30px auto;
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
 }
 
 h1 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #00c896;
-  letter-spacing: 1px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #55a630;
+    letter-spacing: 1px;
 }
 
 /* === TABLA PRINCIPAL === */
 table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 14px;
+    background-color: #2a2a2a;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 th, td {
-  padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #333;
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #333;
+    color: #e0e0e0;
 }
 
 th {
-  background-color: #222;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+    background-color: #1e1e1e;
+    text-transform: none;   /* <-- Esto permite MAYÚSCULA y minúscula natural */
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 tr:hover {
-  background-color: #2a2a2a;
+    background-color: #3e3e3e;
 }
 
 /* === ESTADOS === */
 .estado {
-  font-weight: bold;
-  border-radius: 8px;
-  padding: 5px 10px;
-  display: inline-block;
+    font-weight: bold;
+    border-radius: 6px;
+    padding: 5px 10px;
+    display: inline-block;
 }
 
 .disponible {
-  background-color: #1ea93d;
-  color: #fff;
+    background-color: #55a630;
+    color: #000;
 }
 
 .proximo {
-  background-color: #f0ad4e;
-  color: #000;
+    background-color: #e67e22;
+    color: #000;
 }
 
 .vencido,
 .nodisponible {
-  background-color: #d9534f;
-  color: #fff;
+    background-color: #dc3545;
+    color: #fff;
 }
 
 /* === BOTONES === */
 button {
-  border: none;
-  padding: 7px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.3s;
-  font-weight: 500;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: bold;
+    font-size: 14px;
 }
 
 /* Botón Dar baja */
 .btn-baja {
-  background-color: #d9534f;
-  color: #fff;
+    background-color: #dc3545;
+    color: #fff;
 }
 
 .btn-baja:hover {
-  background-color: #b52b27;
+    background-color: #a71d2a;
 }
 
 /* Botón Historial */
 .btn-historial {
-  background-color: #007bff;
-  color: #fff;
+    background-color: #007bff;
+    color: #fff;
 }
 
 .btn-historial:hover {
-  background-color: #0056b3;
+    background-color: #0056b3;
 }
 
 /* === MODAL === */
 .modal {
-  display: none;
-  position: fixed;
-  z-index: 999;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.6);
-  animation: fadeIn 0.3s ease-in-out;
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 .modal-content {
-  background-color: #1e1e1e;
-  color: #fff;
-  margin: 5% auto;
-  padding: 20px;
-  border-radius: 10px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;        /* Limita el alto del modal */
-  overflow-y: auto;        /* Agrega scroll interno si se excede */
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes scaleIn {
-  from { transform: scale(0.8); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    margin: 5% auto;
+    padding: 25px 35px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 0 15px rgba(85, 166, 48, 0.4);
+    animation: scaleUp 0.25s ease-in-out;
 }
 
 .close {
-  float: right;
-  font-size: 24px;
-  cursor: pointer;
-  color: #aaa;
-  transition: 0.3s;
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+    color: #aaa;
+    transition: 0.3s;
 }
 
 .close:hover {
-  color: #fff;
+    color: #fff;
 }
 
 /* === CAMPOS DE FORMULARIO === */
 .form-group {
-  margin-bottom: 10px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 4px;
-  font-weight: 500;
-  color: #bbb;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #bbb;
 }
 
 .form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #444;
-  background-color: #2c2c2c;
-  color: #fff;
-  font-size: 14px;
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    font-size: 14px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #55a630;
+    box-shadow: 0 0 5px rgba(85, 166, 48, 0.3);
 }
 
 .form-group textarea {
-  resize: vertical;
-  min-height: 60px;
+    resize: vertical;
+    min-height: 60px;
 }
 
 /* === BOTONES DE MODAL === */
 .botones-modal {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 15px;
-  gap: 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 15px;
 }
 
 .btn-guardar {
-  background-color: #16a34a;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
+    background-color: #4a8c2a;
+    color: #000;
 }
 
 .btn-guardar:hover {
-  background-color: #15803d;
+    background-color: #55a630;
+    color: #fff;
 }
 
 .btn-cancelar {
-  background-color: #dc2626;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
+    background-color: #dc3545;
+    color: #fff;
 }
 
 .btn-cancelar:hover {
-  background-color: #b91c1c;
+    background-color: #a71d2a;
 }
 
 /* === TABLA HISTORIAL === */
 #tablaHistorial {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
 }
 
-#tablaHistorial th, 
+#tablaHistorial th,
 #tablaHistorial td {
-  padding: 8px;
-  border-bottom: 1px solid #444;
-  text-align: center;
+    padding: 10px;
+    border-bottom: 1px solid #333;
+    text-align: center;
+    color: #e0e0e0;
 }
 
 #tablaHistorial th {
-  background-color: #222;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+    background-color: #1e1e1e;
+    text-transform: none;   /* <-- Igual aquí */
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 #tablaHistorial tr:hover {
-  background-color: #2a2a2a;
+    background-color: #3e3e3e;
 }
 
-/* === ESTILOS ADICIONALES === */
-.por-vencer {
-  color: #facc15;
-  font-weight: bold;
-}
-
-.no-disponible {
-  color: #ef4444;
-  font-weight: bold;
-}
-
+/* === BUSCADOR === */
 .buscador-lotes {
-  margin-bottom: 1rem;
-  text-align: right;
+    margin-bottom: 15px;
+    text-align: right;
 }
 
 #buscadorLotes {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  width: 250px;
-  font-size: 14px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    width: 250px;
+    font-size: 14px;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
 }
 
 /* --------------------------Notificador -----------------------*/
-/* Contenedor en esquina superior derecha */
 .notificaciones {
-  position: fixed;
-  top: 15px;
-  right: 20px;
-  z-index: 1000;
+    position: fixed;
+    top: 20px;
+    right: 90px;
+    width: 60px;
+    height: 60px;
+    background-color: #fff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: rgba(0,0,0,0.3) 0px 4px 12px;
+    font-size: 28px;
+    color: #333;
+    z-index: 1000;
+    transition: transform 0.2s, background-color 0.3s;
 }
 
 .contador {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background-color: red;
-  color: white;
-  border-radius: 50%;
-  padding: 2px 6px;
-  font-size: 12px;
-  font-weight: bold;
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: bold;
 }
 
-/* Botón icono */
 #btnNotificaciones {
-  background: transparent;
-  border: none;
-  font-size: 28px;
-  cursor: pointer;
-  position: relative;
+    background: transparent;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    position: relative;
 }
 
-/* Ventana desplegable */
 .ventana-notificaciones {
-  display: none;
-  position: absolute;
-  top: 40px;
-  right: 0;
-  width: 250px;
-  max-height: 300px;
-  overflow-y: auto;
-  background-color: white;
-  border: 1px solid #ccc;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  border-radius: 5px;
-  padding: 10px;
+    display: none;
+    position: absolute;
+    top: 40px;
+    right: 0;
+    width: 250px;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    border-radius: 5px;
+    padding: 10px;
 }
+
 .ventana-notificaciones ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
-/* Ventana de notificaciones mejorada */
+
 .ventana-notificaciones li {
-  display: flex;
-  flex-direction: column;
-  padding: 10px 12px;
-  border-left: 4px solid #3498db; /* valor por defecto, se puede sobrescribir según estado */
-  border-radius: 8px;
-  margin-bottom: 8px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s, border-color 0.15s;
-  cursor: default;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 12px;
+    border-left: 4px solid #3498db;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s, border-color 0.15s;
+    cursor: default;
 }
 
 .ventana-notificaciones li:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-  background-color: #fefefe;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    background-color: #fefefe;
 }
 
-/* Última notificación sin margen inferior */
-.ventana-notificaciones li:last-child {
-  margin-bottom: 0;
-}
-
-/* Nombre del lote */
 .notif-lote-nombre {
-  font-weight: 600;
-  color: #46502c;
-  font-size: 14px;
-  margin-bottom: 2px;
+    font-weight: 600;
+    color: #46502c;
+    font-size: 14px;
+    margin-bottom: 2px;
 }
 
-/* Código del lote */
 .notif-lote-codigo {
-  font-size: 12px;
-  color: #7f8c8d;
-  margin-bottom: 2px;
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 2px;
 }
 
-/* Fecha de caducidad y días restantes */
 .notif-lote-caducidad {
-  font-size: 12px;
-  font-weight: 500;
-  margin-top: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 3px;
 }
 
-/* Próximo a vencer: naranja / amarillo */
 .notif-proximo {
-  color: #e67e22;
-  font-weight: bold;
-  border-left: 4px solid #e67e22; /* borde lateral naranja */
+    color: #e67e22;
+    font-weight: bold;
+    border-left: 4px solid #e67e22;
 }
 
-/* Vencido: rojo */
 .notif-vencido {
-  color: #c0392b;
-  font-weight: bold;
-  border-left: 4px solid #c0392b; /* borde lateral rojo */
+    color: #c0392b;
+    font-weight: bold;
+    border-left: 4px solid #c0392b;
 }
 
-/* Separador opcional entre notificaciones */
-.ventana-notificaciones li + li {
-  margin-top: 5px;
+/* Botón Volver */
+.btn-volver {
+  display: inline-flex;           
+  align-items: center;
+  gap: 8px;
+  background-color: #55a630;     /* Verde principal */
+  color: #121212;                /* Texto oscuro */
+  border: none;                  /* Sin borde extra */
+  border-radius: 10px;           /* Bordes redondeados como btn-guardar */
+  padding: 0.9rem 1.2rem;        /* Tamaño cómodo */
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.3s, transform 0.2s;
 }
+
+.btn-volver:hover {
+  background-color: #4a8c2a;    /* Verde más oscuro al pasar el mouse */
+  transform: scale(1.02);       /* Efecto ligero */
+  color: #fff;                  /* Texto blanco al hover */
+}
+

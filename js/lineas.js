@@ -53,9 +53,9 @@ async function cargarLineas() {
         <td>${linea.capacidad_teorica ?? "-"}</td>
         <td class="${linea.estado === "Baja" ? "baja" : "activa"}">${linea.estado}</td>
         <td>
-          <button class="btn-editar" onclick="abrirModalEditar(${linea.id_linea})">✏️</button>
-          <button class="btn-eliminar" onclick="abrirModalEliminar(${linea.id_linea})">🗑️</button>
-          <button class="btn-ver" onclick="verProductosLinea(${linea.id_linea}, '${linea.descripcion}')">👀</button>
+          <button class="btn-editar" onclick="abrirModalEditar(${linea.id_linea})">Editar</button>
+          <button class="btn-eliminar" onclick="abrirModalEliminar(${linea.id_linea})">Eliminar</button>
+          <button class="btn-ver" onclick="verProductosLinea(${linea.id_linea}, '${linea.descripcion}')">Ver Detalle</button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -142,7 +142,7 @@ async function eliminarLineaConfirmado() {
   if (!idEliminar) return;
   const { error } = await supabaseClient.from("linea_productos").delete().eq("id_linea", idEliminar);
   if (error) return alert("❌ Error al eliminar línea.");
-  alert("🗑️ Línea eliminada.");
+  alert("❌ Línea eliminada.");
   cerrarModalEliminar();
   cargarLineas();
 }
@@ -159,9 +159,22 @@ function filtrarLineas() {
 async function verProductosLinea(idLinea, descripcion) {
   lineaSeleccionada = idLinea;
   descripcionLineaSeleccionada = descripcion;
-  document.getElementById("tituloLinea").innerText = `📦 Línea: ${descripcion}`;
   document.getElementById("modalProductos").style.display = "flex";
   document.getElementById("idLineaProducto").value = idLinea;
+
+  // 🔹 Obtener también el código de la línea desde Supabase
+  const { data: lineaData, error: lineaError } = await supabaseClient
+    .from("linea_productos")
+    .select("codigo_linea")
+    .eq("id_linea", idLinea)
+    .single();
+
+  if (lineaError) {
+    console.warn("No se pudo obtener código de línea");
+    document.getElementById("tituloLinea").innerText = `Línea: ${descripcion}`;
+  } else {
+    document.getElementById("tituloLinea").innerText = `Línea ${lineaData.codigo_linea}`;
+  }
 
   const tbody = document.querySelector("#tablaProductosLinea tbody");
   tbody.innerHTML = "<tr><td colspan='5'>Cargando...</td></tr>";
@@ -183,12 +196,13 @@ async function verProductosLinea(idLinea, descripcion) {
         <td>$${p.precio_unitario?.toFixed(2) ?? "0.00"}</td>
         <td>${p.stock ?? 0}</td>
         <td>
-          <button class="btn-editar" onclick="editarProducto(${p.id_producto})">✏️</button>
-          <button class="btn-eliminar" onclick="eliminarProducto(${p.id_producto})">🗑️</button>
+          <button class="btn-editar" onclick="editarProducto(${p.id_producto})">Editar</button>
+          <button class="btn-eliminar" onclick="eliminarProducto(${p.id_producto})">Eliminar</button>
         </td>
       </tr>
     `).join("");
 }
+
 
 function cerrarModalProductos() {
   document.getElementById("modalProductos").style.display = "none";
@@ -242,7 +256,7 @@ async function editarProducto(idProducto) {
 async function eliminarProducto(idProducto) {
   if (!confirm("⚠️ ¿Eliminar producto?")) return;
   await supabaseClient.from("productos").delete().eq("id_producto", idProducto);
-  alert("🗑️ Producto eliminado.");
+  alert("❌ Producto eliminado.");
   verProductosLinea(lineaSeleccionada, document.getElementById("tituloLinea").innerText);
 }
 

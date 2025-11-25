@@ -1,211 +1,279 @@
+/* === ESTILO GENERAL === */
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #111;
-  color: #fff;
-  padding: 20px;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
 }
 
+.container {
+    max-width: 1200px;
+    margin: 30px auto;
+    background-color: #1e1e1e;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.4);
+}
+
+/* === TITULO === */
 h1 {
-  text-align: center;
-  margin-bottom: 25px;
-  color: #3b82f6;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #55a630;
+    letter-spacing: 1px;
 }
 
+/* === ACCIONES === */
 .acciones {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
 }
 
-input[type="text"] {
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #444;
-  background: #222;
-  color: #fff;
+#buscador {
+    flex: 1;
+    min-width: 250px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    font-size: 14px;
 }
 
 button {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: 0.2s;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: bold;
+    font-size: 14px;
 }
 
-#btnAgregar {
-  background: #22c55e;
-  color: #fff;
-}
-#btnAgregar:hover {
-  background: #16a34a;
-}
-
-button.btn-primary {
-  background: #007bff;
-  color: white;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-bottom: 15px;
-  display: inline-block;
+/* Agregar Línea y Volver (mantienen estilo actual) */
+#btnAgregar,
+.btn-primary {
+    background-color: #55a630;
+    color: #000;
 }
 
-/* Tabla */
+#btnAgregar:hover,
+.btn-primary:hover {
+    background-color: #4a8c2a;
+    color: #fff;
+}
+
+/* === TABLA === */
 table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #1e1e1e;
-  border-radius: 8px;
-  overflow: hidden;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 14px;
+    background-color: #2a2a2a;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 th, td {
-  padding: 10px;
-  text-align: left;
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #333;
+    color: #e0e0e0;
 }
 
 th {
-  background: #2b2b2b;
+    background-color: #1e1e1e;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
-tr:nth-child(even) {
-  background: #242424;
+tr:hover {
+    background-color: #3e3e3e;
 }
 
-.baja { color: #ef4444; }
-.activa { color: #22c55e; }
-
-.btn-editar {
-  background: #3b82f6;
-  color: white;
-}
-.btn-editar:hover {
-  background: #2563eb;
-}
-.btn-eliminar {
-  background: #ef4444;
-  color: white;
-}
-.btn-eliminar:hover {
-  background: #dc2626;
+/* === ESTADOS === */
+.estado {
+    font-weight: bold;
+    border-radius: 6px;
+    padding: 5px 10px;
+    display: inline-block;
 }
 
-/* === MODALES === */
+.Activa {
+    background-color: #55a630;
+    color: #000;
+}
+
+.Baja {
+    background-color: #c0392b;
+    color: #fff;
+}
+
+/* === MODAL === */
 .modal {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(3px);
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
 }
 
 .modal-content {
-  background: #1f1f1f;
-  padding: 25px;
-  border-radius: 10px;
-  width: 400px;
-  color: #fff;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    margin: 5% auto;
+    padding: 25px 35px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 0 15px rgba(85,166,48,0.4);
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
-.modal-content h2 {
-  margin-bottom: 15px;
-  text-align: center;
-  color: #3b82f6;
-}
-
-.modal-content label {
-  display: block;
-  margin-top: 10px;
-  font-size: 0.9rem;
-}
-
-.modal-content input, .modal-content select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #444;
-  border-radius: 6px;
-  background: #2b2b2b;
-  color: #fff;
-  margin-top: 5px;
-}
-
+/* === BOTONES MODAL === */
 .modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 5px;
 }
 
 .btn-guardar {
-  background: #22c55e;
-  color: #fff;
+    background-color: #4a8c2a;
+    color: #000;
 }
+
+.btn-guardar:hover {
+    background-color: #55a630;
+    color: #fff;
+}
+
 .btn-cancelar {
-  background: #ef4444;
-  color: #fff;
+    background-color: #dc3545;
+    color: #fff;
 }
 
-.modal-confirmar h2 {
-  color: #facc15;
-}
-.modal-confirmar p {
-  text-align: center;
-  margin-top: 10px;
-  color: #ccc;
+.btn-cancelar:hover {
+    background-color: #a71d2a;
 }
 
-/* === MODAL PRODUCTOS === */
-#tablaProductos {
-  width: 100%;
-  border-collapse: collapse;
-  background: #1e1e1e;
-  margin-top: 10px;
-  border-radius: 6px;
-  overflow: hidden;
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .acciones {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
-#tablaProductos th {
-  background: #2b2b2b;
-  color: #3b82f6;
-  padding: 8px;
-  text-align: left;
+/* === BOTONES DE ACCIONES EN TABLA === */
+
+/* Botón Editar */
+.btn-editar {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: capitalize;
 }
 
-#tablaProductos td {
-  padding: 8px;
-  border-bottom: 1px solid #333;
+.btn-editar:hover {
+    background-color: #0056b3;
 }
 
-#tablaProductos tr:nth-child(even) {
-  background: #242424;
-}
-
-
-#tablaProductosLinea {
-  width: 100%;
-  margin-top: 15px;
-  border-collapse: collapse;
-}
-#tablaProductosLinea th, #tablaProductosLinea td {
-  padding: 8px;
-  text-align: left;
-  border-bottom: 1px solid #333;
-}
-#tablaProductosLinea th {
-  background: #2b2b2b;
-}
+/* Botón Ver Detalle (mismo que editar, azul) */
 .btn-ver {
-  background: #facc15;
-  color: #111;
+    background-color: #007bff;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: capitalize;
 }
+
 .btn-ver:hover {
-  background: #eab308;
+    background-color: #0056b3;
+}
+
+/* Botón Eliminar (rojo) */
+.btn-eliminar {
+    background-color: #dc3545;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: capitalize;
+}
+
+.btn-eliminar:hover {
+    background-color: #a71d2a;
+}
+/* === MODAL EDITAR ESTILOS MEJORADOS === */
+#modalEditar .modal-content {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    padding: 25px 35px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 0 18px rgba(85,166,48,0.4);
+    animation: fadeInScale 0.3s ease-in-out;
+}
+
+#modalEditar h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #55a630;
+    text-align: center;
+    font-weight: 600;
+}
+
+#modalEditar input,
+#modalEditar textarea,
+#modalEditar select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 12px;
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+#modalEditar textarea {
+    resize: vertical;
+}
+
+#modalEditar input:focus,
+#modalEditar textarea:focus,
+#modalEditar select:focus {
+    border-color: #55a630;
+    box-shadow: 0 0 6px rgba(85,166,48,0.4);
+    outline: none;
+}
+
+/* Animación suave del modal */
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.85);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
