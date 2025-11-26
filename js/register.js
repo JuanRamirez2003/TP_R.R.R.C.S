@@ -73,27 +73,38 @@ async function getNextOpCode() {
 
 // ====== Verificar DNI ======
 async function checkDni() {
-    try {
-        const dni = dniInput.value.trim();
-        if (!dni) return false;
+  try {
+    const dni = dniInput.value.trim();
+    if (!dni) return false;
 
-        const { data: existing, error } = await supabaseClient
-            .from("usuarios")
-            .select("dni")
-            .eq("dni", dni);
-
-        if (error) throw error;
-
-        if (existing && existing.length > 0) {
-            showMessage("⚠️ Este DNI ya está registrado", "error");
-            return false;
-        }
-        return true;
-    } catch (err) {
-        console.error("Error verificando DNI:", err);
-        showMessage("Error verificando DNI", "error");
-        return false;
+    // Validar formato antes de consultar la base
+    if (!validarFormatoDni(dni)) {
+      showMessage("El DNI debe tener 8 dígitos numéricos", "error");
+      return false;
     }
+
+    const { data: existing, error } = await supabaseClient
+      .from("usuarios")
+      .select("dni")
+      .eq("dni", dni);
+
+    if (error) throw error;
+
+    if (existing && existing.length > 0) {
+      showMessage("El DNI ya está registrado", "error");
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("Error verificando DNI:", err);
+    showMessage("Error verificando DNI", "error");
+    return false;
+  }
+}
+function validarFormatoDni(dni) {
+  // Solo números, entre 7 y 8 dígitos
+  const regex = /^[0-9]{8}$/;
+  return regex.test(dni);
 }
 
 // ====== Verificar datos antes de tomar foto ======
@@ -110,7 +121,7 @@ verifyButton.addEventListener("click", async () => {
             showMessage("✅ Datos correctos. Ahora puede tomar la foto", "success");
             captureButton.disabled = false;
         } else {
-            showMessage("Corrija los datos antes de continuar", "error");
+            showMessage("DNI inválido o ya registrado en el sistema", "error");
             captureButton.disabled = true;
         }
     } catch (err) {
@@ -151,7 +162,9 @@ registerButton.addEventListener("click", async () => {
         const area = areaInput.value;
         const opCode = opCodeInput.value;
 
-        if (!name || !dni || !area || !capturedDescriptor) {
+        const validarDNI=validarFormatoDni(dni);
+
+        if (!name || !dni || !validarDNI || !capturedDescriptor) {
             showMessage("Complete todos los campos y capture la foto", "error");
             if (registerButton) {
             registerButton.disabled = false;

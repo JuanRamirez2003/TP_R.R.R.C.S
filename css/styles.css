@@ -135,6 +135,13 @@ input[type="text"]:focus {
 .btn-capture:hover {
     background-color: #024996;
 }
+.btn-capture:disabled {
+  background-color: #094585c0;   /* color de fondo cuando está deshabilitado */
+  color: #fff;                 /* color del texto */
+  cursor: not-allowed;         /* cursor de prohibido */
+  opacity: 0.8;                /* opcional, para dar efecto visual */
+}
+
 
 .btn-tertiary {
     background-color: #333;
