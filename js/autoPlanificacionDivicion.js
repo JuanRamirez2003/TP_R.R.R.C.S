@@ -1031,10 +1031,14 @@ async function cargarOPsPendientes() {
   }
 
   // 2️⃣ Traer fijadas para excluirlas de la lista
+
+  const hoyStr = new Date().toISOString().split("T")[0];
+
   const { data: fijadas, error: fijadasError } = await supabaseClient
     .from("planificacion_semanal")
     .select("id_op")
-    .eq("fijada", true);
+    .eq("fijada", true)
+    .gte("dia", hoyStr); 
 
   if (fijadasError) {
     console.error("Error al obtener OPs fijadas:", fijadasError);
@@ -1089,6 +1093,8 @@ async function cargarOPsPendientes() {
     item.dataset.idProducto = op.id_producto;
     item.dataset.numero_op = op.numero_op;
     item.dataset.cantidadLotes = obtenerCantidadLotes(op);
+    item.dataset.fecha_emision = new Date(op.fecha_emision).toLocaleDateString("es-AR");
+
 
     const lineaRec = obtenerLineaRecomendada(op.id_producto, lineasProd);
     const cantidadLotes = obtenerCantidadLotes(op);
@@ -1117,15 +1123,21 @@ function formatoDuracion(minutos) {
 }
 
 // ---------------------- BUSCADOR ----------------------
+
 const buscador = document.getElementById("buscadorPendientes");
 buscador.addEventListener("input", () => {
   const filtro = buscador.value.toLowerCase();
   document.querySelectorAll("#listaPendientes .op-item").forEach(item => {
-    item.style.display = item.textContent.toLowerCase().includes(filtro)
+    const texto = item.textContent.toLowerCase();
+    const fecha = item.dataset.fecha_emision?.toLowerCase() || "";
+
+    item.style.display = (texto.includes(filtro) || fecha.includes(filtro))
       ? "block"
       : "none";
   });
 });
+
+
 const DURACION_JORNADA = 8 * 60;
 // ---------------------- DRAG & DROP ----------------------
 /*
