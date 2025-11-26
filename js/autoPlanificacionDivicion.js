@@ -112,9 +112,10 @@ async function renderAgendaDesdeSupabase() {
         const bloque = document.createElement("div");
         const clasePrioridad = p.prioridad?.toLowerCase() || "normal";
         bloque.className = "bloque-produccion " + clasePrioridad;
-
+        // console.log("?????????????????????",p.id);
         bloque.dataset.numero_op = p.numero_op;
         bloque.dataset.id_linea = p.id_linea;
+        bloque.dataset.id_plani= p.id;
 
         let cantidadLotes = { lotes_incluidos: [], lotes_total: 0 };
 
@@ -146,7 +147,7 @@ async function renderAgendaDesdeSupabase() {
           <div style="text-align:center; width:100%;">
             <strong>Línea ${p.id_linea}</strong><br>
             ${p.numero_op}<br>
-            ${p.hora_inicio.slice(0,5)} - ${p.hora_fin.slice(0,5)} | 
+            ${p.hora_inicio.slice(0, 5)} - ${p.hora_fin.slice(0, 5)} | 
             Lotes: ${cantIncluidos} de ${cantidadLotes.lotes_total}
           </div>
           
@@ -2142,9 +2143,9 @@ document.getElementById("btnGuardarLinea").addEventListener("click", async () =>
       
     </span>
   `);
-//<strong>GENERE OTRA VEZ LA PLANIFICACIÓN</strong>
+  //<strong>GENERE OTRA VEZ LA PLANIFICACIÓN</strong>
   document.getElementById("modalEditarPlanificacion").style.display = "none";
-  planificarSemana(false,false);
+  planificarSemana(false, false);
   resetearModalPlanificacion();
 });
 
@@ -2152,7 +2153,6 @@ document.getElementById("btnGuardarLinea").disabled = (window.tiempoPlanificadoL
 
 async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
 
- // console.log("================ IDs recibidos =", ids);
 
   let huboError = false;
   const currentUserId = localStorage.getItem("currentUserId");
@@ -2324,16 +2324,16 @@ document.getElementById("btnDividirOP").addEventListener("click", async () => {
     </option>`;
   });
   // Activar buscador en el select
-if (window.selectOPDividirChoices) {
-  window.selectOPDividirChoices.destroy();
-}
+  if (window.selectOPDividirChoices) {
+    window.selectOPDividirChoices.destroy();
+  }
 
-window.selectOPDividirChoices = new Choices("#selectOPDividir", {
-  searchEnabled: true,
-  itemSelectText: "",
-  shouldSort: false,
-  searchPlaceholderValue: "Buscar OP...",
-});
+  window.selectOPDividirChoices = new Choices("#selectOPDividir", {
+    searchEnabled: true,
+    itemSelectText: "",
+    shouldSort: false,
+    searchPlaceholderValue: "Buscar OP...",
+  });
 
   const modal = document.getElementById("modalDividirOP");
   modal.style.display = "flex";
@@ -2352,9 +2352,9 @@ document.getElementById("selectOPDividir").addEventListener("change", async (e) 
   const idProducto = Number(e.target.selectedOptions[0].getAttribute("data-producto"));
 
   const { data: lineas, error } = await supabaseClient
-  .from("linea_productos")
-  .select("id_linea, estado")
-  .eq("estado", "Activa");
+    .from("linea_productos")
+    .select("id_linea, estado")
+    .eq("estado", "Activa");
   if (error) return mostrarAviso("Error al cargar líneas");
 
   lineas.sort((a, b) => a.id_linea - b.id_linea);
@@ -2702,14 +2702,11 @@ document.getElementById("btnBuscarOP").addEventListener("click", async () => {
   const hoy = new Date();
   const hoyStr = hoy.toLocaleDateString("en-CA");
 
-  //console.log("######",op.id_orden_produccion);
-
   let { data: planif } = await supabaseClient
     .from("planificacion_semanal")
     .select("*")
     .eq("id_op", op.id_orden_produccion)
     .gte("dia", hoyStr);
-  console.log("######", planif);
   if (!planif || planif.length === 0) {
     mostrarAviso(`La ${op.numero_op} existe pero NO está planificada.`);
     return;
@@ -2725,7 +2722,10 @@ document.getElementById("btnBuscarOP").addEventListener("click", async () => {
     const cantidadLotes = data.lotes_incluidos.length;
     const lotesTotal = data.lotes_total;
     mensaje += `
-    <div class="op-parte" data-linea="${p.id_linea}" data-numero="${op.numero_op}">
+    <div class="op-parte"
+    data-id="${p.id_planificacion_semanal}" 
+
+     data-linea="${p.id_linea}" data-numero="${op.numero_op}" data-cantidad_lotes =${JSON.stringify(data)}>
       <h3>${op.numero_op}</h3>
       <p>➡ Línea: <b>${p.id_linea}</b></p>
       <p>➡ Día: <b>${p.dia}</b></p>
@@ -2756,8 +2756,12 @@ function mostrarModalBuscarOP(mensaje) {
     div.addEventListener("click", () => {
       const linea = div.dataset.linea;
       const numero = div.dataset.numero;
+      // Recuperar y parsear el objeto
+      const cantLotesRaw = div.dataset.cantidad_lotes; 
+      const cantLotesObj = JSON.parse(cantLotesRaw);  
 
-      mostrarModalConfirmar(linea, numero, () => {
+      console.log("//////////////", cantLotesObj.lotes_incluidos);
+      mostrarModalConfirmar(linea, numero, cantLotesObj.lotes_incluidos, () => {
         //mostrarDetalleLinea(linea);
       });
 
@@ -2765,7 +2769,8 @@ function mostrarModalBuscarOP(mensaje) {
   });
 }
 
-function mostrarModalConfirmar(linea, numero) {
+function mostrarModalConfirmar(linea, numero, lotes_incluidos) {
+  // console.log(linea ,"###",  numero ,"%%%%",cantidadLotes);
   const modal = document.getElementById("modalConfirmarOP");
   const texto = document.getElementById("modalConfirmarTexto");
   const titulo = document.getElementById("modalConfirmarTitulo");
@@ -2783,7 +2788,7 @@ function mostrarModalConfirmar(linea, numero) {
       filtro.dispatchEvent(new Event("change"));
     }
     renderAgendaDesdeSupabase().then(() => {
-      resaltarOP(numero);
+      resaltarOP(numero, lotes_incluidos);
     });
 
 
@@ -2796,12 +2801,16 @@ function mostrarModalConfirmar(linea, numero) {
   };
 }
 
-function resaltarOP(numeroOP) {
+async function resaltarOP(numeroOP , lotes_incluidos) {
 
+  const numeroOP2 = await buscarOPenPlanificacion(numeroOP, lotes_incluidos);
+
+  //console.log("==========================",numeroOP2);
   document.querySelectorAll(".op-resaltada").forEach(el => el.classList.remove("op-resaltada"));
 
   let el = Array.from(document.querySelectorAll(".bloque-produccion"))
-    .find(node => node.dataset.numero_op?.toUpperCase() === numeroOP.toUpperCase());
+    .find(node => node.dataset.id_plani?.toUpperCase() === String(numeroOP2).toUpperCase());
+    // console.log(el.dataset);
 
   if (el) {
     el.classList.add("op-resaltada");
@@ -2815,6 +2824,7 @@ function resaltarOP(numeroOP) {
 }
 
 
+
 document.getElementById("inputBuscarOP").addEventListener("input", (e) => {
   const valor = e.target.value.trim();
 
@@ -2826,8 +2836,38 @@ document.getElementById("inputBuscarOP").addEventListener("input", (e) => {
 });
 
 
+async function buscarOPenPlanificacion(numeroOP, lotes_incluidos) {
+  const hoy = new Date();
+  const hoyStr = hoy.toISOString().split("T")[0]; 
+
+  let { data: planif, error } = await supabaseClient
+    .from("planificacion_semanal")
+    .select("*")
+    .ilike("numero_op", `${numeroOP}%`)
+    .gte("dia", hoyStr);
+
+  if (error) {
+    console.error("Error buscando planificación:", error);
+    return [];
+  }
+
+  if (!planif || planif.length === 0) {
+    return [];
+  }
+
+  const resultados = planif.filter(p => {
+    if (!p.cantidad_lotes) return false;
+
+    try {
+      const data = typeof p.cantidad_lotes === "string" ? JSON.parse(p.cantidad_lotes) : p.cantidad_lotes;
+      const incluidos = data.lotes_incluidos || [];
+      return lotes_incluidos.some(lote => incluidos.map(String).includes(String(lote)));
+    } catch (err) {
+      console.error("Error parseando cantidad_lotes:", err);
+      return false;
+    }
+  });
 
 
-
-
-
+  return resultados.map(r => r.id);
+}
