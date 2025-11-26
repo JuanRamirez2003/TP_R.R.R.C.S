@@ -203,6 +203,11 @@ document.getElementById("form-parametros").addEventListener("submit", async (e) 
     }
 
     if (error) throw error;
+    const { error: errorLinea } = await supabase
+    .from("linea_productos")
+    .update({ horas_jornada: horas })
+    .eq("id_linea", idLinea);
+
 
     //alert(filaEditando ? "Datos actualizados correctamente" : "Línea agregada correctamente");
 

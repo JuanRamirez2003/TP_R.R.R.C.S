@@ -117,16 +117,44 @@
 #logoEmpresa:hover {
   transform: scale(1.06);
 }
+.titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* reparte entre logo, título y espaciador */
+  width: 100%;
+}
+
+.titulo h2 {
+  text-align: center;
+  margin: 0;
+  flex: 1; /* ocupa el espacio central */
+}
+
+.espaciador {
+  width: 180px; /* mismo ancho que el logo para equilibrar */
+}
+
+
+.logo-derecha {
+  width: 180px;
+  height: auto;
+  display: block;            /* asegura que la imagen se comporte como bloque */
+}
+
   </style>
 </head>
-  <!-- Logo -->
-  <img src="LOGOPNG.png" alt="Logo de la empresa" id="logoEmpresa">
 
 <body>
 
 
   <div class="main-content">
-    <h2>Planificación Semanal de Producción</h2>
+    
+    <div class="titulo">
+      <img src="LOGOPNG.png" alt="Logo de preparación" class="logo-derecha">
+      <h2>Planificación Semanal de Producción</h2>
+      <div class="espaciador"></div>
+
+    </div>
 
     <!-- ===================== FILTROS ===================== -->
     <div class="filtros">
