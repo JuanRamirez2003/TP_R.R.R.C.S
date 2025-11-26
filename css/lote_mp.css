@@ -493,3 +493,60 @@ button {
 #logoEmpresa:hover {
   transform: scale(1.08); /* Efecto suave */
 }
+/* Vista para el celular  */
+/* === MODO RESPONSIVO PARA CELULAR SIN CAMBIAR ESTILO ORIGINAL === */
+@media screen and (max-width: 768px) {
+  
+  body {
+    background-color: #f4f6f9; /* Conserva tu color */
+    padding: 5px;
+  }
+
+  .container {
+    width: 100%;
+    padding: 10px;
+    margin: 0 auto;
+    box-shadow: none; /* Suaviza en móvil pero mantiene estilo */
+  }
+
+  h1 {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  /* Buscador más visible y usable */
+  .buscador-lotes {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  .buscador-lotes input {
+    width: 100%;
+    padding: 10px;
+    font-size: 15px;
+  }
+
+  /* Mantiene los colores y diseño de tabla, pero permite scroll horizontal */
+  .tabla-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 900px; /* Evita que se achique y se rompa */
+  }
+
+  /* Botones se mantienen iguales pero se ajustan */
+  .btn-editar,
+  .btn-eliminar {
+    font-size: 13px;
+    padding: 6px 10px;
+    display: inline-block;
+    margin: 2px;
+  }
+
+  /* Mejor presentación en lista vertical si hay poco espacio */
+  td {
+    white-space: nowrap;
+  }
+}
