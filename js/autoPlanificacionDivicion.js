@@ -1105,8 +1105,7 @@ async function cargarOPsPendientes() {
       <strong>${op.numero_op}</strong> - ${op.ver_orden?.[0]?.nombre || "Sin producto"}<br>
       <small>
         📦 Lotes: <b>${cantidadLotes}</b> |
-        ⏳  Duración por línea selec: <b class="duracion-texto">${duracion}</b> |
-        🧾 OV: <b>${cantidadOV}</b><br>
+        🧾 OV: <b>${cantidadOV}</b>|
         ⚙️ Línea sugerida: <b>${lineaRec.id_linea}</b>
     `;
 

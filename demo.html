@@ -5,9 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login Manual Demo</title>
  <link rel="stylesheet" href="css/styles.css" />
+
+ <style>
+body {
+  display: flex;
+  flex-direction: column;   /* 👉 Pone todo en columna (uno abajo del otro) */
+  align-items: center;      /* Centra los elementos */
+  justify-content: flex-start;
+}
+  .logo-sidebar {
+  display: block;
+  margin: 0 auto 10px auto;
+  max-width: 300px;
+  height: auto;
+ 
+}
+.containerDEMO {
+    background-color: #1e1e1e;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 550px;
+    text-align: center;
+    transition: transform 0.3s ease-in-out;
+    border: 1px solid #333;
+
+
+    margin: 20px auto 0 auto; 
+    display: block;
+}
+ </style>
 </head>
 <body>
-  <div class="container">
+  
+  <img src="LOGOPNG.png" alt="Logo de preparación" class="logo-sidebar">
+  
+  <div class="containerDEMO">
+  
     <h2>Login Manual Demo</h2>
     <div class="form-group">
       <input type="text" id="manual-op-code" placeholder="Código de Operario" required>
@@ -15,6 +50,8 @@
     </div>
     <button id="manual-login-button" class="btn btn-primary">Ingresar</button>
     <div id="message-box" class="message-box"></div>
+
+    <h4>Cód. Operario : 002 , DNI: 12345678 </h4>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
