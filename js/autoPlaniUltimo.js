@@ -112,7 +112,7 @@ async function renderAgendaDesdeSupabase() {
         const bloque = document.createElement("div");
         const clasePrioridad = p.prioridad?.toLowerCase() || "normal";
         bloque.className = "bloque-produccion " + clasePrioridad;
-        // console.log("?????????????????????",p.id);
+
         bloque.dataset.numero_op = p.numero_op;
         bloque.dataset.id_linea = p.id_linea;
         bloque.dataset.id_plani= p.id;
@@ -147,7 +147,7 @@ async function renderAgendaDesdeSupabase() {
           <div style="text-align:center; width:100%;">
             <strong>Línea ${p.id_linea}</strong><br>
             ${p.numero_op}<br>
-            ${p.hora_inicio.slice(0, 5)} - ${p.hora_fin.slice(0, 5)} | 
+            ${p.hora_inicio.slice(0,5)} - ${p.hora_fin.slice(0,5)} | 
             Lotes: ${cantIncluidos} de ${cantidadLotes.lotes_total}
           </div>
           
@@ -1031,14 +1031,10 @@ async function cargarOPsPendientes() {
   }
 
   // 2️⃣ Traer fijadas para excluirlas de la lista
-
-  const hoyStr = new Date().toISOString().split("T")[0];
-
   const { data: fijadas, error: fijadasError } = await supabaseClient
     .from("planificacion_semanal")
     .select("id_op")
-    .eq("fijada", true)
-    .gte("dia", hoyStr); 
+    .eq("fijada", true);
 
   if (fijadasError) {
     console.error("Error al obtener OPs fijadas:", fijadasError);
@@ -1093,8 +1089,6 @@ async function cargarOPsPendientes() {
     item.dataset.idProducto = op.id_producto;
     item.dataset.numero_op = op.numero_op;
     item.dataset.cantidadLotes = obtenerCantidadLotes(op);
-    item.dataset.fecha_emision = new Date(op.fecha_emision).toLocaleDateString("es-AR");
-
 
     const lineaRec = obtenerLineaRecomendada(op.id_producto, lineasProd);
     const cantidadLotes = obtenerCantidadLotes(op);
@@ -1105,8 +1099,8 @@ async function cargarOPsPendientes() {
       <strong>${op.numero_op}</strong> - ${op.ver_orden?.[0]?.nombre || "Sin producto"}<br>
       <small>
         📦 Lotes: <b>${cantidadLotes}</b> |
-        ⏳  Duración en línea: <b class="duracion-texto">${duracion}</b> |
-        🧾 OV: <b>${cantidadOV}</b>|
+        ⏳  Duración por línea selec: <b class="duracion-texto">${duracion}</b> |
+        🧾 OV: <b>${cantidadOV}</b><br>
         ⚙️ Línea sugerida: <b>${lineaRec.id_linea}</b>
     `;
 
@@ -1123,21 +1117,15 @@ function formatoDuracion(minutos) {
 }
 
 // ---------------------- BUSCADOR ----------------------
-
 const buscador = document.getElementById("buscadorPendientes");
 buscador.addEventListener("input", () => {
   const filtro = buscador.value.toLowerCase();
   document.querySelectorAll("#listaPendientes .op-item").forEach(item => {
-    const texto = item.textContent.toLowerCase();
-    const fecha = item.dataset.fecha_emision?.toLowerCase() || "";
-
-    item.style.display = (texto.includes(filtro) || fecha.includes(filtro))
+    item.style.display = item.textContent.toLowerCase().includes(filtro)
       ? "block"
       : "none";
   });
 });
-
-
 const DURACION_JORNADA = 8 * 60;
 // ---------------------- DRAG & DROP ----------------------
 /*
@@ -2155,9 +2143,9 @@ document.getElementById("btnGuardarLinea").addEventListener("click", async () =>
       
     </span>
   `);
-  //<strong>GENERE OTRA VEZ LA PLANIFICACIÓN</strong>
+//<strong>GENERE OTRA VEZ LA PLANIFICACIÓN</strong>
   document.getElementById("modalEditarPlanificacion").style.display = "none";
-  planificarSemana(false, false);
+  planificarSemana(false,false);
   resetearModalPlanificacion();
 });
 
@@ -2165,6 +2153,7 @@ document.getElementById("btnGuardarLinea").disabled = (window.tiempoPlanificadoL
 
 async function fijarOPsEnLineaSeleccionada(ids, idLineaSeleccionada, hoy) {
 
+ // console.log("================ IDs recibidos =", ids);
 
   let huboError = false;
   const currentUserId = localStorage.getItem("currentUserId");
@@ -2336,16 +2325,16 @@ document.getElementById("btnDividirOP").addEventListener("click", async () => {
     </option>`;
   });
   // Activar buscador en el select
-  if (window.selectOPDividirChoices) {
-    window.selectOPDividirChoices.destroy();
-  }
+if (window.selectOPDividirChoices) {
+  window.selectOPDividirChoices.destroy();
+}
 
-  window.selectOPDividirChoices = new Choices("#selectOPDividir", {
-    searchEnabled: true,
-    itemSelectText: "",
-    shouldSort: false,
-    searchPlaceholderValue: "Buscar OP...",
-  });
+window.selectOPDividirChoices = new Choices("#selectOPDividir", {
+  searchEnabled: true,
+  itemSelectText: "",
+  shouldSort: false,
+  searchPlaceholderValue: "Buscar OP...",
+});
 
   const modal = document.getElementById("modalDividirOP");
   modal.style.display = "flex";
@@ -2364,9 +2353,9 @@ document.getElementById("selectOPDividir").addEventListener("change", async (e) 
   const idProducto = Number(e.target.selectedOptions[0].getAttribute("data-producto"));
 
   const { data: lineas, error } = await supabaseClient
-    .from("linea_productos")
-    .select("id_linea, estado")
-    .eq("estado", "Activa");
+  .from("linea_productos")
+  .select("id_linea, estado")
+  .eq("estado", "Activa");
   if (error) return mostrarAviso("Error al cargar líneas");
 
   lineas.sort((a, b) => a.id_linea - b.id_linea);
