@@ -25,6 +25,8 @@ let cantTotalCajasOP = 0;
 let materialesFaltantesPorProducto = new Map();
 let opCreadas = [];
 
+let cantidadMaterialesFaltante = new Map();
+
 async function generarOrdenesProduccionAutomatica() {
     try {
         console.log("🔄 Iniciando automatización de OP...");
@@ -143,6 +145,7 @@ async function crearOrdenesProduccion() {
 
     detallesExcedidosPorProducto = new Map();
     materialesFaltantesPorProducto = new Map();
+    cantidadMaterialesFaltante = new Map();
 
     for (const [producto, detalles] of ovPorProducto.entries()) {
 
@@ -328,6 +331,8 @@ async function crearOrdenesProduccion() {
     console.log("📌 Detalles que necesitan OP especial/manual:", detallesExcedidosPorProducto);
     console.log("📦 Materiales faltantes para OP (para generar OC):", materialesFaltantesPorProducto);
 
+    console.log("%%%%%%%%%%%%%%%%%%",opCreadas);
+
     mostrarOPenPantalla(opCreadas, detallesExcedidosPorProducto);
 
 }
@@ -391,9 +396,20 @@ async function verificarStockSuficiente(detalleReceta) {
 
         if (data.stock_disponible < item.cantidad_total) {
             item.condicion = `⚠️ Insuficiente (${data.stock_disponible} disp. / necesita ${item.cantidad_total})`;
+            //console.log(item.condicion)
             materialesInsuficientes.push(item);
+           const requerido = parseInt(item.cantidad_total, 10);
+            const disponible = parseInt(data.stock_disponible, 10);
+            //console.log("##", requerido ,"##",disponible);
+            const falta = requerido - disponible;
+            //console.log("FALTAN", falta);
+            const anterior = cantidadMaterialesFaltante.get(item.id_mp) || 0;
+            //console.log("ANTERIOR", anterior);
+            cantidadMaterialesFaltante.set(item.id_mp, anterior + falta);
+
         } else {
             item.condicion = "✅ Disponible";
+            
         }
     }
 
@@ -413,13 +429,16 @@ async function reservarLotes(idOrden, idMP, cantidadTotal) {
     try {
         let cantidadRestante = cantidadTotal;
 
-        // Buscar lotes disponibles ordenados por fecha de vencimiento (FEFO)
+        const hoy = new Date().toISOString().split("T")[0]; 
+
         const { data: lotes, error } = await supabaseClient
             .from('lote_mp')
             .select('*')
             .eq('id_mp', idMP)
-            .gt('cantidad_disponible', 0)
-            .order('fecha_caducidad', { ascending: true });
+            .eq('estado', 'Conforme')    
+            .gt('cantidad_disponible', 0) 
+            .gte('fecha_caducidad', hoy)  
+            .order('fecha_caducidad', { ascending: true });  
 
         if (error) {
             console.error("Error al obtener lotes:", error);
