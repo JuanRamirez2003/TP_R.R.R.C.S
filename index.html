@@ -86,6 +86,7 @@
 
         <div class="button-group">
             <button class="btn btn-primary" id="btn-login">Iniciar Sesión</button>
+            <button class="btn btn-primary" id="btn-login-demo">Iniciar Sesión Demo</button>
             <button class="btn btn-secondary" id="btn-access">Registrar Ingreso/Egreso</button>
         </div>
     </div>
@@ -93,11 +94,15 @@
 <script>
     // Redirección de botones
     document.getElementById('btn-login').addEventListener('click', () => {
+        window.location.href = 'login.html';
+    });
+    document.getElementById('btn-login-demo').addEventListener('click', () => {
         window.location.href = 'demo.html';
     });
     document.getElementById('btn-access').addEventListener('click', () => {
         window.location.href = 'acceso.html';
     });
+
 
     // Copos verdes
     const snowContainer = document.getElementById('snow-container');
